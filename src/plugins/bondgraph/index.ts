@@ -132,14 +132,16 @@ for (const [path, data] of Object.entries(BG_RDF_TEMPLATE_SOURCES)) {
 export class BGBaseComponent {
     #name: string|undefined
     #nodeType: string
+    #bgClass: string
     #numPorts: number
     #style: BGElementStyle
     #symbol: string
     #type: string
 
-    constructor(template: BGLibraryComponentTemplate, name: string, nodeType: string) {
+    constructor(template: BGLibraryComponentTemplate, name: string, nodeType: string, bgClass: string) {
         this.#name = name
         this.#nodeType = nodeType
+        this.#bgClass = bgClass
         this.#symbol = template.symbol
         this.#style = template.style
         this.#type = template.type
@@ -147,11 +149,11 @@ export class BGBaseComponent {
     }
 
     get isBondElement() {
-        return this.#nodeType === BGF.uri('BondElement').value
+        return this.#bgClass === BGF.uri('BondElement').value
     }
 
     get isJunctionStructure() {
-        return this.#nodeType === BGF.uri('JunctionStructure').value
+        return this.#bgClass === BGF.uri('JunctionStructure').value
     }
 
     get name() {
@@ -1042,17 +1044,21 @@ export class BondgraphPlugin implements PluginInterface {
     #loadBaseComponents() {
         // Get information about the components in the add component tool
         this.#query(`
-            SELECT ?element ?label ?base WHERE {
+            SELECT ?element ?type ?label ?base ?bgClass WHERE {
                 ?element rdfs:subClassOf ?base .
+                ?base rdfs:subClassOf* ?bgClass .
+                OPTIONAL { ?element a ?type }
                 OPTIONAL { ?element rdfs:label ?label }
-                { ?base rdfs:subClassOf* bg:BondElement }
-            UNION
-                { ?base rdfs:subClassOf* bg:JunctionStructure }
+                FILTER (
+                    sameTerm(?bgClass, bgf:BondElement )
+                 || sameTerm(?bgClass, bgf:JunctionStructure )
+              )
             }`
         ).forEach((r) => {
             const element = r.get('element')!
             const label = r.get('label')
             const base = r.get('base')!
+            const bgClass = r.get('bgClass')!
             for (const componentTemplate of this.#bondgraph_component_templates.values()) {
                 if (componentTemplate.type === element.value) {
                     let component = this.#baseComponents.get(componentTemplate.type)
@@ -1061,8 +1067,8 @@ export class BondgraphPlugin implements PluginInterface {
                             componentTemplate.name = label.value
                         }
                         component = new BGBaseComponent(componentTemplate,
-                                        base.value)
                                         label ? label.value : $rdf.getCurie(element.value),
+                                        base.value, bgClass.value)
                         this.#baseComponents.set(componentTemplate.type, component)
                     }
                     componentTemplate.component = component
