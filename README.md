@@ -1,11 +1,8 @@
-# The CellDL Editor
-
-There are two versions of the Editor:
-
-1. **The CellDL Editor:** a desktop application that can be run on [Intel](https://en.wikipedia.org/wiki/List_of_Intel_processors)-based and [ARM](https://en.wikipedia.org/wiki/ARM_architecture_family)-based [Windows](https://en.wikipedia.org/wiki/Microsoft_Windows), [Linux](https://en.wikipedia.org/wiki/Linux), and [macOS](https://en.wikipedia.org/wiki/MacOS) machines; and
-2. **The CellDL Editor's Web app:** a [Web app](https://en.wikipedia.org/wiki/Web_application) that can be run on a Web browser.
+# The CellDL Editor Vue Component
 
 This package is a [Vue 3](https://vuejs.org/) component for the CellDL Editor, built with the [Composition API](https://vuejs.org/guide/extras/composition-api-faq).
+
+
 
 ## Usage
 
@@ -30,18 +27,6 @@ const emit = defineEmits<{
     'error': [msg: string]
 }>()
 
-
-- **vite.config.ts:**
-
-Bundled wuth the the CellDL Editor is [Oxigraph for Javascript](https://github.com/oxigraph/oxigraph/tree/main/js). This is a large Web Asembly module (3.7MB) which is loaded asynchronously during startup. When building an application that uses the editor component, it can be put into its chunk by setting `build.rollupOptions.output.manualChunks` in the application's `vite.config.ts` to:
-
-```
-(id: string) => {
-    if (id.includes('oxigraph')) {
-        return id.split('/').slice(-1)[0];
-    }
-}
-```
 
 - **index.html:**
 

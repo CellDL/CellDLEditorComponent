@@ -6,9 +6,9 @@
         "email": "d.brooks@auckland.ac.nz"
     },
     "bugs": {
-        "url": "https://github.com/CellDL/CellDLEditor/issues"
+        "url": "https://github.com/CellDL/CellDLEditorComponent/issues"
     },
-    "description": "A Web-based editor for CellDL files.",
+    "description": "A Vue 3 component for the CellDL Editor.",
     "files": [
         "dist",
         "README.md",
@@ -25,7 +25,7 @@
     "productName": "CellDLEditor",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/CellDL/CellDLEditor.git"
+        "url": "git+https://github.com/CellDL/CellDLEditorComponent.git"
     },
     "type": "module",
     "types": "dist/index.d.ts",
