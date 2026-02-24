@@ -1,19 +1,27 @@
 {
     "compilerOptions": {
+        "allowJs": true,
         "baseUrl": ".",
-        "composite": true,
+        "declaration": true,
+        "declarationMap": true,
+        "emitDeclarationOnly": true,
+        "esModuleInterop": true,
+        "jsx": "preserve",
         "lib": ["dom", "esnext"],
         "module": "esnext",
         "moduleResolution": "bundler",
-        "noEmit": false,
-        "strictNullChecks": true,
-        "resolveJsonModule": true,
-        "target": "esnext",
-        "types": ["vite/client"],
+        "moduleDetection": "auto",
+        "noEmit": true,
+        "outDir": "./dist",
         "paths": {
             "@editor/*": ["./src/CellDL/*"],
             "@renderer/*": ["./src/*"]
-        }
+        },
+        "resolveJsonModule": true,
+        "strictNullChecks": true,
+        "target": "esnext",
+        "types": ["vite/client"],
+        "verbatimModuleSyntax": true
     },
     "extends": "@vue/tsconfig/tsconfig.dom.json",
     "include": ["**/*.js", "**/*.ts", "**/*.vue", "package.json"]

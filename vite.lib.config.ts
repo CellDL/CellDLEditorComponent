@@ -1,5 +1,5 @@
 import * as primeVueAutoImportResolver from '@primevue/auto-import-resolver'
-import dts from 'vite-plugin-dts'
+import typescript from "@rollup/plugin-typescript"
 import tailwindcssPlugin from '@tailwindcss/vite'
 import vuePlugin from '@vitejs/plugin-vue'
 
@@ -21,6 +21,7 @@ export default vite.defineConfig({
         rollupOptions: {
             external: ['vue'],
             output: {
+                dir: 'dist',
                 exports: 'named',
                 globals: {
                     vue: 'Vue'
@@ -31,7 +32,16 @@ export default vite.defineConfig({
                     }
                     return assetInfo.names[0] ?? 'default-name'
                 }
-            }
+            },
+            plugins: [
+                typescript({
+                    include: [
+                        './index.ts',
+                        'src/**'
+                    ]
+                }),
+            ]
+
         },
         sourcemap: true,
         target: 'esnext'
@@ -53,10 +63,6 @@ export default vite.defineConfig({
         }
     },
     plugins: [
-        dts({
-            insertTypesEntry: true
-        }),
-
         // Note: this must be in sync with vite.config.ts.
 
         tailwindcssPlugin(),
