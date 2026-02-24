@@ -5,8 +5,8 @@
     "": {
       "name": "@abi-software/celldl-editor",
       "dependencies": {
-        "@celldl/editor-rdf": "/Users/dbro078/CellDL/CellDLEditorRDF/celldl-editor-rdf-0.20260220.1.tgz",
         "@atomic-ehr/ucum": "^0.2.5",
+        "@celldl/editor-rdf": "^0.20260224.1",
         "@ctrl/tinycolor": "^4.2.0",
         "@mathjax/src": "^4.0.0",
         "@primeuix/themes": "^2.0.2",
@@ -85,7 +85,7 @@
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.3.11", "", { "os": "win32", "cpu": "x64" }, "sha512-43VrG813EW+b5+YbDbz31uUsheX+qFKCpXeY9kfdAx+ww3naKxeVkTD9zLIWxUPfJquANMHrmW3wbe/037G0Qg=="],
 
-    "@celldl/editor-rdf": ["@celldl/editor-rdf@/Users/dbro078/CellDL/CellDLEditorRDF/celldl-editor-rdf-0.20260220.1.tgz", { "dependencies": { "@jeswr/pretty-turtle": "^1.8.2", "oxigraph": "^0.5.2" } }],
+    "@celldl/editor-rdf": ["@celldl/editor-rdf@0.20260224.1", "", { "dependencies": { "@jeswr/pretty-turtle": "^1.8.2", "oxigraph": "^0.5.2" } }, "sha512-w5kQU+jDmJCxtXuo3JNTx+S2dBwGRW9AEchUWRUuPs67X6qaiHhBeajm1WC7xwknA4LO2Vv8ZblXtR44NViKAg=="],
 
     "@ctrl/tinycolor": ["@ctrl/tinycolor@4.2.0", "", {}, "sha512-kzyuwOAQnXJNLS9PSyrk0CWk35nWJW/zl/6KvnTBMFK65gm7U1/Z5BqjxeapjZCIhQcM/DsrEmcbRwDyXyXK4A=="],
 
@@ -497,7 +497,7 @@
 
     "obug": ["obug@2.1.1", "", {}, "sha512-uTqF9MuPraAQ+IsnPf366RG4cP9RtUi7MLO1N3KEc+wb0a6yKpeL0lmk2IB1jY5KHPAlTc6T/JRdC/YqxHNwkQ=="],
 
-    "oxigraph": ["oxigraph@0.5.3", "", {}, "sha512-eKMZ6xaab7e68X6t4XmlNyt4dEOR1k+SgctWpAxl4Zi+ra+CK7yKzELX4HPEoHR2SCDEnZoXzuT7AIDJp4Ql2Q=="],
+    "oxigraph": ["oxigraph@0.5.5", "", {}, "sha512-MRnSBaOGzy8k8xhloTZSoTf4KbPKSbtB++K4BiS+mAqyevVOOgE2fJIbI9e2kYbP3G045Lb3HhbJM8NjbQDfKA=="],
 
     "package-json-from-dist": ["package-json-from-dist@1.0.1", "", {}, "sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw=="],
 
