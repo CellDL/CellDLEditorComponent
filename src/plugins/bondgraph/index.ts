@@ -487,6 +487,29 @@ export class BondgraphPlugin implements PluginInterface {
     }
 
     checkConnectionValid(sourceObject: CellDLObject, targetObject: CellDLObject): ConnectionStatus|undefined {
+        /*
+        Junctions and elements:
+            JT ==> `Composite with Junction` or `Junction`
+                    JT value is `One`, `Transform`, or `Zero`
+         No JT ==> `Element`
+
+        Can't have direct:
+            Element <---> Element
+            One <---> One
+            Zero <---> Zero
+            Transform <---> Transform
+
+            Element <---> Transform ??
+
+            Element <---> Transform <---> Element
+            One <---> Transform <---> One
+            Zero <---> Transform <---> Zero
+
+        Domains:
+            Allow:
+                undefined <---> Any
+                Same <---> Same
+        */
         const sourceData = <PluginData>sourceObject.pluginData(this.id)
         const targetData = <PluginData>targetObject.pluginData(this.id)
         let alert: string = ''
