@@ -28,7 +28,12 @@ import { bgRdfStatements } from '@celldl/editor-rdf'
 import { arrowMarkerDefinition } from '@renderer/common/styling'
 import type { IUiJsonDiscreteInput } from '@renderer/libopencor/locUIJsonApi'
 
-import { getSvgFillStyle, getSvgPathStyle, setSvgPathStyle, type IPathStyle } from '@renderer/common/svgUtils'
+import {
+    getSvgFillStyle,
+    getSvgPathStyle,
+    setSvgPathStyle,
+    type IPathStyle
+} from '@renderer/common/svgUtils'
 
 import { alert } from '@editor/editor/alerts'
 import {
@@ -50,10 +55,14 @@ import {
     updateItemProperty,
     type ValueChange
 } from '@editor/components/properties'
+
 import * as $rdf from '@renderer/metadata'
 import { BGF, RDF, SPARQL_PREFIXES } from '@renderer/metadata'
 import { type MetadataProperty, MetadataPropertiesMap } from '@renderer/metadata'
+
 import type { ConnectionStatus, PluginInterface } from '@renderer/plugins'
+
+//==============================================================================
 
 import {
     BONDGRAPH_COMPONENT_DEFINITIONS,
@@ -81,16 +90,16 @@ export class BGBaseComponent {
     #junctionType: string|undefined
     #name: string|undefined
     #numPorts: number
-    #style: BGElementStyle
     #symbol: string
+    #style: BGElementStyle
     #type: string
 
     constructor(template: BGLibraryComponentTemplate, name: string) {
         this.#name = name
-        this.#symbol = template.symbol
-        this.#style = template.style
-        this.#type = template.type
         this.#numPorts = template.numPorts
+        this.#style = template.style
+        this.#symbol = template.symbol
+        this.#type = template.type
     }
 
     get junctionType() {
@@ -160,10 +169,10 @@ interface PluginData {
     baseComponentType: string
     elementTemplate?: ElementTemplate
     fillColours?: string[]
-    symbol?: string
     junctionType?: string
     location?: string
     species?: string
+    symbol?: string
 }
 
 //==============================================================================
