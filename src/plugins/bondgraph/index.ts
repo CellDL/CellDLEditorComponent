@@ -241,6 +241,12 @@ const ELEMENT_VALUE_INDEX = 3
 
 //==============================================================================
 
+const DEFAULT_TRANSFORM_RATIO = 1
+const TRANSFORM_NODE_PROMPT = 'Ratio'
+
+//==============================================================================
+//==============================================================================
+
 export class BondgraphPlugin implements PluginInterface {
     readonly id: string = BONDGRAPH_PLUGIN_ID
 
@@ -355,8 +361,14 @@ export class BondgraphPlugin implements PluginInterface {
             ]
             if (!componentTemplate.noSpeciesLocation) {
                 metadataProperties.push(
-                    [ BGF.uri('hasSpecies'), $rdf.literal(DEFAULT_SPECIES)],
-                    [ BGF.uri('hasLocation'), $rdf.literal(DEFAULT_LOCATION)]
+                    [ BGF.uri('hasSpecies'), $rdf.literal(DEFAULT_SPECIES) ],
+                    [ BGF.uri('hasLocation'), $rdf.literal(DEFAULT_LOCATION) ]
+                )
+            }
+            if (componentTemplate.type === BGF.uri('TransformNode').value) {
+                metadataProperties.push(
+                    // Passing a number causes a memory exception in oxigraph...
+                    [ BGF.uri('hasValue'), $rdf.literal(String(DEFAULT_TRANSFORM_RATIO)) ],
                 )
             }
             return {
@@ -555,6 +567,9 @@ export class BondgraphPlugin implements PluginInterface {
                     }
                     if (itemTemplate.itemId === BG_INPUT.ElementValue) {
                         item.optional = false
+                        if (pluginData.baseComponentType === BGF.uri('TransformNode').value) {
+                            item.name = TRANSFORM_NODE_PROMPT
+                        }
                     }
                     items.push(item)
                 }
@@ -875,15 +890,16 @@ export class BondgraphPlugin implements PluginInterface {
             value: baseComponent.type,
             emphasise: true
         })
-        discreteItem.possibleValues.push(
-            ...elementTemplates.map(t => {
-                return {
-                    name: t.name,
-                    value: t.type
-                }
-            })
-        )
-
+        if (baseComponent.type !== BGF.uri('TransformNode').value) {
+            discreteItem.possibleValues.push(
+                ...elementTemplates.map(t => {
+                    return {
+                        name: t.name,
+                        value: t.type
+                    }
+                })
+            )
+        }
         const discreteValue = pluginData.elementTemplate
                             ? pluginData.elementTemplate.type
                             : baseComponent.type
@@ -1045,6 +1061,25 @@ export class BondgraphPlugin implements PluginInterface {
 
     #assignTemplates() {
         for (const [base, component] of this.#baseComponents.entries()) {
+            if (component.type === BGF.uri('TransformNode').value) {
+                if (!this.#baseComponentToElementTemplates.has(component.type)) {
+                    this.#baseComponentToElementTemplates.set(component.type, [])
+                }
+                const elementTemplate: ElementTemplate = {
+                    type: component.type,
+                    domain: '',
+                    name: 'component.name || $rdf.getCurie(component.type)',
+                    parameters: new Map(),
+                    variables: new Map(),
+                    defaultStyle: component.style,
+                    symbol: component.symbol,
+                    baseComponentType: component.type,
+                    value: { name: 'k', units: '', value: '1' },
+                }
+                this.#elementTemplates.set(elementTemplate.type, elementTemplate)
+                this.#baseComponentToElementTemplates.get(component.type)!.push(elementTemplate)
+                continue
+            }
             this.#query(`
                 SELECT ?element ?label ?symbol ?domain ?relation WHERE {
                     ?element
