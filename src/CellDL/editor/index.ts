@@ -24,24 +24,24 @@ import { useTippy } from "vue-tippy"
 
 import '@renderer/assets/svgContent.css'
 
-import type { CellDLObject } from '@editor/celldlObjects/index'
+import type { CellDLObject } from '@editor/celldlObjects'
 import { PathMaker, type PathNode } from '@editor/connections/pathmaker'
-import type { TemplateEventDetails } from '@editor/components/index'
+import type { TemplateEventDetails } from '@editor/components'
 import { ObjectPropertiesPanel } from '@editor/components/properties'
-import type { CellDLDiagram } from '@editor/diagram/index'
-import { componentLibraryPlugin } from '@renderer/plugins/index'
+import type { CellDLDiagram } from '@editor/diagram'
 import { round } from '@editor/utils'
 
 import { type PointLike, PointMath } from '@renderer/common/points'
 import type { StringProperties } from '@renderer/common/types'
+import { componentLibraryPlugin } from '@renderer/plugins'
 
 //==============================================================================
 
-import { EditorFrame } from '@editor/editor/editorframe'
-import { editGuides, EDITOR_GRID_CLASS } from '@editor/editor/editguides'
-import PanZoom from '@editor/editor/panzoom'
-import { SelectionBox } from '@editor/editor/selectionbox'
-import { undoRedo } from '@editor/editor/undoredo'
+import { EditorFrame } from './editorframe'
+import { editGuides, EDITOR_GRID_CLASS } from './editguides'
+import PanZoom from './panzoom'
+import { SelectionBox } from './selectionbox'
+import { undoRedo } from './undoredo'
 
 //==============================================================================
 
