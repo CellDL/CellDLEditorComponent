@@ -209,6 +209,10 @@ export class CellDLObject {
         return this.#name
     }
 
+    get numConnections(): number {
+        return 0
+    }
+
     get objectTemplate() {
         return this.#objectTemplate
     }
