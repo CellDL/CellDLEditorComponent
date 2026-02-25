@@ -1004,8 +1004,8 @@ export class CellDLDiagram {
             const connector = <CellDLConnectedObject>celldlObject
             const connections = (<CellDLConnectedObject>celldlObject).connections
             for (const connection of connections) {
-                this.#removeObject(connection, undoAction)
                 componentLibraryPlugin.deleteConnection(connection, this.rdfStore)
+                this.#removeObject(connection, undoAction)
                 connector.deleteConnection(connection)
             }
         }
