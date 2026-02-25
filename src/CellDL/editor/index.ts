@@ -457,7 +457,11 @@ export class CellDLEditor {
         } else {
             const position = `(${round(pos.x, 1)}, ${round(pos.y, 1)})`
             if (this.#activeObject) {
-                this.status = this.#activeObject.name ?? ''
+                let pluginText = componentLibraryPlugin.statusText(this.#activeObject)
+                if (pluginText !== '') {
+                    pluginText = ` (${pluginText})`
+                }
+                this.status = (this.#activeObject.name ?? '') + pluginText
                 if (this.#statusPos) {
                     this.#statusPos.innerText = `${this.#activeObject.id} ${position}`
                 }

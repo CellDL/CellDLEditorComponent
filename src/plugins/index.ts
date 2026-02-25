@@ -69,6 +69,7 @@ export interface PluginInterface {
     newDocument: (uri: string, rdfStore: RdfStore) => void
     addDocumentMetadataToStore: (rdfStore: RdfStore) => void
     getPluginData: (celldlObject: CellDLObject, rdfStore: RdfStore) => object
+    statusText: (celldlObject: CellDLObject) => string
 
     addNewConnection: (connection: CellDLConnection, rdfStore: RdfStore) => void
     checkConnectionValid: (startObject: CellDLObject, endObject: CellDLObject) => ConnectionStatus|undefined
@@ -202,6 +203,10 @@ export class ComponentLibraryPlugin {
             pluginDataMap.set(plugin.id, plugin.getPluginData(celldlObject, rdfStore))
         }
         return pluginDataMap
+    }
+
+    statusText(celldlObject: CellDLObject): string {
+        return [...this.#registeredPlugins.values().map(plugin => plugin.statusText(celldlObject))].join(' ')
     }
 
     getObjectTemplate(uri: SubjectType, metadata: MetadataPropertiesMap, rdfStore: RdfStore): ObjectTemplate|undefined {

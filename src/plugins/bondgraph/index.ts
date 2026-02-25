@@ -384,6 +384,11 @@ export class BondgraphPlugin implements PluginInterface {
         return pluginData || {}
     }
 
+    statusText(celldlObject: CellDLObject): string {
+        let domain = (<PluginData>celldlObject.pluginData(this.id)).domain ?? ''
+        return domain !== '' ? $rdf.fragment(domain) : ''
+    }
+
     getTemplateName(rdfType: string): string|undefined {
         const elementTemplate = this.#elementTemplates.get(rdfType)
         if (elementTemplate) {
