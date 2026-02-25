@@ -68,7 +68,7 @@ export type MetadataProperty = [$rdf.NamedNode, MetadataPropertyValue]
 
 export function fragment(uri: $rdf.NamedNode|string): string {
     // @ts-expect-error: uri is a NamedNode
-    const uriString = isNamedNode(uri) ? uri.value : uri
+    const uriString = $rdf.isNamedNode(uri) ? uri.value : uri
     const parts = uriString.split('#')
     return parts.at(-1)
 }
@@ -143,7 +143,7 @@ export class MetadataPropertiesMap extends Map<string, MetadataPropertyValue> {
         }
     }
 
-    setProperty(predicate: PredicateType, value: MetadataPropertyValue, multiValued = false) {
+    setProperty(predicate: $rdf.PredicateType, value: MetadataPropertyValue, multiValued = false) {
         if (predicate.equals(RDF.uri('type')) && $rdf.isNamedNode(value)) {
             // @ts-expect-error: `value` is a NamedNode
             this.#rdfTypes.add(value.uri)
@@ -167,6 +167,7 @@ export class MetadataPropertiesMap extends Map<string, MetadataPropertyValue> {
                     values.add(value)
                 }
             } else if (values) {
+                // @ts-expect-error: `values` is a Literal or NamedNode
                 if (!($rdf.isLiteral(values) || $rdf.isNamedNode(values)) || !values.equals(value)) {
                     this.set(property, new Set<MetadataPropertyValue>([values, value]))
                 }
