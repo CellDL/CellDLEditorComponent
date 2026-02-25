@@ -78,30 +78,23 @@ const BONDGRAPH_FRAMEWORK = 'https://bg-rdf.org/ontologies/bondgraph-framework'
 //==============================================================================
 
 export class BGBaseComponent {
+    #junctionType: string|undefined
     #name: string|undefined
-    #nodeType: string
-    #bgClass: string
     #numPorts: number
     #style: BGElementStyle
     #symbol: string
     #type: string
 
-    constructor(template: BGLibraryComponentTemplate, name: string, nodeType: string, bgClass: string) {
+    constructor(template: BGLibraryComponentTemplate, name: string) {
         this.#name = name
-        this.#nodeType = nodeType
-        this.#bgClass = bgClass
         this.#symbol = template.symbol
         this.#style = template.style
         this.#type = template.type
         this.#numPorts = template.numPorts
     }
 
-    get isBondElement() {
-        return this.#bgClass === BGF.uri('BondElement').value
-    }
-
-    get isJunctionStructure() {
-        return this.#bgClass === BGF.uri('JunctionStructure').value
+    get junctionType() {
+        return this.#junctionType
     }
 
     get name() {
@@ -122,6 +115,10 @@ export class BGBaseComponent {
 
     get type() {
         return this.#type
+    }
+
+    setJunctionType(junctionType: string) {
+        this.#junctionType = junctionType
     }
 }
 
@@ -164,6 +161,7 @@ interface PluginData {
     elementTemplate?: ElementTemplate
     fillColours?: string[]
     symbol?: string
+    junctionType?: string
     location?: string
     species?: string
 }
@@ -316,9 +314,13 @@ export class BondgraphPlugin implements PluginInterface {
             const rdfType = r.get('type')!.value
             const symbol = r.get('symbol')
             const baseComponent = this.#baseComponents.get(rdfType)
-            if (baseComponent) {
+            if (baseComponent && !pluginData) {
                 pluginData = { baseComponentType: rdfType } as PluginData
-            } else if (this.#elementTemplates.has(rdfType)) {
+                if (baseComponent.junctionType) {
+                    pluginData.junctionType = baseComponent.junctionType
+                }
+            }
+            if (this.#elementTemplates.has(rdfType)) {
                 const elementTemplate = this.#elementTemplates.get(rdfType)!
                 if (pluginData) {
                     pluginData.elementTemplate = elementTemplate
@@ -475,18 +477,21 @@ export class BondgraphPlugin implements PluginInterface {
         `)
     }
 
-    checkConnectionValid(startObject: CellDLObject, endObject: CellDLObject): ConnectionStatus|undefined {
-        const startTemplate = (<PluginData>startObject.pluginData(this.id)).elementTemplate
-        const endTemplate = (<PluginData>endObject.pluginData(this.id)).elementTemplate
-        if (startTemplate?.domain && endTemplate?.domain
-         && startTemplate.domain !== endTemplate.domain) {
-            return {
-                alert: `Cannot connect ${$rdf.fragment(startTemplate.domain)} and ${$rdf.fragment(endTemplate.domain)} physical domains`
+    checkConnectionValid(sourceObject: CellDLObject, targetObject: CellDLObject): ConnectionStatus|undefined {
+        const sourceData = <PluginData>sourceObject.pluginData(this.id)
+        const targetData = <PluginData>targetObject.pluginData(this.id)
+        let alert: string = ''
+        if (sourceData.junctionType === targetData.junctionType) {
+            if (!sourceData.junctionType) {
+                alert = 'Direct connections between Bond Elements are not allowed'
+            } else {
+                alert = `Cannot directly connect two ${$rdf.fragment(sourceData.junctionType)} nodes`
             }
+        } else if (sourceData.domain && targetData.domain
+                && sourceData.domain !== targetData.domain) {
+            alert = `Cannot connect ${$rdf.fragment(sourceData.domain)} and ${$rdf.fragment(targetData.domain)} physical domains`
         }
-        return {
-            domain: startTemplate?.domain || endTemplate?.domain
-        }
+        return alert ? { alert } : { domain: sourceData.domain || targetData.domain }
     }
 
     deleteConnection(connection: CellDLConnection, rdfStore: $rdf.RdfStore) {
@@ -1010,35 +1015,68 @@ export class BondgraphPlugin implements PluginInterface {
 
     #loadBaseComponents() {
         // Get information about the components in the add component tool
+        let lastElement: $rdf.Term|undefined
         this.#query(`
-            SELECT ?element ?type ?label ?base ?bgClass WHERE {
+            SELECT ?element ?label ?base ?bgClass WHERE {
                 ?element rdfs:subClassOf ?base .
                 ?base rdfs:subClassOf* ?bgClass .
-                OPTIONAL { ?element a ?type }
                 OPTIONAL { ?element rdfs:label ?label }
+                OPTIONAL {
+                    { ?element bgf:hasDomain ?domain }
+                UNION
+                    { ?base bgf:hasDomain ?domain }
+                }
                 FILTER (
-                    sameTerm(?bgClass, bgf:BondElement )
-                 || sameTerm(?bgClass, bgf:JunctionStructure )
-              )
-            }`
+                  !bound(?domain)
+                  && (sameTerm(?bgClass, bgf:BondElement )
+                   || sameTerm(?bgClass, bgf:JunctionStructure )))
+            } order by ?element`
         ).forEach((r) => {
             const element = r.get('element')!
             const label = r.get('label')
-            const base = r.get('base')!
+            const nodeType = r.get('base')!
             const bgClass = r.get('bgClass')!
-            for (const componentTemplate of this.#bondgraph_component_templates.values()) {
-                if (componentTemplate.type === element.value) {
-                    let component = this.#baseComponents.get(componentTemplate.type)
-                    if (!component) {
-                        if (label) {    // Ontology labels override component names
-                            componentTemplate.name = label.value
+            let junctionType: string|undefined
+            /*
+            element             nodeType               bgClass
+            ==================  =====================  =====================
+            bgf:OneStorageNode  bgf:FlowStore          bgf:BondElement
+            bgf:OneStorageNode  bgf:OneNode            bgf:JunctionStructure
+            bgf:QuantityStore   bgf:BondElement        bgf:BondElement
+            bgf:Reaction        bgf:Dissipator         bgf:BondElement
+            bgf:TransformNode   bgf:JunctionStructure  bgf:JunctionStructure
+            bgf:ZeroNode        bgf:JunctionStructure  bgf:JunctionStructure
+            */
+            if (bgClass.value === BGF.uri('JunctionStructure').value) {
+                if (nodeType.value === BGF.uri('JunctionStructure').value) {
+                    junctionType = element.value
+                } else {
+                    junctionType = nodeType.value
+                }
+            }
+            if (lastElement?.value !== element.value) {
+                for (const componentTemplate of this.#bondgraph_component_templates.values()) {
+                    if (element.value === componentTemplate.type) {
+                        let component = this.#baseComponents.get(componentTemplate.type)
+                        if (!component) {
+                            if (label) {    // Ontology labels override component names
+                                componentTemplate.name = label.value
+                            }
+                            component = new BGBaseComponent(componentTemplate,
+                                            label ? label.value : $rdf.getCurie(element.value))
+                            this.#baseComponents.set(element.value, component)
                         }
-                        component = new BGBaseComponent(componentTemplate,
-                                        label ? label.value : $rdf.getCurie(element.value),
-                                        base.value, bgClass.value)
-                        this.#baseComponents.set(componentTemplate.type, component)
+                        componentTemplate.component = component
+                        if (junctionType) {
+                            component.setJunctionType(junctionType)
+                        }
                     }
-                    componentTemplate.component = component
+                }
+                lastElement = element
+            } else {
+                const component = this.#baseComponents.get(element.value)
+                if (component && junctionType) {
+                    component.setJunctionType(junctionType)
                 }
             }
         })
