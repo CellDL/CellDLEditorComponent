@@ -23,6 +23,10 @@
     "license": "Apache-2.0",
     "module": "dist/CellDLEditor.es.js",
     "productName": "CellDLEditor",
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org/"
+    },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/CellDL/CellDLEditorComponent.git"
