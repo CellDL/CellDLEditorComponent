@@ -1,4 +1,4 @@
-name: Publish the CellDL Editor as a npm package
+name: Publish the CellDL Editor as a npm package with Vue bundled
 on:
   workflow_dispatch:
 
