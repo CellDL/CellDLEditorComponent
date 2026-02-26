@@ -135,10 +135,12 @@ export function getItemProperty(celldlObject: CellDLObject,
         const valueUnits = value.split(' ')
         return {
             ...itemTemplate,
+            // @ts-expect-error
             value:  Number(valueUnits[0]),
             units: valueUnits[1]
         }
     }
+    // @ts-expect-error
     return {
         ...itemTemplate,
         value: value
