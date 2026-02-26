@@ -19,7 +19,6 @@ export default vite.defineConfig({
             name: 'CellDLEditor'
         },
         rollupOptions: {
-            external: ['vue'],
             output: {
                 dir: 'dist',
                 exports: 'named',
