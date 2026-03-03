@@ -56,6 +56,7 @@ export class RdfStore extends $rdf.RdfStore {
     #addMetadataProperties(subject: $rdf.SubjectType, predicate: $rdf.PredicateType, value: MetadataPropertyValue): $rdf.Statement[] {
         const statements: $rdf.Statement[] = []
         if ($rdf.isLiteral(value) || $rdf.isNamedNode(value)) {
+            // @ts-expect-error: `value` is a Literal or NamedNode
             statements.push(super.add(subject, predicate, value))
         } else if (value instanceof MetadataPropertiesMap) {
             const node = $rdf.blankNode()
@@ -114,11 +115,15 @@ export class RdfStore extends $rdf.RdfStore {
 
     #metadataValue(value: $rdf.ObjectType): MetadataPropertyValue | null {
         if ($rdf.isLiteral(value) || $rdf.isNamedNode(value)) {
+            // @ts-expect-error: `value` is a Literal or NamedNode
             return value
         } else if ($rdf.isBlankNode(value)) {
+            // @ts-expect-error: `value` is a BlankNode
             if (super.contains(value, RDF.uri('rest'), null)) {
+                // @ts-expect-error: `value` is a BlankNode
                 return this.#listFromCollection(value)
             } else {
+                // @ts-expect-error: `value` is a BlankNode
                 return this.metadataPropertiesForSubject(value)
             }
         }

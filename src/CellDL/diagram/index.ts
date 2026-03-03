@@ -189,8 +189,9 @@ export class CellDLDiagram {
     get metadata(): StringProperties {
         return Object.keys(this.#diagramProperties)
             .filter((key) => key in this.#diagramMetadata)
-            .reduce((obj: Record<string, any>, key: string) => {
-                obj[key] = this.#diagramProperties[key]
+            .reduce((obj: StringProperties, key: string) => {
+                // biome-ignore lint/style/noNonNullAssertion: `key` is in `diagramProperties`
+                obj[key] = this.#diagramProperties[key]!
                 return obj
             }, {})
     }
@@ -276,10 +277,14 @@ export class CellDLDiagram {
     }
 
     #setLastIdentifier() {
-        for (const element of this.#svgDiagram.querySelectorAll(`[id]`)) {
+        const elementsWithId = this.#svgDiagram.querySelectorAll(`[id]`)
+        for (let index = 0; index < elementsWithId.length; ++index) {
+            // biome-ignore lint/style/noNonNullAssertion: `index` is in range
+            const element = elementsWithId[index]!
             if (element.id.startsWith(ID_PREFIX)) {
                 const parts = element.id.substring(ID_PREFIX.length).split('-')
                 if (parts.length) {
+                    // @ts-expect-error:
                     const lastIdentifier = +parts[0]
                     if (lastIdentifier > this.#lastIdentifier) {
                         this.#lastIdentifier = lastIdentifier
@@ -387,6 +392,7 @@ export class CellDLDiagram {
         // better in dark mode.
         const strokedPaths = svgDiagram.querySelectorAll(`path[stroke="${OLD_CONNECTION_COLOUR}"]`)
         for (let index = 0; index < strokedPaths.length; ++index) {
+            // biome-ignore lint/style/noNonNullAssertion: `index` is in range
             const path = strokedPaths[index]!
             path.setAttribute('stroke', CONNECTION_COLOUR)
         }
@@ -415,7 +421,10 @@ export class CellDLDiagram {
     }
 
     #findLayers() {
-        for (const layer of this.#svgDiagram.querySelectorAll(`g.${CELLDL_STYLE_CLASS.Layer}[id]`)) {
+        const layersWithId = this.#svgDiagram.querySelectorAll(`g.${CELLDL_STYLE_CLASS.Layer}[id]`)
+        for (let index = 0; index < layersWithId.length; index += 1) {
+            // biome-ignore lint/style/noNonNullAssertion: `index` is in range
+            const layer = layersWithId[index]!
             this.#layers.set(layer.id, <SVGGElement>layer)
             this.#orderedLayerIds.push(layer.id)
         }
@@ -640,6 +649,7 @@ export class CellDLDiagram {
                 objectIds.isSupersetOf(new Set((<CellDLConnection>object).connectedObjects.map((obj) => obj.id)))
             ) {
                 // Component or connection all inside bounds
+                // biome-ignore lint/style/noNonNullAssertion: object has a celldlSvgElement
                 compartmentGroup.appendChild(object.celldlSvgElement!.svgElement)
                 if (!object.isConnection) {
                     this.#spatialIndex.remove(object)
