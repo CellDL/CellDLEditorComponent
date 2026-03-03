@@ -52,7 +52,6 @@ import { CELLDL_URI, fragment, SPARQL_PREFIXES } from '@renderer/metadata/index'
 
 export interface ConnectionStatus {
     alert?: string
-    domain?: string
 }
 
 //==============================================================================
@@ -71,8 +70,10 @@ export interface PluginInterface {
     getPluginData: (celldlObject: CellDLObject, rdfStore: RdfStore) => object
     statusText: (celldlObject: CellDLObject) => string
 
-    addNewConnection: (connection: CellDLConnection, rdfStore: RdfStore) => void
+    addComponent: (component: CellDLObject, rdfStore: RdfStore) => void
+    addConnection: (connection: CellDLConnection, rdfStore: RdfStore) => void
     checkConnectionValid: (startObject: CellDLObject, endObject: CellDLObject) => ConnectionStatus|undefined
+    deleteComponent: (component: CellDLObject, rdfStore: RdfStore) => void
     deleteConnection: (connection: CellDLConnection, rdfStore: RdfStore) => void
     getMaxConnections: (celldlObject: CellDLObject) => number
 
@@ -163,9 +164,15 @@ export class ComponentLibraryPlugin {
 
     //==========================================================================
 
-    addNewConnection(connection: CellDLConnection, rdfStore: RdfStore) {
+    addComponent(component: CellDLObject, rdfStore: RdfStore) {
         for (const plugin of this.#registeredPlugins.values()) {
-            plugin.addNewConnection(connection, rdfStore)
+            plugin.addComponent(component, rdfStore)
+        }
+    }
+
+    addConnection(connection: CellDLConnection, rdfStore: RdfStore) {
+        for (const plugin of this.#registeredPlugins.values()) {
+            plugin.addConnection(connection, rdfStore)
         }
     }
 
@@ -176,6 +183,12 @@ export class ComponentLibraryPlugin {
             if (status) {
                 return status
             }
+        }
+    }
+
+    deleteComponent(component: CellDLObject, rdfStore: RdfStore) {
+        for (const plugin of this.#registeredPlugins.values()) {
+            plugin.deleteComponent(component, rdfStore)
         }
     }
 

@@ -26,7 +26,10 @@ import { bgRdfStatements } from '@celldl/editor-rdf'
 //==============================================================================
 
 import { arrowMarkerDefinition } from '@renderer/common/styling'
-import type { IUiJsonDiscreteInput } from '@renderer/libopencor/locUIJsonApi'
+import type {
+    IUiJsonDiscreteInput,
+    IUiJsonDiscreteInputPossibleValue
+} from '@renderer/libopencor/locUIJsonApi'
 
 import {
     getSvgFillStyle,
@@ -76,6 +79,7 @@ import type {
     BGLibraryComponentTemplate,
     BGElementStyle
 } from './utils'
+import { DomainGraph } from './domainGraph'
 
 //==============================================================================
 
@@ -87,6 +91,7 @@ const BONDGRAPH_FRAMEWORK = 'https://bg-rdf.org/ontologies/bondgraph-framework'
 //==============================================================================
 
 export class BGBaseComponent {
+    #bgClass: string
     #junctionType: string|undefined
     #name: string|undefined
     #numPorts: number
@@ -94,12 +99,21 @@ export class BGBaseComponent {
     #style: BGElementStyle
     #type: string
 
-    constructor(template: BGLibraryComponentTemplate, name: string) {
+    constructor(template: BGLibraryComponentTemplate, name: string, bgClass: string) {
         this.#name = name
+        this.#bgClass = bgClass
         this.#numPorts = template.numPorts
         this.#style = template.style
         this.#symbol = template.symbol
         this.#type = template.type
+    }
+
+    get isBondElement() {
+        return this.#bgClass === BGF.uri('BondElement').value
+    }
+
+    get isJunctionStructure() {
+        return this.#bgClass === BGF.uri('JunctionStructure').value
     }
 
     get junctionType() {
@@ -160,13 +174,13 @@ type ElementTemplate = ElementTypeName & {
     variables: IdVariableMap
     symbol: string
     defaultStyle: BGElementStyle
-    baseComponentType: string
+    baseComponent: BGBaseComponent
 }
 
 //==============================================================================
 
 interface PluginData {
-    baseComponentType: string
+    baseComponent: BGBaseComponent
     elementTemplate?: ElementTemplate
     fillColours?: string[]
     junctionType?: string
@@ -244,6 +258,7 @@ const PARAMS_GROUP_INDEX = 1
 const VARS_GROUP_INDEX = 2
 
 // Within ELEMENT_GROUP
+const ELEMENT_TYPE_INDEX = 0
 const ELEMENT_VALUE_INDEX = 3
 
 //==============================================================================
@@ -259,6 +274,7 @@ export class BondgraphPlugin implements PluginInterface {
 
     #baseComponents: Map<string, BGBaseComponent> = new Map()                       // Indexed by component.type
     #baseComponentToElementTemplates: Map<string, ElementTemplate[]> = new Map()    // Indexed by component.type
+    #domainGraph: DomainGraph = new DomainGraph(undefined)
     #elementTemplates: Map<string, ElementTemplate> = new Map()                     // Indexed by element.type
     #propertyGroups: PropertyGroup[]
 
@@ -302,54 +318,6 @@ export class BondgraphPlugin implements PluginInterface {
             return this.#baseComponents.get(type)!.name || ''
         }
         return ''
-    }
-
-    getPluginData(celldlObject: CellDLObject, rdfStore: $rdf.RdfStore): object {
-        if (celldlObject.isConnection) {
-            return {
-                baseComponent: {}
-            }
-        }
-        const rows = rdfStore.query(`${SPARQL_PREFIXES}
-            PREFIX : <${this.#currentDocumentUri}#>
-
-            SELECT ?type ?symbol WHERE {
-                ${celldlObject.uri.toString()} a ?type
-                OPTIONAL { ${celldlObject.uri.toString()} bgf:hasSymbol ?symbol }
-            }`
-        )
-        let pluginData: PluginData|undefined
-        for (const r of rows) {
-            const rdfType = r.get('type')!.value
-            const symbol = r.get('symbol')
-            const baseComponent = this.#baseComponents.get(rdfType)
-            if (baseComponent && !pluginData) {
-                pluginData = { baseComponentType: rdfType } as PluginData
-                if (baseComponent.junctionType) {
-                    pluginData.junctionType = baseComponent.junctionType
-                }
-            }
-            if (this.#elementTemplates.has(rdfType)) {
-                const elementTemplate = this.#elementTemplates.get(rdfType)!
-                if (pluginData) {
-                    pluginData.elementTemplate = elementTemplate
-                } else {
-                    pluginData = {
-                        baseComponentType: elementTemplate.baseComponentType,
-                        elementTemplate: elementTemplate
-                    }
-                }
-            }
-            if (symbol && pluginData) {
-                pluginData.symbol = symbol.value
-            }
-        }
-        return pluginData || {}
-    }
-
-    statusText(celldlObject: CellDLObject): string {
-        let domain = (<PluginData>celldlObject.pluginData(this.id)).domain ?? ''
-        return domain !== '' ? $rdf.fragment(domain) : ''
     }
 
     getTemplateName(rdfType: string): string|undefined {
@@ -412,6 +380,7 @@ export class BondgraphPlugin implements PluginInterface {
         for (const statement of this.#rdfStore.statements()) {
             rdfStore.add(statement.subject, statement.predicate, statement.object, bgfGraph)
         }
+        this.#domainGraph = new DomainGraph(rdfStore)
     }
 
     //======================================
@@ -473,8 +442,78 @@ export class BondgraphPlugin implements PluginInterface {
     }
 
     //==========================================================================
+    //==========================================================================
 
-    addNewConnection(connection: CellDLConnection, rdfStore: $rdf.RdfStore) {
+    addComponent(component: CellDLObject, _rdfStore: $rdf.RdfStore) {
+        const pluginData = <PluginData>component.pluginData(this.id)
+        this.#domainGraph.addNode(component.uri.value,
+            pluginData.elementTemplate?.domain,
+            pluginData.baseComponent.type === this.#transformNodeType)
+    }
+
+    deleteComponent(component: CellDLObject, _rdfStore: $rdf.RdfStore) {
+        this.#domainGraph.deleteNode(component.uri.value)
+    }
+
+    getPluginData(celldlObject: CellDLObject, rdfStore: $rdf.RdfStore): object {
+        if (celldlObject.isConnection) {
+            return {
+                baseComponent: {}
+            }
+        }
+        const rows = rdfStore.query(`${SPARQL_PREFIXES}
+            PREFIX : <${this.#currentDocumentUri}#>
+
+            SELECT ?type ?symbol WHERE {
+                ${celldlObject.uri.toString()} a ?type
+                OPTIONAL { ${celldlObject.uri.toString()} bgf:hasSymbol ?symbol }
+            }`
+        )
+        let pluginData: PluginData|undefined
+        for (const r of rows) {
+            const rdfType = r.get('type')!.value
+            const symbol = r.get('symbol')
+            const baseComponent = this.#baseComponents.get(rdfType)
+            if (baseComponent && !pluginData) {
+                pluginData = { baseComponent } as PluginData
+                if (baseComponent.junctionType) {
+                    pluginData.junctionType = baseComponent.junctionType
+                }
+            }
+            if (this.#elementTemplates.has(rdfType)) {
+                const elementTemplate = this.#elementTemplates.get(rdfType)!
+                if (pluginData) {
+                    pluginData.elementTemplate = elementTemplate
+                } else {
+                    pluginData = {
+                        baseComponent: elementTemplate.baseComponent,
+                        elementTemplate: elementTemplate
+                    }
+                }
+            }
+            if (symbol && pluginData) {
+                pluginData.symbol = symbol.value
+            }
+        }
+        return pluginData || {}
+    }
+
+    statusText(celldlObject: CellDLObject): string {
+        const pluginData = <PluginData>celldlObject.pluginData(this.id)
+        let domain: string|undefined
+        if (pluginData.baseComponent.isBondElement) {
+            domain = pluginData.elementTemplate?.domain
+        } else {
+            domain = this.#domainGraph.getDomain(celldlObject.uri.value)
+        }
+        return domain ? $rdf.fragment(domain) : ''
+    }
+
+    //==========================================================================
+    //==========================================================================
+
+    addConnection(connection: CellDLConnection, rdfStore: $rdf.RdfStore) {
+        this.#domainGraph.addEdge(connection.uri.value, [connection.source!.uri.value, connection.target!.uri.value])
         const uri = connection.uri.toString()
         rdfStore.update(`${SPARQL_PREFIXES}
             PREFIX : <${this.#currentDocumentUri}#>
@@ -512,21 +551,22 @@ export class BondgraphPlugin implements PluginInterface {
         */
         const sourceData = <PluginData>sourceObject.pluginData(this.id)
         const targetData = <PluginData>targetObject.pluginData(this.id)
-        let alert: string = ''
         if (sourceData.junctionType === targetData.junctionType) {
             if (!sourceData.junctionType) {
-                alert = 'Direct connections between Bond Elements are not allowed'
+                return { alert: 'Direct connections between Bond Elements are not allowed' }
             } else {
-                alert = `Cannot directly connect two ${$rdf.fragment(sourceData.junctionType)} nodes`
+                return { alert: `Cannot directly connect two ${$rdf.fragment(sourceData.junctionType)} nodes` }
             }
-        } else if (sourceData.domain && targetData.domain
-                && sourceData.domain !== targetData.domain) {
-            alert = `Cannot connect ${$rdf.fragment(sourceData.domain)} and ${$rdf.fragment(targetData.domain)} physical domains`
         }
-        return alert ? { alert } : { domain: sourceData.domain || targetData.domain }
+        const sourceDomain = this.#domainGraph.getDomain(sourceObject.uri.value)
+        const targetDomain = this.#domainGraph.getDomain(targetObject.uri.value)
+        if (sourceDomain && targetDomain && sourceDomain !== targetDomain) {
+            return { alert: `Cannot connect ${$rdf.fragment(sourceDomain)} and ${$rdf.fragment(targetDomain)} physical domains` }
+        }
     }
 
     deleteConnection(connection: CellDLConnection, rdfStore: $rdf.RdfStore) {
+        this.#domainGraph.deleteEdge([connection.source!.uri.value, connection.target!.uri.value])
         const uri = connection.uri.toString()
         rdfStore.update(`${SPARQL_PREFIXES}
             PREFIX : <${this.#currentDocumentUri}#>
@@ -540,8 +580,7 @@ export class BondgraphPlugin implements PluginInterface {
 
     getMaxConnections(celldlObject: CellDLObject): number {
         const pluginData = (<PluginData>celldlObject.pluginData(this.id))
-        const baseComponent = this.#baseComponents.get(pluginData.baseComponentType)
-        return baseComponent ? baseComponent.numPorts : Infinity
+        return pluginData.baseComponent.numPorts
     }
 
     //==========================================================================
@@ -582,10 +621,8 @@ export class BondgraphPlugin implements PluginInterface {
         propertyTemplates.items.forEach((itemTemplate: ItemDetails) => {
             const items: ItemDetails[] = []
             if (itemTemplate.itemId === BG_INPUT.ElementType) {
-                const discreteItem = this.#getElementTypeItem(itemTemplate, pluginData)
-                if (discreteItem) {
-                    items.push(discreteItem)
-                }
+                const discreteItem = this.#getElementTypeItem(celldlObject, itemTemplate, pluginData)
+                items.push(discreteItem)
             } else if (itemTemplate.itemId === BG_INPUT.ElementSpecies ||
                        itemTemplate.itemId === BG_INPUT.ElementLocation ||
                        itemTemplate.itemId === BG_INPUT.ElementValue) {
@@ -730,10 +767,14 @@ export class BondgraphPlugin implements PluginInterface {
     async updateObjectProperties(celldlObject: CellDLObject, itemId: string, value: ValueChange,
                                     componentProperties: PropertyGroup[], rdfStore: $rdf.RdfStore) {
         await this.#updateElementProperties(value, itemId, celldlObject, rdfStore)
-
-        const elementTemplate = (<PluginData>celldlObject.pluginData(this.id)).elementTemplate
+        const pluginData = (<PluginData>celldlObject.pluginData(this.id))
+        const elementTemplate = pluginData.elementTemplate
         if (elementTemplate) {
             if (itemId === BG_INPUT.ElementType && value.newValue !== value.oldValue) {
+                // Possible element types depend on the component's domain so recalculate
+                const elementTypeItem = componentProperties[ELEMENT_GROUP_INDEX]!.items[ELEMENT_TYPE_INDEX]!
+                const possibleValues = this.#elementTypePossibleValues(celldlObject, pluginData.baseComponent)
+                elementTypeItem.possibleValues = possibleValues
                 this.#setElementValueTemplate(elementTemplate.value,
                                               componentProperties[ELEMENT_GROUP_INDEX]!)
                 if (!elementTemplate.value) {
@@ -876,10 +917,7 @@ export class BondgraphPlugin implements PluginInterface {
         // Update and redraw the component's SVG element
 
         const pluginData = (<PluginData>celldlObject.pluginData(this.id))
-        const baseComponent = this.#baseComponents.get(pluginData.baseComponentType)
-        if (!baseComponent) {
-            return ''
-        }
+        const baseComponent = pluginData.baseComponent
         const symbol = pluginData?.symbol
                      ?? pluginData.elementTemplate?.symbol
                      ?? baseComponent.symbol
@@ -911,32 +949,38 @@ export class BondgraphPlugin implements PluginInterface {
 
     //==========================================================================
 
-    #getElementTypeItem(itemTemplate: ItemDetails, pluginData: PluginData): ItemDetails|undefined {
-        const discreteItem = <IUiJsonDiscreteInput>{...itemTemplate}
-
-        discreteItem.possibleValues = []
-        const baseComponent = this.#baseComponents.get(pluginData.baseComponentType)
-        if (!baseComponent) {
-            return
-        }
+    #elementTypePossibleValues(celldlObject: CellDLObject, baseComponent: BGBaseComponent): IUiJsonDiscreteInputPossibleValue[] {
+        const possibleValues: IUiJsonDiscreteInputPossibleValue[] = []
         const elementTemplates = this.#baseComponentToElementTemplates.get(baseComponent.type) || []
-
-        // `baseComponent` and `templates` are possible values
-        discreteItem.possibleValues.push({
+        possibleValues.push({  // `baseComponent` and `templates` are possible values
             name: baseComponent.name || '',
             value: baseComponent.type,
             emphasise: true
         })
-        if (baseComponent.type !== BGF.uri('TransformNode').value) {
-            discreteItem.possibleValues.push(
-                ...elementTemplates.map(t => {
-                    return {
-                        name: t.name,
-                        value: t.type
-                    }
-                })
+        if (baseComponent.isBondElement) {
+            const domain = this.#domainGraph.getDomain(celldlObject.uri.value)
+            possibleValues.push(
+                ...elementTemplates
+                        .filter(et => // Filter templates by component's domain
+                                      // but only if it's connected
+                                    celldlObject.numConnections === 0
+                                || !domain
+                                ||  domain === et.domain)
+                        .map(et => {
+                                return {
+                                    name: et.name,
+                                    value: et.type
+                                }
+                            })
             )
         }
+        return possibleValues
+    }
+
+    #getElementTypeItem(celldlObject: CellDLObject, itemTemplate: ItemDetails, pluginData: PluginData): ItemDetails {
+        const baseComponent = pluginData.baseComponent
+        const discreteItem = <IUiJsonDiscreteInput>{...itemTemplate}
+        discreteItem.possibleValues = this.#elementTypePossibleValues(celldlObject, baseComponent)
         const discreteValue = pluginData.elementTemplate
                             ? pluginData.elementTemplate.type
                             : baseComponent.type
@@ -954,7 +998,7 @@ export class BondgraphPlugin implements PluginInterface {
                        celldlObject: CellDLObject, rdfStore: $rdf.RdfStore) {
         const objectUri = celldlObject.uri.toString()
         const pluginData = (<PluginData>celldlObject.pluginData(this.id))
-        const baseComponent = this.#baseComponents.get(pluginData.baseComponentType)!
+        const baseComponent = pluginData.baseComponent
 
         const deleteTriples: string[] = []
         if (this.#elementTemplates.has(value.oldValue)) {
@@ -978,11 +1022,14 @@ export class BondgraphPlugin implements PluginInterface {
             PREFIX : <${this.#currentDocumentUri}#>
             INSERT DATA { ${objectUri} a <${value.newValue}> }
         `)
+        let newDomain: string|undefined
         let newSymbol: string|undefined
         if (this.#elementTemplates.has(value.newValue)) {
             pluginData.elementTemplate = this.#elementTemplates.get(value.newValue)!
+            newDomain = pluginData.elementTemplate.domain
             newSymbol = pluginData.elementTemplate.symbol
         }
+        this.#domainGraph.setDomain(celldlObject.uri.value, newDomain)
         if (newSymbol === undefined) {
             newSymbol = baseComponent.symbol
         }
@@ -1095,7 +1142,8 @@ export class BondgraphPlugin implements PluginInterface {
                                 componentTemplate.name = label.value
                             }
                             component = new BGBaseComponent(componentTemplate,
-                                            label ? label.value : $rdf.getCurie(element.value))
+                                            label ? label.value : $rdf.getCurie(element.value),
+                                            bgClass.value)
                             this.#baseComponents.set(element.value, component)
                         }
                         componentTemplate.component = component
@@ -1143,7 +1191,7 @@ export class BondgraphPlugin implements PluginInterface {
                     variables: new Map(),
                     defaultStyle: component.style,
                     symbol: component.symbol,
-                    baseComponentType: component.type,
+                    baseComponent: component,
                     value: { name: 'k', units: '', value: '1' },
                 }
                 this.#elementTemplates.set(elementTemplate.type, elementTemplate)
@@ -1180,7 +1228,7 @@ export class BondgraphPlugin implements PluginInterface {
                     variables: new Map(),
                     defaultStyle: component.style,
                     symbol: symbol ? symbol.value : component.symbol,
-                    baseComponentType: component.type,
+                    baseComponent: component,
                 }
                 const domain = this.#physicalDomains.get(domainId)
                 if (domain) {
