@@ -1003,7 +1003,7 @@ export class CellDLDiagram {
         if (celldlObject.isComponent) {
             editGuides.removeGuide(<CellDLComponent>celldlObject)
         }
-        celldlObject.celldlSvgElement!.remove() // Will remove SVG element from DOM
+        celldlObject.celldlSvgElement?.remove() // Will remove SVG element from DOM
         const statements = this.#kb.statementsMatching(celldlObject.uri)
         undoAction.addKnowledge(statements)
         this.#kb.removeStatementList(statements)

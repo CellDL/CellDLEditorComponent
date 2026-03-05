@@ -598,7 +598,7 @@ export class CellDLEditor {
         if (event.dataTransfer) {
             const itemList = event.dataTransfer!.items
             for (let index = 0; index < itemList.length; ++index) {
-                const item = itemList[index]
+                const item = itemList[index]!
                 if (item.kind === "string" && item.type.match("^text/plain")) {
                     item.getAsString((s: string) => {
                         this.#addComponentTemplate(event, JSON.parse(s), true)
