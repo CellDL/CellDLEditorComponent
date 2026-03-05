@@ -209,7 +209,7 @@ export class DomainGraph {
         this.#graph.dropEdge(edgeNodeUris[0], edgeNodeUris[1])
         const domainNode0 = this.#graph.getNodeAttribute(edgeNodeUris[0], 'domain')
         const domainNode1 = this.#graph.getNodeAttribute(edgeNodeUris[1], 'domain')
-        if (domainNode0 !== domainNode1) {
+        if (domainNode0 && domainNode1 && domainNode0 !== domainNode1) {
             domainMismatch('deleteEdge', edgeNodeUris[0], edgeNodeUris[1])
         }
         if (!this.#transformNodes.has(edgeNodeUris[0])
