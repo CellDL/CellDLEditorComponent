@@ -116,7 +116,6 @@ export class CellDLObject {
         }
 
         // Get data that plugins need to associate with the object
-
         this.#pluginData = componentLibraryPlugin.getPluginData(this, celldlDiagram.rdfStore)
     }
 

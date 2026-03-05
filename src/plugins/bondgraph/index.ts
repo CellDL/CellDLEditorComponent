@@ -21,6 +21,8 @@ limitations under the License.
 
 import { ucum } from '@atomic-ehr/ucum'
 
+//==============================================================================
+
 import { bgRdfStatements } from '@celldl/editor-rdf'
 
 //==============================================================================
@@ -360,8 +362,6 @@ export class BondgraphPlugin implements PluginInterface {
         }
     }
 
-    //======================================
-
     getPropertyGroups(): PropertyGroup[] {
         return this.#propertyGroups
     }
@@ -370,13 +370,12 @@ export class BondgraphPlugin implements PluginInterface {
 
     openDiagram(uri: string, rdfStore: $rdf.RdfStore) {
         // We are creating a BondgraphModel
-
         rdfStore.add($rdf.namedNode(uri), RDF.uri('type'), BGF.uri('BondgraphModel'))
+
         this.#currentDocumentUri = uri
 
-        // Add a copy of the BG-RDF framework as a named graph, to use later when
+        // Add a copy of the BG-RDF framework as a **named graph**, to use when
         // finding BondElements and JunctionStructures
-
         const bgfGraph = $rdf.namedNode(BONDGRAPH_FRAMEWORK)
         for (const statement of this.#rdfStore.statements()) {
             rdfStore.add(statement.subject, statement.predicate, statement.object, bgfGraph)
@@ -518,7 +517,6 @@ export class BondgraphPlugin implements PluginInterface {
         const uri = connection.uri.toString()
         rdfStore.update(`${SPARQL_PREFIXES}
             PREFIX : <${this.#currentDocumentUri}#>
-
             INSERT DATA {
                 ${uri} bgf:hasSource ${connection.source!.uri.toString()} .
                 ${uri} bgf:hasTarget ${connection.target!.uri.toString()} .
@@ -571,7 +569,6 @@ export class BondgraphPlugin implements PluginInterface {
         const uri = connection.uri.toString()
         rdfStore.update(`${SPARQL_PREFIXES}
             PREFIX : <${this.#currentDocumentUri}#>
-
             DELETE DATA {
                 ${uri} bgf:hasSource ${connection.source!.uri.toString()} .
                 ${uri} bgf:hasTarget ${connection.target!.uri.toString()} .
@@ -776,11 +773,13 @@ export class BondgraphPlugin implements PluginInterface {
                 const elementTypeItem = componentProperties[ELEMENT_GROUP_INDEX]!.items[ELEMENT_TYPE_INDEX]!
                 const possibleValues = this.#elementTypePossibleValues(celldlObject, pluginData.baseComponent)
                 elementTypeItem.possibleValues = possibleValues
+                // The component might now have a `value` field
                 this.#setElementValueTemplate(elementTemplate.value,
                                               componentProperties[ELEMENT_GROUP_INDEX]!)
                 if (!elementTemplate.value) {
                     this.#deleteElementValue(celldlObject, rdfStore)
                 }
+                // And parameters and variables
                 this.#setVariableTemplates(elementTemplate.parameters,
                                            componentProperties[PARAMS_GROUP_INDEX]!, true)
                 this.#setVariableTemplates(elementTemplate.variables,
@@ -989,7 +988,6 @@ export class BondgraphPlugin implements PluginInterface {
         if (index >= 0) {
             discreteItem.value = discreteItem.possibleValues[index]
         }
-
         return discreteItem as ItemDetails
     }
 
