@@ -226,10 +226,6 @@ export class RectilinearPath extends PathElement {
             const firstPathPoints = RectilinearPath.#elementPathPoints(this.firstElement, currentPathPoint)
             this.pathPoints.push(...firstPathPoints)
             let prevPathPoint = this.pathPoints[1]!
-            if (!this.firstElement.pointOutside(currentPathPoint, CONNECTION_SPLAY_PADDING)) {
-                pathIndex = 2
-                currentPathPoint = new Point(pathArray[2][1], pathArray[2][2])
-            }
             while (pathIndex < pathLength - 2) {
                 const dirn = direction(prevPathPoint, currentPathPoint)
                 const pathPoint = new PathPoint(
