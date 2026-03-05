@@ -290,6 +290,7 @@ export class BondgraphPlugin implements PluginInterface {
     #currentDocumentUri: string = ''
     #physicalDomains: Map<string, PhysicalDomain> = new Map()
     #rdfStore: $rdf.RdfStore = new $rdf.RdfStore()
+    #transformNodeType = BGF.uri('TransformNode').value
 
     constructor() {
         this.#propertyGroups = PROPERTY_GROUPS()
@@ -344,7 +345,7 @@ export class BondgraphPlugin implements PluginInterface {
                     [ BGF.uri('hasLocation'), $rdf.literal(DEFAULT_LOCATION) ]
                 )
             }
-            if (componentTemplate.type === BGF.uri('TransformNode').value) {
+            if (componentTemplate.type === this.#transformNodeType) {
                 metadataProperties.push(
                     // Passing a number causes a memory exception in oxigraph...
                     [ BGF.uri('hasValue'), $rdf.literal(String(DEFAULT_TRANSFORM_RATIO)) ],
@@ -641,7 +642,7 @@ export class BondgraphPlugin implements PluginInterface {
                     }
                     if (itemTemplate.itemId === BG_INPUT.ElementValue) {
                         item.optional = false
-                        if (pluginData.baseComponentType === BGF.uri('TransformNode').value) {
+                        if (pluginData.baseComponent.type === this.#transformNodeType) {
                             item.name = TRANSFORM_NODE_PROMPT
                         }
                     }
@@ -1179,7 +1180,7 @@ export class BondgraphPlugin implements PluginInterface {
 
     #assignTemplates() {
         for (const [base, component] of this.#baseComponents.entries()) {
-            if (component.type === BGF.uri('TransformNode').value) {
+            if (component.type === this.#transformNodeType) {
                 if (!this.#baseComponentToElementTemplates.has(component.type)) {
                     this.#baseComponentToElementTemplates.set(component.type, [])
                 }
