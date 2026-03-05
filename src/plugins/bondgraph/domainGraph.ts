@@ -99,7 +99,7 @@ export class DomainGraph {
                 }
             }
         )
-        // Add all junctions apart from TransformNodes
+        // Add all junctions and note TransformNodes
         rdfStore
             .query(`${SPARQL_PREFIXES}${JUNCTION_STRUCTURE_QUERY}`, true)
             .forEach((r) => {
@@ -181,8 +181,10 @@ export class DomainGraph {
             let domain: string|undefined
             if (domainNode0) {
                 if (!domainNode1) {
-                    // Propogate `domainNode0` via `edgeNodeUris[1]`
-                    this.#setDomains(edgeNodeUris[1], domainNode0)
+                    if (!this.#transformNodes.has(edgeNodeUris[1])) {
+                        // Propogate `domainNode0` via `edgeNodeUris[1]`
+                        this.#setDomains(edgeNodeUris[1], domainNode0)
+                    }
                     domain = domainNode0
                 } else if (domainNode0 !== domainNode1) {
                     domainMismatch('addEdge', edgeNodeUris[0], edgeNodeUris[1])
@@ -190,8 +192,10 @@ export class DomainGraph {
                     domain = domainNode0
                 }
             } else if (domainNode1) {
-                // Propogate `domainNode1` via `edgeNodeUris[0]`
-                this.#setDomains(edgeNodeUris[0], domainNode1)
+                if (!this.#transformNodes.has(edgeNodeUris[0])) {
+                    // Propogate `domainNode1` via `edgeNodeUris[0]`
+                    this.#setDomains(edgeNodeUris[0], domainNode1)
+                }
                 domain = domainNode1
             }
             const edge = this.#graph.addEdgeWithKey(edgeUri, edgeNodeUris[0], edgeNodeUris[1])
@@ -208,8 +212,11 @@ export class DomainGraph {
         if (domainNode0 !== domainNode1) {
             domainMismatch('deleteEdge', edgeNodeUris[0], edgeNodeUris[1])
         }
-        this.#clearDomains(edgeNodeUris[0], domainNode0)
-        this.#clearDomains(edgeNodeUris[1], domainNode1)
+        if (!this.#transformNodes.has(edgeNodeUris[0])
+         && !this.#transformNodes.has(edgeNodeUris[1])) {
+            this.#clearDomains(edgeNodeUris[0], domainNode0)
+            this.#clearDomains(edgeNodeUris[1], domainNode1)
+        }
     }
 
     //==========================================================================
