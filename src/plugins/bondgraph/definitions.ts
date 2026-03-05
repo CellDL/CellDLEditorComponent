@@ -188,7 +188,7 @@ export const BONDGRAPH_COMPONENT_DEFINITIONS: BGComponentDefinition[] = [
         type: 'https://bg-rdf.org/ontologies/bondgraph-framework#PotentialSource',
         name: 'Potential source',
         numPorts: 1,
-        symbol: 'Se',
+        symbol: 'S',
         style: POTENTIAL_STYLE,
     },
     {
@@ -196,7 +196,7 @@ export const BONDGRAPH_COMPONENT_DEFINITIONS: BGComponentDefinition[] = [
         type: 'https://bg-rdf.org/ontologies/bondgraph-framework#FlowSource',
         name: 'Flow source',
         numPorts: 1,
-        symbol: 'Sf',
+        symbol: 'S',
         style: FLOW_STYLE,
     }
 ]
