@@ -318,7 +318,7 @@ vue.watch(
                         celldlDiagram = new CellDLDiagram(options?.name || '', options.data, celldlEditor)
                         await celldlEditor.editDiagram(celldlDiagram)
                     } catch(err) {
-                        emit('error', `Cannot open ${options?.name} -- invalid CellDL file?`)
+                        emit('error', `Cannot open ${options?.name} -- invalid CellDL file?\n\n${err}`)
                     }
                 }
             } else if (options.action === 'data') {
