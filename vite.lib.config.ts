@@ -10,7 +10,12 @@ import * as vite from 'vite'
 
 const _dirname = path.dirname(url.fileURLToPath(import.meta.url))
 
-export default vite.defineConfig({
+export default vite.defineConfig(({ mode }) => {
+  return {
+    esbuild: {
+      // Drops console.log calls only in production mode
+      pure: mode === 'production' ? ['console.log'] : [],
+    },
     build: {
         lib: {
             entry: './index.ts',
@@ -71,4 +76,5 @@ export default vite.defineConfig({
             resolvers: [primeVueAutoImportResolver.PrimeVueResolver()]
         })
     ]
+  }
 })
