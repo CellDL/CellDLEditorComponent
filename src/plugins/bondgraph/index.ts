@@ -62,7 +62,7 @@ import {
 } from '@editor/components/properties'
 
 import * as $rdf from '@renderer/metadata'
-import { BGF, RDF, SPARQL_PREFIXES } from '@renderer/metadata'
+import { BGF, BGF_URI, RDF, SPARQL_PREFIXES } from '@renderer/metadata'
 import { type MetadataProperty, MetadataPropertiesMap } from '@renderer/metadata'
 
 import type { ConnectionStatus, PluginInterface } from '@renderer/plugins'
@@ -463,7 +463,6 @@ export class BondgraphPlugin implements PluginInterface {
         }
         const rows = rdfStore.query(`${SPARQL_PREFIXES}
             PREFIX : <${this.#currentDocumentUri}#>
-
             SELECT ?type ?symbol WHERE {
                 ${celldlObject.uri.toString()} a ?type
                 OPTIONAL { ${celldlObject.uri.toString()} bgf:hasSymbol ?symbol }
@@ -472,27 +471,29 @@ export class BondgraphPlugin implements PluginInterface {
         let pluginData: PluginData|undefined
         for (const r of rows) {
             const rdfType = r.get('type')!.value
-            const symbol = r.get('symbol')
-            const baseComponent = this.#baseComponents.get(rdfType)
-            if (baseComponent && !pluginData) {
-                pluginData = { baseComponent } as PluginData
-                if (baseComponent.junctionType) {
-                    pluginData.junctionType = baseComponent.junctionType
-                }
-            }
-            if (this.#elementTemplates.has(rdfType)) {
-                const elementTemplate = this.#elementTemplates.get(rdfType)!
-                if (pluginData) {
-                    pluginData.elementTemplate = elementTemplate
-                } else {
-                    pluginData = {
-                        baseComponent: elementTemplate.baseComponent,
-                        elementTemplate: elementTemplate
+            if (rdfType.startsWith(BGF_URI)) {
+                const symbol = r.get('symbol')
+                const baseComponent = this.#baseComponents.get(rdfType)
+                if (baseComponent && !pluginData) {
+                    pluginData = { baseComponent } as PluginData
+                    if (baseComponent.junctionType) {
+                        pluginData.junctionType = baseComponent.junctionType
                     }
                 }
-            }
-            if (symbol && pluginData) {
-                pluginData.symbol = symbol.value
+                if (this.#elementTemplates.has(rdfType)) {
+                    const elementTemplate = this.#elementTemplates.get(rdfType)!
+                    if (pluginData) {
+                        pluginData.elementTemplate = elementTemplate
+                    } else {
+                        pluginData = {
+                            baseComponent: elementTemplate.baseComponent,
+                            elementTemplate: elementTemplate
+                        }
+                    }
+                }
+                if (symbol && pluginData) {
+                    pluginData.symbol = symbol.value
+                }
             }
         }
         return pluginData || {}
