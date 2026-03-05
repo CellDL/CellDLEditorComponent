@@ -161,7 +161,6 @@ export class DomainGraph {
     }
 
     setDomain(uri: string, domain: string|undefined) {
-console.log('set domain', uri, domain)
         if (this.#graph.hasNode(uri)) {
             const elementDomain = this.#graph.getNodeAttribute(uri, 'domain')
             this.#deleteDomain(uri, elementDomain)  // delete needs to be before clear...
