@@ -1186,7 +1186,7 @@ export class BondgraphPlugin implements PluginInterface {
                 const elementTemplate: ElementTemplate = {
                     type: component.type,
                     domain: '',
-                    name: 'component.name || $rdf.getCurie(component.type)',
+                    name: component.name || $rdf.getCurie(component.type),
                     parameters: new Map(),
                     variables: new Map(),
                     defaultStyle: component.style,
