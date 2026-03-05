@@ -5,7 +5,7 @@
       "name": "@abi-software/celldl-editor",
       "dependencies": {
         "@atomic-ehr/ucum": "^0.2.5",
-        "@celldl/editor-rdf": "^0.20260305.0",
+        "@celldl/editor-rdf": "^0.20260305.1",
         "@ctrl/tinycolor": "^4.2.0",
         "@mathjax/src": "^4.0.0",
         "@primeuix/themes": "^2.0.2",
@@ -85,7 +85,7 @@
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.3.11", "", { "os": "win32", "cpu": "x64" }, "sha512-43VrG813EW+b5+YbDbz31uUsheX+qFKCpXeY9kfdAx+ww3naKxeVkTD9zLIWxUPfJquANMHrmW3wbe/037G0Qg=="],
 
-    "@celldl/editor-rdf": ["@celldl/editor-rdf@0.20260305.0", "", { "dependencies": { "@jeswr/pretty-turtle": "^1.8.2", "oxigraph": "^0.5.5" } }, "sha512-GDKTVex/moGtl7lBTVwfyg4PaEvNWppBb205OLAgEj5631fJG3kEb5EAw+Rv4aqPfaEHZZioEhYLscPFxpYlIA=="],
+    "@celldl/editor-rdf": ["@celldl/editor-rdf@0.20260305.1", "", { "dependencies": { "@jeswr/pretty-turtle": "^1.8.2", "oxigraph": "^0.5.5" } }, "sha512-P+qZ5SCDr5XHvQlUc+4bPKzxwXIDo4r7FBQmDlpeZXGNhVQRzOjugFxtfiI/ei90EOa1c9gnQUVjkoxW3xAktg=="],
 
     "@ctrl/tinycolor": ["@ctrl/tinycolor@4.2.0", "", {}, "sha512-kzyuwOAQnXJNLS9PSyrk0CWk35nWJW/zl/6KvnTBMFK65gm7U1/Z5BqjxeapjZCIhQcM/DsrEmcbRwDyXyXK4A=="],
 
