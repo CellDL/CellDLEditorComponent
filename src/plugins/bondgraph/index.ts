@@ -578,7 +578,7 @@ export class BondgraphPlugin implements PluginInterface {
 
     getMaxConnections(celldlObject: CellDLObject): number {
         const pluginData = (<PluginData>celldlObject.pluginData(this.id))
-        return pluginData.baseComponent.numPorts
+        return pluginData.baseComponent?.numPorts || Infinity
     }
 
     //==========================================================================
