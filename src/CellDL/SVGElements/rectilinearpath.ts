@@ -218,9 +218,9 @@ export class RectilinearPath extends PathElement {
 
     protected setPathPoints(pathArray: NormalArray) {
         this.pathPoints.length = 0
-        if (this.validPath) {
-            // `validPath` is set by the constructor when path starts
-            const pathLength = pathArray.length // with 'M' command and is at least 2 long
+        // `validPath` is set by the constructor when path starts
+        if (this.validPath) {  // ==> starts with 'M' command and at least two long array.
+            const pathLength = pathArray.length
             let pathIndex = 1
             let currentPathPoint = new Point(pathArray[1][1], pathArray[1][2])
             const firstPathPoints = RectilinearPath.#elementPathPoints(this.firstElement, currentPathPoint)
