@@ -65,7 +65,7 @@ export interface PluginInterface {
     styleRules: () => string
     svgDefinitions: () => string
 
-    newDocument: (uri: string, rdfStore: RdfStore) => void
+    openDiagram: (uri: string, rdfStore: RdfStore) => void
     addDocumentMetadataToStore: (rdfStore: RdfStore) => void
     getPluginData: (celldlObject: CellDLObject, rdfStore: RdfStore) => object
     statusText: (celldlObject: CellDLObject) => string
@@ -149,10 +149,10 @@ export class ComponentLibraryPlugin {
 
     //==========================================================================
 
-    newDocument(uri: string, rdfStore: RdfStore) {
+    openDiagram(uri: string, rdfStore: RdfStore) {
         this.#currentDocumentUri = uri
         for (const plugin of this.#registeredPlugins.values()) {
-            plugin.newDocument(uri, rdfStore)
+            plugin.openDiagram(uri, rdfStore)
         }
     }
 

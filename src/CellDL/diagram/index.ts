@@ -162,7 +162,7 @@ export class CellDLDiagram {
         this.#setLastIdentifier()
         this.#setupDefines()
         this.#setStylesheet()
-        componentLibraryPlugin.newDocument(this.#documentNode.uri, this.#kb)
+        componentLibraryPlugin.openDiagram(this.#documentNode.uri, this.#kb)
     }
 
     finishSetup() {

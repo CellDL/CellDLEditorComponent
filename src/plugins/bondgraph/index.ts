@@ -367,7 +367,7 @@ export class BondgraphPlugin implements PluginInterface {
 
     //==========================================================================
 
-    newDocument(uri: string, rdfStore: $rdf.RdfStore) {
+    openDiagram(uri: string, rdfStore: $rdf.RdfStore) {
         // We are creating a BondgraphModel
 
         rdfStore.add($rdf.namedNode(uri), RDF.uri('type'), BGF.uri('BondgraphModel'))
