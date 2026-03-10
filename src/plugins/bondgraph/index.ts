@@ -502,7 +502,7 @@ export class BondgraphPlugin implements PluginInterface {
     statusText(celldlObject: CellDLObject): string {
         const pluginData = <PluginData>celldlObject.pluginData(this.id)
         let domain: string|undefined
-        if (pluginData.baseComponent.isBondElement) {
+        if (pluginData.baseComponent?.isBondElement) {
             domain = pluginData.elementTemplate?.domain
         } else {
             domain = this.#domainGraph.getDomain(celldlObject.uri.value)
