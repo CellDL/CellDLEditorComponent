@@ -41,6 +41,7 @@ class IdBounds {
     bounds: Bounds
 
     constructor(celldlObject: CellDLObject) {
+        // biome-ignore lint/style/noNonNullAssertion: an object has a celldlSvgElement
         this.bounds = celldlObject.celldlSvgElement!.svgBounds()
         this.id = celldlObject.id
     }
@@ -88,6 +89,7 @@ export class CellDLSpatialIndex {
 
     remove(celldlObject: CellDLObject) {
         if (this.#objects.has(celldlObject.id)) {
+            // biome-ignore lint/style/noNonNullAssertion: IdBounds is two long
             this.#index.remove(this.#objects.get(celldlObject.id)![1])
             this.#objects.delete(celldlObject.id)
         }
@@ -95,11 +97,13 @@ export class CellDLSpatialIndex {
 
     update(celldlObject: CellDLObject) {
         if (this.#objects.has(celldlObject.id)) {
+            // biome-ignore lint/style/noNonNullAssertion: IdBounds is two long
             const savedItem = this.#objects.get(celldlObject.id)![1]
             const item = new IdBounds(celldlObject)
             if (!savedItem.bounds.equal(item.bounds)) {
                 this.#index.remove(savedItem)
                 this.#index.insert(item)
+                // biome-ignore lint/style/noNonNullAssertion: IdBounds is two long
                 this.#objects.get(celldlObject.id)![1] = item
             }
         }
@@ -114,6 +118,7 @@ export class CellDLSpatialIndex {
         })
         return intersectingItems.map((item) => {
             return {
+                // biome-ignore lint/style/noNonNullAssertion: IdBounds is two long
                 object: this.#objects.get(item.id)![0],
                 exact: item.bounds.inContainer(bounds)
             }
@@ -139,6 +144,7 @@ export class SpatialObjectIndex {
         if (celldlObjects.length) {
             this.#spatialObjectIndex = new Flatbush(celldlObjects.length)
             for (const object of celldlObjects) {
+                // biome-ignore lint/style/noNonNullAssertion: an object has a celldlSvgElement
                 const bounds = object.celldlSvgElement!.svgBounds()
                 const index = this.#spatialObjectIndex.add(...bounds.asArray())
                 this.#spatialBounds.set(index, bounds)
@@ -152,7 +158,9 @@ export class SpatialObjectIndex {
         return this.#spatialObjectIndex
             ? this.#spatialObjectIndex.search(...bounds.asArray()).map((index) => {
                   return {
+                      // biome-ignore lint/style/noNonNullAssertion: spatialObjects has the index
                       object: this.#spatialObjects.get(index)!,
+                      // biome-ignore lint/style/noNonNullAssertion: spatialBounds has the index
                       bounds: this.#spatialBounds.get(index)!
                   }
               })

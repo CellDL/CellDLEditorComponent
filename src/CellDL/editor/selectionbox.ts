@@ -55,6 +55,7 @@ export class SelectionBox {
 
     constructor(editor: CellDLEditor, startPoint: DOMPoint) {
         this.#editor = editor
+        // biome-ignore lint/style/noNonNullAssertion: the editor has a frame layer
         this.#editorFrame = editor.editorFrame!
         this.#startPoint = Point.fromPoint(editGuides.gridAlign(startPoint))
         this.#topLeft = ControlPoint.fromPoint(this.#startPoint)
@@ -121,13 +122,14 @@ export class SelectionBox {
 
     makeCompartment() {
         if (this.count) {
+            // biome-ignore lint/style/noNonNullAssertion: the editor has a diagram
             this.#editor.celldlDiagram!.createCompartment(Bounds.fromPoints(this.#topLeft, this.#bottomRight), [
                 ...this.#selectedObjects.values()
             ])
         }
     }
 
-    pointerEvent(event, point: DOMPoint): boolean {
+    pointerEvent(event: PointerEvent, point: DOMPoint): boolean {
         if (this.#drawing) {
             if (event.type === 'pointermove') {
                 this.#drawTo(point)
@@ -143,6 +145,7 @@ export class SelectionBox {
                     this.#movePoint.point = editGuides.gridAlign(point)
                 } else if (this.#panStart !== null) {
                     const delta = this.#panStart.subtract(point)
+                    // biome-ignore lint/style/noNonNullAssertion: panStart ==> panTopLeft
                     this.#topLeft.point = editGuides.gridAlign(this.#panTopLeft!.subtract(delta))
                     this.#bottomRight.point = this.#topLeft.point.add(this.#size)
                 }
@@ -160,7 +163,8 @@ export class SelectionBox {
                 const currentIndex = element.dataset.controlIndex ? +element.dataset.controlIndex : -1
                 if (event.type === 'pointerdown') {
                     if (currentIndex >= 0) {
-                        const controlPoint = this.#controlPoints[currentIndex]
+                        // biome-ignore lint/style/noNonNullAssertion: currentIndex is in range
+                        const controlPoint = this.#controlPoints[currentIndex]!
                         this.#movePoint = controlPoint
                         this.#panStart = null
                     } else {
@@ -200,12 +204,14 @@ export class SelectionBox {
         this.#xMax = new RestrictedValue(this.#bottomRight.x)
         this.#xMin.reassignMaximum(this.#xMax)
         this.#xMax.reassignMinimum(this.#xMin)
+        // biome-ignore lint/style/noNonNullAssertion: we have both xMin and xMax
         const xMid = new ComputedValue((() => (this.#xMin!.value + this.#xMax!.value) / 2).bind(this))
 
         this.#yMin = new RestrictedValue(this.#topLeft.y)
         this.#yMax = new RestrictedValue(this.#bottomRight.y)
         this.#yMin.reassignMaximum(this.#yMax)
         this.#yMax.reassignMinimum(this.#yMin)
+        // biome-ignore lint/style/noNonNullAssertion: we have both yMin and yMax
         const yMid = new ComputedValue((() => (this.#yMin!.value + this.#yMax!.value) / 2).bind(this))
 
         this.#controlPoints = [
@@ -218,14 +224,17 @@ export class SelectionBox {
             new ControlPoint(this.#xMin, this.#yMax),
             new ControlPoint(this.#xMin, yMid)
         ]
-        this.#topLeft = this.#controlPoints[0]
-        this.#bottomRight = this.#controlPoints[4]
+        // biome-ignore lint/style/noNonNullAssertion: controlPoints is 8 long
+        this.#topLeft = this.#controlPoints[0]!
+        // biome-ignore lint/style/noNonNullAssertion: controlPoints is 8 long
+        this.#bottomRight = this.#controlPoints[4]!
         let index = 0
         const styles = ['', 'gripper-h', '', 'gripper-v', '', 'gripper-h', '', 'gripper-v']
         const cursors = ['move', 'ns-resize', 'move', 'ew-resize', 'move', 'ns-resize', 'move', 'ew-resize']
         for (const controlPoint of this.#controlPoints) {
             const svgElement = controlPoint.createSvgElement(this.#editorFrame, styles[index])
-            svgElement.style.setProperty('cursor', cursors[index])
+            // biome-ignore lint/style/noNonNullAssertion: index is in range
+            svgElement.style.setProperty('cursor', cursors[index]!)
             svgElement.dataset.parentId = this.#selectionRect.id
             svgElement.dataset.controlIndex = `${index}`
             index += 1
@@ -243,6 +252,7 @@ export class SelectionBox {
     }
 
     #setSelectedObjects() {
+        // biome-ignore lint/style/noNonNullAssertion: the editor has a diagram
         const selectedItems = this.#editor
             .celldlDiagram!.objectsContainedIn(this.bounds)
             .filter((c) => c.exact)
