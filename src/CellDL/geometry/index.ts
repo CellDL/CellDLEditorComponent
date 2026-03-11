@@ -121,7 +121,7 @@ export class Bounds {
     inContainer(container: Bounds): boolean {
         return (
             this.#left >= container.#left &&
-            this.#top <= container.#top &&
+            this.#right <= container.#right &&
             this.#top >= container.#top &&
             this.#bottom <= container.#bottom
         )
