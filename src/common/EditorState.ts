@@ -22,7 +22,51 @@ import type * as vue from 'vue'
 
 //==============================================================================
 
-export interface EditorToolButton {
+export type EditorState = {
+    msg?: string
+    state: string
+}
+
+//==============================================================================
+
+export class EditorStatus {
+    #canPaste: boolean = false
+    #canRedo: boolean = false
+    #fileModified: boolean = false
+    #objectSelected: boolean = false
+
+    get canPaste(): boolean {
+        return this.#canPaste
+    }
+    set canPaste(value: boolean) {
+        this.#canPaste = value
+    }
+
+    get canRedo(): boolean {
+        return this.#canRedo
+    }
+    set canRedo(value: boolean) {
+        this.#canRedo = value
+    }
+
+    get fileModified(): boolean {
+        return this.#fileModified
+    }
+    set fileModified(value: boolean) {
+        this.#fileModified = value
+    }
+
+    get objectSelected(): boolean {
+        return this.#objectSelected
+    }
+    set objectSelected(value: boolean) {
+        this.#objectSelected = value
+    }
+}
+
+//==============================================================================
+
+export type EditorToolButton = {
     toolId: string
     active?: boolean
     prompt: string
@@ -33,16 +77,13 @@ export interface EditorToolButton {
 
 //==============================================================================
 
-export interface EditorState {
-    fileModified?: boolean
-    itemSelected?: boolean
-    pasteContents?: boolean
-    redoContents?: boolean
+export type FileStatus = {
+    haveData: boolean
+    modified: boolean
 }
-
 //==============================================================================
 
-export interface ViewState {
+export type ViewState = {
     showGrid?: boolean
     gridSpacing?: number
     snapToGrid?: number

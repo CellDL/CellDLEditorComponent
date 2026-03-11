@@ -27,10 +27,10 @@ import type { MenuItem, MenuItemCommandEvent } from 'primevue/menuitem'
 
 import * as common from '../common/common'
 
-import type { EditorState, ViewState } from '@renderer/common/EditorTypes'
+import type { EditorStatus, ViewState } from '@renderer/common/EditorState'
 
 const props = defineProps<{
-    editorState: EditorState
+    editorStatus: EditorStatus
     fileModified: boolean  // to become part of editor state
     haveFile: boolean
     noPython?: boolean

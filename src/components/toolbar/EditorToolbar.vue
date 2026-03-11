@@ -29,7 +29,7 @@ useThemeCssVariables('toolbar')
 
 //==============================================================================
 
-import { type EditorToolButton } from '@renderer/common/EditorTypes'
+import { type EditorToolButton } from '@renderer/common/EditorState'
 
 import ToolButton from './ToolButton.vue'
 

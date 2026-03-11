@@ -53,7 +53,7 @@ import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS, PANEL_IDS } from '@editor/edit
 import { editGuides } from '@editor/editor/editguides'
 import { undoRedo } from '@editor/editor/undoredo'
 
-import { type EditorToolButton } from '@renderer/common/EditorTypes'
+import { type EditorToolButton } from '@renderer/common/EditorState'
 import EditorToolbar from '@renderer/components/toolbar/EditorToolbar.vue'
 
 import ComponentPopover from '@renderer/components/popovers/ComponentPopover.vue'
@@ -77,6 +77,7 @@ if (!$rdf.initialised()) {
 import type {
     CellDLEditorProps,
     EditorData,
+    EditorStatus,
     EditorEditCommand,
     EditorFileCommand,
     EditorSetStateCommand,
@@ -298,7 +299,9 @@ function styleEvent(toolId: string, object: string, styling: StyleObject) {
 
 const emit = defineEmits<{
     'editor-data': [data: EditorData],
-    'error': [msg: string]
+    'editor-state': [state: {
+        error: string
+    }]
 }>()
 
 vue.watch(
@@ -318,7 +321,9 @@ vue.watch(
                         celldlDiagram = new CellDLDiagram(options?.name || '', options.data, celldlEditor)
                         await celldlEditor.editDiagram(celldlDiagram)
                     } catch(err) {
-                        emit('error', `Cannot open ${options?.name} -- invalid CellDL file?\n\n${err}`)
+                        emit('editor-state', {
+                            error: `Cannot open ${options?.name} -- invalid CellDL file?\n\n${err}`
+                        })
                     }
                 }
             } else if (options.action === 'data') {

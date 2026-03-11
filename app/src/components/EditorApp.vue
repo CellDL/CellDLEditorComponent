@@ -19,7 +19,7 @@
                 :id="mainMenuId"
                     :haveFile="haveFile"
                     :fileModified="fileModified"
-                    :editorState="editorState"
+                    :editorStatus="editorStatus"
                     :noPython="noPython"
                     :viewState="viewState"
                     @about="onAboutMenu"
@@ -122,7 +122,7 @@ import * as vueCommon from '../common/vueCommon'
 import AboutDialog from './dialogs/AboutDialog.vue'
 
 import type { CellDLEditorCommand, EditorData, Theme } from '../../../index'
-import type { EditorState, ViewState } from '../../../index'
+import { EditorStatus, type FileStatus, type ViewState } from '../../../index'
 import { DEFAULT_VIEW_STATE } from '../../../index'
 
 import * as $rdf from '@celldl/editor-rdf'
@@ -273,10 +273,7 @@ const editorCommand = vue.ref<CellDLEditorCommand>()
 
 const windowTitle = vue.ref<string>('New diagram')
 
-const fileStatus = vue.ref<{
-    haveData: boolean
-    modified: boolean
-}>({
+const fileStatus = vue.ref<FileStatus>({
     haveData: false,
     modified: false
 })
@@ -577,12 +574,8 @@ function onMenuActive() {
 
 //==============================================================================
 
-const editorState = vue.computed<EditorState>(() => {
-    return {
-        fileModified: false,
-        itemSelected: true,
-        pasteContents: true
-    }
+const editorStatus = vue.computed<EditorStatus>(() => {
+    return new EditorStatus()
 })
 
 function onEditAction(action: string) {

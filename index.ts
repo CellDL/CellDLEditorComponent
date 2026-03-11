@@ -23,12 +23,12 @@ limitations under the License.
 //==============================================================================
 
 import CellDLEditor from '@renderer/components/CellDLEditor.vue'
-import type { ViewState } from '@renderer/common/EditorTypes'
+import type { ViewState } from '@renderer/common/EditorState'
 
 //==============================================================================
 
 export { DEFAULT_VIEW_STATE } from '@editor/editor/editguides'
-export type { EditorState, ViewState } from '@renderer/common/EditorTypes'
+export { type EditorState, EditorStatus, type FileStatus, type ViewState } from '@renderer/common/EditorState'
 
 export { version } from './package.json'
 
