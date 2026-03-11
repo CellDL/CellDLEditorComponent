@@ -8,6 +8,9 @@
                 @popover-event="popoverEvent"
             )
             div#svg-content(ref="svgContent")
+                EditorContextMenu(
+                    :contextMenuProps="contextMenuProps"
+                )
                 <!-- context-menu(id="context-menu")  -->
             #panel-content(
                 :class="{ hidden: !panelVisible }"
@@ -63,6 +66,9 @@ import PropertiesPanel from '@renderer/components/panels/PropertiesPanel.vue'
 
 import { componentLibraryPlugin } from '@renderer/plugins/index'
 import { BondgraphPlugin } from '@renderer/plugins/bondgraph/index'
+
+import EditorContextMenu from './widgets/EditorContextMenu.vue'
+import type { ContextMenuProps } from './widgets/EditorContextMenu.vue'
 
 //==============================================================================
 
@@ -166,6 +172,16 @@ function connectionStylePrompt(name: string): string {
 // Plugins need to be initialised before creating the editor
 
 let celldlEditor: CellDLEditor = new CellDLEditor()
+
+// Pass 'context-menu' events from the editor to the context menu's component
+
+const contextMenuProps = vue.ref<ContextMenuProps>({
+    state: new Set()
+})
+
+document.addEventListener('open-context-menu', (event: Event) => {
+    contextMenuProps.value = (<CustomEvent>event).detail
+})
 
 //==============================================================================
 //==============================================================================

@@ -95,6 +95,7 @@ export enum CONTEXT_MENU {
     GROUP_OBJECTS = 'menu-group',
     UNGROUP_OBJECTS = 'menu-ungroup'
 }
+
 //==============================================================================
 
 export function notifyChanges() {
@@ -144,7 +145,7 @@ export class CellDLEditor {
     #pathMaker: PathMaker | null = null
     #nextPathNode: PathNode | null = null
 
-//    #contextMenu: ContextMenu
+    #contextMenuActiveItems: Set<CONTEXT_MENU> = new Set()
 
     #currentTemplateDetails: TemplateEventDetails | null = null
     #drawConnectionSettings: StringProperties = {}
@@ -165,10 +166,6 @@ export class CellDLEditor {
     constructor() {
         CellDLEditor.instance = this
 
-        /**
-        this.#contextMenu = this.getElementById('context-menu') as ContextMenu
-        this.status = 'new editor'
-**/
         // Add a handler for events from toolbar buttons
         document.addEventListener('toolbar-event', this.#toolBarEvent.bind(this))
         document.addEventListener('component-selected', this.#componentTemplateSelectedEvent.bind(this))
@@ -229,8 +226,6 @@ export class CellDLEditor {
             this.#tooltip = tippy
             this.#tooltipElement = this.#tooltip.value.popper
         }
-/**
-
         // Handle context menu events
         this.#container.addEventListener('contextmenu', (event) => {
             const element = event.target as SVGGraphicsElement
@@ -238,11 +233,15 @@ export class CellDLEditor {
             if (clickedObject && clickedObject === this.#activeObject) {
                 this.#setSelectedObject(clickedObject)
             }
-            this.#contextMenu.open(event.clientX, event.clientY)
+            document.dispatchEvent(new CustomEvent('open-context-menu', {
+                detail: {
+                    state: this.#contextMenuActiveItems,
+                    event: event
+                }
+            }))
         })
-
-        this.#contextMenu.setListener((event: Event) => {
-            const targetId = 'target' in event && event.target && 'id' in event.target ? event.target.id : null
+        document.addEventListener('context-menu-click', (event: Event) => {
+            const targetId = (<CustomEvent>event).detail.id
             if (targetId === CONTEXT_MENU.DELETE) {
                 this.#deleteSelectedObjects()
             } else if (targetId === CONTEXT_MENU.INFO) {
@@ -253,9 +252,8 @@ export class CellDLEditor {
                     this.#closeSelectionBox()
                 }
             }
-            this.#contextMenu.close()
         })
-**/
+
     }
 
     get celldlDiagram() {
@@ -369,8 +367,12 @@ export class CellDLEditor {
         }
     }
 
-    enableContextMenuItem(_itemId: string, _enable: boolean = true) {
-//        this.#contextMenu.enableItem(itemId, enable)
+    enableContextMenuItem(itemId: CONTEXT_MENU, enable: boolean = true) {
+        if (enable) {
+            this.#contextMenuActiveItems.add(itemId)
+        } else {
+            this.#contextMenuActiveItems.delete(itemId)
+        }
     }
 
     #toolBarEvent(event: Event) {
