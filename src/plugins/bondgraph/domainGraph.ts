@@ -42,6 +42,7 @@ const BOND_ELEMENT_QUERY = `
         }
     } ORDER BY ?model
 `
+
 const JUNCTION_STRUCTURE_QUERY = `
     SELECT ?model ?junction ?junctionType
     WHERE {
@@ -91,7 +92,9 @@ export class DomainGraph {
                 }
                 if (model === modelUri) {
                     const element = r.get('element')!.value
-                    this.#graph.addNode(element)
+                    if (!this.#graph.hasNode(element)) {
+                        this.#graph.addNode(element)
+                    }
                     const domain = r.get('domain')?.value
                     if (domain) {
                         this.#addDomain(element, domain)
