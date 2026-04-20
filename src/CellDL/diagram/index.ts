@@ -243,10 +243,10 @@ export class CellDLDiagram {
             for (const stmt of this.#kb.statementsMatching(subject, predicate, null)) {
                 if ($rdf.isBlankNode(stmt.object)) {
                     // @ts-expect-error: `stmt.object` is a BlankNode
-                    this.#kb.removeStatements(stmt.object, null, null)
+                    this.#kb.removeStatementsMatching(stmt.object, null, null)
                 }
             }
-            this.#kb.removeStatements(subject, predicate, null)
+            this.#kb.removeStatementsMatching(subject, predicate, null)
         }
     }
 
@@ -266,7 +266,7 @@ export class CellDLDiagram {
             this.#diagramProperties.modified = new Date(Date.now()).toISOString()
         }
         for (const [key, property] of Object.entries(this.#diagramMetadata)) {
-            this.#kb.removeStatements(this.#documentNode, property, null)
+            this.#kb.removeStatementsMatching(this.#documentNode, property, null)
             if (key in this.#diagramProperties) {
                 const value = this.#diagramProperties[key]
                 if (value && this.#documentNode) {
@@ -972,7 +972,7 @@ export class CellDLDiagram {
             }
             celldlObject.celldlSvgElement!.remove() // Will remove SVG element from DOM
             const statements = this.#kb.statementsMatching(celldlObject.uri)
-            this.#kb.removeStatementList(statements)
+            this.#kb.removeStatements(statements)
             this.#objects.delete(celldlObject.id)
         }
     }
@@ -1006,7 +1006,7 @@ export class CellDLDiagram {
         celldlObject.celldlSvgElement?.remove() // Will remove SVG element from DOM
         const statements = this.#kb.statementsMatching(celldlObject.uri)
         undoAction.addKnowledge(statements)
-        this.#kb.removeStatementList(statements)
+        this.#kb.removeStatements(statements)
         this.#objects.delete(celldlObject.id)
         this.#spatialIndex.remove(celldlObject)
         if (celldlObject.isConnectable) {

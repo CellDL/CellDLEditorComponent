@@ -96,9 +96,9 @@ export class RdfStore extends $rdf.RdfStore {
         return this.metadataFromPredicates(predicateValues)
     }
 
-    removeStatementList(statements: $rdf.Statement[]) {
+    removeStatements(statements: $rdf.Statement[]) {
         statements.forEach((s) => {
-            super.removeStatements(s.subject, s.predicate, s.object, null)
+            super.removeStatementsMatching(s.subject, s.predicate, s.object, null)
         })
     }
 
