@@ -18,8 +18,8 @@ limitations under the License.
 
 ******************************************************************************/
 
-import { type PointLike, PointMath } from '@renderer/common/points'
 import type { ObjectTemplate } from '@editor/components/index'
+import { type PointLike, PointMath } from '@renderer/common/points'
 import { SVG_URI } from '@renderer/common/svgUtils'
 
 //==============================================================================
