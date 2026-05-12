@@ -24,5 +24,6 @@
         "verbatimModuleSyntax": true
     },
     "extends": "@vue/tsconfig/tsconfig.dom.json",
-    "include": ["**/*.js", "**/*.ts", "**/*.vue", "package.json"]
+    "include": ["**/*.js", "**/*.ts", "**/*.vue", "package.json"],
+    "exclude": ["**/dist/**", "**/app/dist/**"]
 }

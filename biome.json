@@ -34,7 +34,16 @@
         }
     },
     "linter": {
-        "includes": ["**/*.css", "**/*.js", "**/*.ts", "**/*.vue", "!**/components.d.ts"]
+        "includes": [
+            "**/*.css",
+            "**/*.js",
+            "**/*.ts",
+            "**/*.vue",
+            "!!**/.rollup.cache/**",
+            "!**/components.d.ts",
+            "!!**/app/dist/**",
+            "!!**/dist/**"
+        ]
     },
     "overrides": [
         {
