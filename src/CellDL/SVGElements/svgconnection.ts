@@ -61,7 +61,8 @@ export class SvgConnection extends CellDLSVGElement {
         if (svgElement.tagName === svgPathTag) {
             svgPaths.push(<SVGPathElement>svgElement)
         } else if (svgElement.tagName === svgGroupTag) {
-            for (const element of svgElement.children) {
+            for (let i = 0; i < svgElement.children.length; ++i) {
+                const element = svgElement.children.item(i)!
                 if (shapeTags.includes(element.tagName)) {
                     SVGPathCommander.shapeToPath(element as ShapeTypes, true)
                 }
@@ -110,22 +111,22 @@ export class SvgConnection extends CellDLSVGElement {
     }
 
     clearControlHandles() {
-        this.#pathElements.forEach((element) => element.clearControlHandles(this.selected))
+        this.#pathElements.forEach((element) => { element.clearControlHandles(this.selected) })
     }
 
     drawControlHandles() {
-        this.#pathElements.forEach((element) => element.drawControlHandles(this.selected))
+        this.#pathElements.forEach((element) => { element.drawControlHandles(this.selected) })
     }
 
     clearSelectedHandles() {
         if (this.selected) {
-            this.#pathElements.forEach((element) => element.clearControlHandles(false))
+            this.#pathElements.forEach((element) => { element.clearControlHandles(false) })
         }
     }
 
     drawSelectedHandles() {
         if (this.selected) {
-            this.#pathElements.forEach((element) => element.drawControlHandles(true))
+            this.#pathElements.forEach((element) => { element.drawControlHandles(true) })
         }
     }
 
@@ -167,17 +168,17 @@ export class SvgConnection extends CellDLSVGElement {
     }
 
     redraw() {
-        this.#pathElements.forEach((element) => element.redraw())
+        this.#pathElements.forEach((element) => { element.redraw() })
         super.redraw()
     }
 
     remove() {
         super.remove()
-        this.#pathElements.forEach((element) => element.remove())
+        this.#pathElements.forEach((element) => { element.remove() })
     }
 
     startMove(svgPoint: PointLike) {
-        if (this.#moveableElement && this.#moveableElement.movePoint) {
+        if (this.#moveableElement?.movePoint) {
             this.#undoMoveAction = undoRedo.undoMoveAction()
             this.#undoMoveAction.addObjectDetails(this.celldlObject)
             this.#undoMoveAction.startMove(this.#moveableElement.moveIndex, this.#moveableElement.movePoint.point)

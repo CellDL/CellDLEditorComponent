@@ -64,7 +64,7 @@ useThemeCssVariables('checkbox')
 useThemeCssVariables('divider')
 useThemeCssVariables('radiobutton')
 
-import { type INodeStyle } from '@renderer/common/svgUtils'
+import type { INodeStyle } from '@renderer/common/svgUtils'
 
 const props = defineProps<{
     fillStyle: INodeStyle

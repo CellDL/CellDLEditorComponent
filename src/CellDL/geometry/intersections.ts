@@ -31,11 +31,11 @@ export class ShapeIntersections {
 
     #shapeFromElement(element: Element): Shape {
         const elementName: SvgElements = <SvgElements>element.tagName
-        const attrs = {}
-        element.getAttributeNames().map((n) => {
+        const attrs: Record<string, string|null> = {}
+        element.getAttributeNames().forEach((n: string) => {
             attrs[n] = element.getAttribute(n)
         })
-        return shape(elementName, <SvgProperties<typeof elementName>>attrs)
+        return shape(elementName, attrs as unknown as SvgProperties<typeof elementName>)
     }
 
     intersections(element: Element): Point2D[] {

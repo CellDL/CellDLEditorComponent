@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import * as vue from 'vue'
-import { type SelectChangeEvent } from 'primevue/select'
+import type { SelectChangeEvent } from 'primevue/select'
 import { useThemeCssVariables } from '@renderer/common/themeCssVariables'
 
 useThemeCssVariables('select')

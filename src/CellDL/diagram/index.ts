@@ -468,7 +468,7 @@ export class CellDLDiagram {
 
     #trimSVGDiagram(svgDiagram: SVGSVGElement): Extent | null {
         const bounds = (<SVGGraphicsElement[]>(
-            [...svgDiagram.children].filter(
+            Array.from(svgDiagram.children).filter(
                 (child) => 'getBBox' in child && !child.classList.contains('editor-specific')
             )
         ))
@@ -970,7 +970,7 @@ export class CellDLDiagram {
             if (celldlObject.isComponent) {
                 editGuides.removeGuide(<CellDLComponent>celldlObject)
             }
-            celldlObject.celldlSvgElement!.remove() // Will remove SVG element from DOM
+            celldlObject.celldlSvgElement?.remove() // Will remove SVG element from DOM
             const statements = this.#kb.statementsMatching(celldlObject.uri)
             this.#kb.removeStatements(statements)
             this.#objects.delete(celldlObject.id)

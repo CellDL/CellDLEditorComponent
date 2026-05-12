@@ -80,7 +80,7 @@ export class RdfStore extends $rdf.RdfStore {
         })
     }
 
-    metadataFromPredicates(predicateValues: PredicateValue[]): MetadataPropertiesMap {
+    #metadataFromPredicates(predicateValues: PredicateValue[]): MetadataPropertiesMap {
         const metadata = new MetadataPropertiesMap()
         for (const predicateValue of predicateValues) {
             const value = this.#metadataValue(predicateValue.object)
@@ -93,7 +93,7 @@ export class RdfStore extends $rdf.RdfStore {
 
     metadataPropertiesForSubject(subject: $rdf.SubjectType): MetadataPropertiesMap {
         const predicateValues = super.statementsMatching(subject, null, null, null) as PredicateValue[]
-        return this.metadataFromPredicates(predicateValues)
+        return this.#metadataFromPredicates(predicateValues)
     }
 
     removeStatements(statements: $rdf.Statement[]) {

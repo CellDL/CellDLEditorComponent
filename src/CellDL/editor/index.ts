@@ -874,7 +874,7 @@ export class CellDLEditor {
         if (this.#selectedObject) {
             // Delete the object
             this.#unsetActiveObject()
-            this.#celldlDiagram!.removeObject(this.#selectedObject)
+            this.#celldlDiagram?.removeObject(this.#selectedObject)
             this.#unsetSelectedObject()
             this.#showStatus(null)
         } else if (this.#selectionBox) {

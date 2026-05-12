@@ -62,7 +62,7 @@ const html = mathjax.document('', {
     OutputJax: svg,
     renderActions: {
         removeLatex: [  // remove LaTeX specific attributes
-            STATE.CONVERT + 1,
+            (STATE.CONVERT as number) + 1,
             () => {},
             (math: any, _doc: any) => {
                 math.root.walkTree((node: any) => {

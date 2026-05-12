@@ -23,7 +23,7 @@ import { CONNECTION_COLOUR, CONNECTION_WIDTH } from '@renderer/common/styling'
 import { svgPath, svgPathDescription, SVG_URI } from '@renderer/common/svgUtils'
 import { CELLDL, RDF } from '@renderer/metadata/index'
 import { MetadataPropertiesMap } from '@renderer/metadata/index'
-import { componentLibraryPlugin, type connectionStatus } from '@renderer/plugins/index'
+import { componentLibraryPlugin, type ConnectionStatus } from '@renderer/plugins/index'
 
 import { type CellDLConnectedObject, CellDLConnection, type CellDLObject } from '@editor/celldlObjects/index'
 import { alert } from '@editor/editor/alerts'

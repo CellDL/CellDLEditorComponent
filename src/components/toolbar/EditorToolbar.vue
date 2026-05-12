@@ -22,14 +22,14 @@
 </template>
 
 <script setup lang="ts">
-import * as vue from 'vue'
+import type * as vue from 'vue'
 import { useThemeCssVariables } from '@renderer/common/themeCssVariables'
 
 useThemeCssVariables('toolbar')
 
 //==============================================================================
 
-import { type EditorToolButton } from '@renderer/common/EditorState'
+import type { EditorToolButton } from '@renderer/common/EditorState'
 
 import ToolButton from './ToolButton.vue'
 
@@ -50,7 +50,7 @@ function buttonEvent(toolId: string, active: boolean, panel: vue.Raw<vue.Compone
             button.active = false
         }
     }
-    emit('button-event', toolId, active, props.type == 'panel' ? panel : null)
+    emit('button-event', toolId, active, props.type === 'panel' ? panel : null)
 }
 
 function popoverEvent(id: string, data: any) {

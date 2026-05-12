@@ -39,7 +39,7 @@ useThemeCssVariables('floatlabel')
 useThemeCssVariables('inputtext')
 useThemeCssVariables('slider')
 
-import { type IPathStyle } from '@renderer/common/svgUtils'
+import type { IPathStyle } from '@renderer/common/svgUtils'
 
 const props = defineProps<{
     pathStyle: IPathStyle

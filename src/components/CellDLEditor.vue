@@ -48,7 +48,7 @@ import '@renderer/assets/icons.css'
 
 import * as vueCommon from '@renderer/common/vueCommon'
 
-import { type StyleObject } from '@editor/components/properties'
+import type { StyleObject } from '@editor/components/properties'
 import { CellDLDiagram } from '@editor/diagram/index'
 
 import { CellDLEditor } from '@editor/editor/index'
@@ -56,7 +56,7 @@ import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS, PANEL_IDS } from '@editor/edit
 import { editGuides } from '@editor/editor/editguides'
 import { undoRedo } from '@editor/editor/undoredo'
 
-import { type EditorToolButton } from '@renderer/common/EditorState'
+import type { EditorToolButton } from '@renderer/common/EditorState'
 import EditorToolbar from '@renderer/components/toolbar/EditorToolbar.vue'
 
 import ComponentPopover from '@renderer/components/popovers/ComponentPopover.vue'
@@ -171,7 +171,7 @@ function connectionStylePrompt(name: string): string {
 
 // Plugins need to be initialised before creating the editor
 
-let celldlEditor: CellDLEditor = new CellDLEditor()
+const celldlEditor: CellDLEditor = new CellDLEditor()
 
 // Pass 'context-menu' events from the editor to the context menu's component
 

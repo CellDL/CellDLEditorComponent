@@ -149,11 +149,15 @@ class IdGenerator {
     }
 
     static get instance() {
-        return IdGenerator.#instance ?? (IdGenerator.#instance = new IdGenerator())
+        if (!IdGenerator.#instance) {
+            IdGenerator.#instance = new IdGenerator()
+        }
+        return IdGenerator.#instance
     }
 
     get nextId() {
-        return (this.#nextId += 1)
+        this.#nextId += 1
+        return this.#nextId
     }
 }
 
@@ -211,13 +215,13 @@ export class RestrictedValue implements NumericRange {
         return this.#value
     }
     set value(value: number) {
-        if (this.#value != value) {
+        if (this.#value !== value) {
             if (value < this.minimum) {
                 value = this.minimum
             } else if (value > this.maximum) {
                 value = this.maximum
             }
-            if (this.#value != value) {
+            if (this.#value !== value) {
                 this.#value = value
                 this.#dirty = true
             }
@@ -393,7 +397,7 @@ export class RestrictedPoint {
     }
 
     offsetPoint(point: PointLike): Point {
-        return this.#moveOffset!.add(point)
+        return this.#moveOffset.add(point)
     }
 
     reassignValue(point: PointLike) {

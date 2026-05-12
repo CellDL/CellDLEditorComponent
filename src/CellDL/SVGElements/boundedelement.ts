@@ -181,7 +181,7 @@ export class BoundedElement extends CellDLSVGElement {
             for (const path of this.#connectedPathElements.values()) {
                 path.componentBoundingBoxResisized(this, cornerDeltas as [Point, Point])
             }
-            ;(<CellDLConnectedObject>this.celldlObject).connections.forEach((c) => c.redraw())
+            ;(<CellDLConnectedObject>this.celldlObject).connections.forEach((c) => { c.redraw() })
         }
     }
 }
