@@ -27,25 +27,64 @@ import type { Constructor, StringProperties } from '@renderer/common/types'
 //==============================================================================
 
 export interface ObjectTemplate {
+    /**
+     * The object's CellDL class.
+     */
     CellDLClass: Constructor<CellDLObject>
+    /**
+     * A description of the object.
+     */
     description?: string
+    /**
+     * A depiction for the object, encoded as a data URL.
+     */
     imageData?: string
+
     metadataProperties: MetadataPropertiesMap
+    /**
+     * A name for the object.
+     */
     name?: string
 }
 
 //==============================================================================
 
 export interface LibraryComponentTemplate {
+    /**
+     * A unique indentifier for the component template.
+     */
     id: string
+
+    /**
+     * A descriptive name for the component template.
+     */
     name: string
+
+    /**
+     * A depiction for the component, encoded as a data URL.
+     */
     imageData: string
+
+    /**
+     * `true` if the component template is selected in the `Add component` tool.
+     */
     selected?: boolean
 }
 
 export interface ComponentLibrary {
+    /**
+     * A unique indentifier for the component library.
+     */
     id: string
+
+    /**
+     * A descriptive name for the component library.
+     */
     name: string
+
+    /**
+     * Templates of components in the library.
+     */
     templates: LibraryComponentTemplate[]
 }
 
