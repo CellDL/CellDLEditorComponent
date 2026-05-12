@@ -1,0 +1,38 @@
+{
+    "$schema": "https://typedoc.org/schema.json",
+    "readme": "./README.md",
+    "plugin": [
+        "typedoc-plugin-missing-exports",
+        "typedoc-github-theme",
+        "typedoc-plugin-vue"
+    ],
+    "includeVersion": true,
+    "entryPoints": [
+        "./index.ts",
+        "src/**/index.ts"
+    ],
+    "entryPointStrategy": "expand",
+    "excludeExternals": true,
+    "excludeNotDocumented": false,
+    "excludePrivate": true,
+    "excludeVueProperties": true,
+    "out": "./docs",
+    "customCss": "./static/docs/custom.css",
+    "hideGenerator": true,
+    "highlightLanguages": ["vue"],
+    "navigation": {
+        "includeCategories": true,
+        "includeGroups": true,
+        "includeFolders": true
+    },
+    "skipErrorChecking": true,
+    "sort": [
+        "kind",
+        "static-first",
+        "source-order"
+    ],
+    "categorizeByGroup": false,
+    "searchGroupBoosts": {
+        "Classes": 1.5
+    }
+}

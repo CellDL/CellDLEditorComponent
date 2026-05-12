@@ -26,6 +26,7 @@ out
 *.njsproj
 *.sln
 *.sw?
+docs/
 
 *.sublime-project
 *.sublime-workspace
