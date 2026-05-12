@@ -80,7 +80,7 @@ export interface PluginInterface {
     loadComponentProperties: (celldlObject: CellDLObject,
                               componentProperties: PropertyGroup[], rdfStore: RdfStore) => void
     updateObjectProperties: (celldlObject: CellDLObject, itemId: string, value: ValueChange,
-                                componentProperties: PropertyGroup[], rdfStore: RdfStore) => Promise<void>
+                             componentProperties: PropertyGroup[], rdfStore: RdfStore) => Promise<void>
     updatedComponentStyling: (celldlObject: CellDLObject, objectType: string, styling: StyleObject) =>  Promise<void>
 }
 

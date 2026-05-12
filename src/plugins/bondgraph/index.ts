@@ -760,7 +760,7 @@ export class BondgraphPlugin implements PluginInterface {
     //==========================================================================
 
     async updateObjectProperties(celldlObject: CellDLObject, itemId: string, value: ValueChange,
-                                    componentProperties: PropertyGroup[], rdfStore: $rdf.RdfStore) {
+                                 componentProperties: PropertyGroup[], rdfStore: $rdf.RdfStore) {
         await this.#updateElementProperties(value, itemId, celldlObject, rdfStore)
         const pluginData = (<PluginData>celldlObject.pluginData(this.id))
         const elementTemplate = pluginData.elementTemplate
