@@ -385,7 +385,7 @@ export class BondgraphPlugin implements PluginInterface {
 
     //======================================
 
-    addDocumentMetadataToStore(rdfStore: $rdf.RdfStore) {
+    addPluginMetadataToStore(rdfStore: $rdf.RdfStore) {
         // First remove existing statements about components in the document
 
         rdfStore.update(`${SPARQL_PREFIXES}
@@ -584,7 +584,7 @@ export class BondgraphPlugin implements PluginInterface {
 
     //==========================================================================
 
-    updateComponentProperties(celldlObject: CellDLObject, componentProperties: PropertyGroup[], rdfStore: $rdf.RdfStore) {
+    loadComponentProperties(celldlObject: CellDLObject, componentProperties: PropertyGroup[], rdfStore: $rdf.RdfStore) {
         alert.clear()
         if (celldlObject.isConnection) {
             componentProperties.forEach(group => {
@@ -792,7 +792,7 @@ export class BondgraphPlugin implements PluginInterface {
 
     //==================================
 
-    async updateComponentStyling(celldlObject: CellDLObject, objectType: string, styling: StyleObject) {
+    async updatedComponentStyling(celldlObject: CellDLObject, objectType: string, styling: StyleObject) {
         const pluginData = (<PluginData>celldlObject.pluginData(this.id))
         if (objectType === 'node' && 'fillColours' in styling) {
             const fillColours = styling.fillColours as string[] || []

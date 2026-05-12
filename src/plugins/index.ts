@@ -66,7 +66,7 @@ export interface PluginInterface {
     svgDefinitions: () => string
 
     openDiagram: (uri: string, rdfStore: RdfStore) => void
-    addDocumentMetadataToStore: (rdfStore: RdfStore) => void
+    addPluginMetadataToStore: (rdfStore: RdfStore) => void
     getPluginData: (celldlObject: CellDLObject, rdfStore: RdfStore) => object
     statusText: (celldlObject: CellDLObject) => string
 
@@ -79,11 +79,11 @@ export interface PluginInterface {
 
     getObjectTemplateById: (id: string) => ObjectTemplate|undefined
     getTemplateName: (rdfType: string) => string|undefined
-    updateComponentProperties: (celldlObject: CellDLObject,
-                             componentProperties: PropertyGroup[], rdfStore: RdfStore) => void
+    loadComponentProperties: (celldlObject: CellDLObject,
+                              componentProperties: PropertyGroup[], rdfStore: RdfStore) => void
     updateObjectProperties: (celldlObject: CellDLObject, itemId: string, value: ValueChange,
                                 componentProperties: PropertyGroup[], rdfStore: RdfStore) => Promise<void>
-    updateComponentStyling: (celldlObject: CellDLObject, objectType: string, styling: StyleObject) =>  Promise<void>
+    updatedComponentStyling: (celldlObject: CellDLObject, objectType: string, styling: StyleObject) =>  Promise<void>
 }
 
 //==============================================================================
@@ -156,9 +156,9 @@ export class ComponentLibraryPlugin {
         }
     }
 
-    addDocumentMetadataToStore(rdfStore: RdfStore) {
+    addPluginMetadataToStore(rdfStore: RdfStore) {
         for (const plugin of this.#registeredPlugins.values()) {
-            plugin.addDocumentMetadataToStore(rdfStore)
+            plugin.addPluginMetadataToStore(rdfStore)
         }
     }
 
@@ -272,21 +272,21 @@ export class ComponentLibraryPlugin {
 
     //==========================================================================
 
-    updateComponentProperties(celldlObject: CellDLObject,
-                           componentProperties: PropertyGroup[], rdfStore: RdfStore): void {
+    loadComponentProperties(celldlObject: CellDLObject,
+                            componentProperties: PropertyGroup[], rdfStore: RdfStore): void {
         for (const pluginId of celldlObject.pluginIds) {
             const plugin = this.#registeredPlugins.get(pluginId)
             if (plugin) {
-                plugin.updateComponentProperties(celldlObject, componentProperties, rdfStore)
+                plugin.loadComponentProperties(celldlObject, componentProperties, rdfStore)
             }
         }
     }
 
-    async updateComponentStyling(celldlObject: CellDLObject, objectType: string, styling: StyleObject) {
+    async updatedComponentStyling(celldlObject: CellDLObject, objectType: string, styling: StyleObject) {
         for (const pluginId of celldlObject.pluginIds) {
             const plugin = this.#registeredPlugins.get(pluginId)
             if (plugin) {
-                await plugin.updateComponentStyling(celldlObject, objectType, styling)
+                await plugin.updatedComponentStyling(celldlObject, objectType, styling)
             }
         }
     }

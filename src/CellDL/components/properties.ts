@@ -217,7 +217,7 @@ export class ObjectPropertiesPanel {
         if (celldlObject) {
             // Update component properties with plugin specific values
 
-            componentLibraryPlugin.updateComponentProperties(celldlObject, this.#componentProperties.value, rdfStore)
+            componentLibraryPlugin.loadComponentProperties(celldlObject, this.#componentProperties.value, rdfStore)
 
             if (this.#metadataIndex >= 0) {
                 // Update component properties in the METADATA_GROUP
@@ -261,7 +261,7 @@ export class ObjectPropertiesPanel {
 
     async updateObjectStyling(celldlObject: CellDLObject|null, objectType: string, styling: StyleObject) {
         if (celldlObject) {
-            await componentLibraryPlugin.updateComponentStyling(celldlObject, objectType, styling)
+            await componentLibraryPlugin.updatedComponentStyling(celldlObject, objectType, styling)
         }
     }
 }
