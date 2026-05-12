@@ -85,7 +85,7 @@ import { DomainGraph } from './domainGraph'
 
 //==============================================================================
 
-export const BONDGRAPH_PLUGIN_ID = 'bondgraph-components'
+export const PLUGIN_ID = 'bondgraph-components'
 
 const BONDGRAPH_FRAMEWORK = 'https://bg-rdf.org/ontologies/bondgraph-framework'
 
@@ -272,7 +272,7 @@ const TRANSFORM_NODE_PROMPT = 'Ratio'
 //==============================================================================
 
 export class BondgraphPlugin implements PluginInterface {
-    readonly id: string = BONDGRAPH_PLUGIN_ID
+    readonly id: string = PLUGIN_ID
 
     #baseComponents: Map<string, BGBaseComponent> = new Map()                       // Indexed by component.type
     #baseComponentToElementTemplates: Map<string, ElementTemplate[]> = new Map()    // Indexed by component.type
@@ -592,7 +592,7 @@ export class BondgraphPlugin implements PluginInterface {
             const pluginData = (<PluginData>celldlObject.pluginData(this.id))
             componentProperties.forEach(group => {
                 if (group.groupId === BG_GROUP.ElementGroup) {
-                    this.#getElementProperties(celldlObject, group, rdfStore)
+                    this.#loadElementProperties(celldlObject, group, rdfStore)
                 } else if (pluginData.elementTemplate) {
                     if (group.groupId === BG_GROUP.ParameterGroup) {
                         this.#setVariableTemplates(pluginData.elementTemplate.parameters, group)
@@ -608,7 +608,7 @@ export class BondgraphPlugin implements PluginInterface {
         }
     }
 
-    #getElementProperties(celldlObject: CellDLObject,
+    #loadElementProperties(celldlObject: CellDLObject,
                           group: PropertyGroup, rdfStore: $rdf.RdfStore) {
         const propertyTemplates = this.#propertyGroups[ELEMENT_GROUP_INDEX]!
         const pluginData = <PluginData>celldlObject.pluginData(this.id)
@@ -874,8 +874,8 @@ export class BondgraphPlugin implements PluginInterface {
         if (itemVariable.length !== 2) {
             return
         }
-        itemId = itemVariable[0]!
-        if (itemId !== BG_GROUP.ParameterGroup && itemId === BG_GROUP.VariableGroup) {
+        const groupId = itemVariable[0]!
+        if (groupId !== BG_GROUP.ParameterGroup && groupId === BG_GROUP.VariableGroup) {
             return
         }
         const varName = itemVariable[1]!
@@ -888,7 +888,7 @@ export class BondgraphPlugin implements PluginInterface {
                 ?pv bgf:varName "${varName}" ;
                     bgf:hasValue ?value .
             }`)
-        const variable = (itemId === BG_GROUP.ParameterGroup)
+        const variable = (groupId === BG_GROUP.ParameterGroup)
                        ? elementTemplate.parameters.get(varName)
                        : elementTemplate.variables.get(varName)
         if (!variable) {
