@@ -303,10 +303,6 @@ export class BondgraphPlugin implements PluginInterface {
         this.#loadTemplateParameters()
     }
 
-    rdfStatements(): $rdf.Statement[] {
-        return this.#rdfStore.statements()
-    }
-
     //==========================================================================
 
     get componentLibrary(): ComponentLibrary {
