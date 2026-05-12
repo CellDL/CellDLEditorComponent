@@ -204,7 +204,7 @@ const toolButtons = vue.ref<EditorToolButton[]>([
         toolId: EDITOR_TOOL_IDS.AddComponentTool,
         active: (DEFAULT_EDITOR_TOOL_ID as EDITOR_TOOL_IDS) === EDITOR_TOOL_IDS.AddComponentTool,
         prompt: defaultComponent.name,
-        image: defaultComponent.image,
+        image: defaultComponent.imageData,
         panel: vue.markRaw(ComponentPopover)
     }
 ])

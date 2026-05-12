@@ -9,7 +9,7 @@
                         :class="{ selected: template.selected }"
                         :library="library.id"
                         :id="fullId(library, template)"
-                        :src="template.image"
+                        :src="template.imageData"
                         :aria-label="template.name"
                         v-tippy="{ content: template.name, placement: 'right' }"
                         draggable="true"

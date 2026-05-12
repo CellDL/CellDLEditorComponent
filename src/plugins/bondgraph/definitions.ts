@@ -233,11 +233,11 @@ function makeLatex(symbol: string, species: string|undefined,  location: string|
 
 //======================================
 
-export function svgImage(symbol: string,
-                         species: string|undefined,
-                         location: string|undefined,
-                         elementStyle: BGElementStyle,
-                         background: string[]|undefined) {
+export function svgImageData(symbol: string,
+                             species: string|undefined,
+                             location: string|undefined,
+                             elementStyle: BGElementStyle,
+                             background: string[]|undefined): string {
     const latex = makeLatex(symbol, species, location)
     const style = (!!background && background.length)
                 ? Object.assign({}, elementStyle, { background })
@@ -251,7 +251,7 @@ export function definitionToLibraryTemplate(defn: BGComponentDefinition): BGLibr
     const latex = defn.noSpeciesLocation ? defn.symbol : makeLatex(defn.symbol, DEFAULT_SPECIES, DEFAULT_LOCATION)
 
     return Object.assign({}, defn, {
-        image: typeset(latex, defn.style, true)
+        imageData: typeset(latex, defn.style, true)
     })
 }
 

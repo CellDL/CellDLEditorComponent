@@ -29,7 +29,7 @@ import type { Constructor, StringProperties } from '@renderer/common/types'
 export interface ObjectTemplate {
     CellDLClass: Constructor<CellDLObject>
     description?: string
-    image?: string
+    imageData?: string
     metadataProperties: MetadataPropertiesMap
     name?: string
 }
@@ -39,7 +39,7 @@ export interface ObjectTemplate {
 export interface LibraryComponentTemplate {
     id: string
     name: string
-    image: string
+    imageData: string
     selected?: boolean
 }
 

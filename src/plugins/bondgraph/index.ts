@@ -74,7 +74,7 @@ import {
     DEFAULT_LOCATION,
     DEFAULT_SPECIES,
     definitionToLibraryTemplate,
-    svgImage
+    svgImageData
 } from './definitions'
 import type {
     BGComponentLibrary,
@@ -351,7 +351,7 @@ export class BondgraphPlugin implements PluginInterface {
             }
             return {
                 CellDLClass: CellDLComponent,
-                image: componentTemplate.image,
+                imageData: componentTemplate.imageData,
                 metadataProperties: MetadataPropertiesMap.fromProperties(metadataProperties),
                 name: this.#getName(componentTemplate.type)
             }
@@ -918,17 +918,17 @@ export class BondgraphPlugin implements PluginInterface {
         const symbol = pluginData?.symbol
                      ?? pluginData.elementTemplate?.symbol
                      ?? baseComponent.symbol
-        let svgData = ''
+        let imageData = ''
         try {
-            svgData = svgImage(symbol, species, location,
+            imageData = svgImageData(symbol, species, location,
                                baseComponent.style, pluginData.fillColours)
         // biome-ignore lint/suspicious/noExplicitAny: <>
         } catch (error: any) {
             return (error as Error).message
         }
-        if (svgData) {
+        if (imageData) {
             const celldlSvgElement = celldlObject.celldlSvgElement!
-            await celldlSvgElement.updateSvgElement(svgData)
+            await celldlSvgElement.updateImageElement(imageData)
             celldlSvgElement.redraw()
         }
         return ''

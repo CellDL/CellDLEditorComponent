@@ -59,10 +59,8 @@ export class EditorFrame {
     addSvgElement(template: ObjectTemplate, topLeft: PointLike): SVGGElement {
         const svgElement: SVGGElement = document.createElementNS(SVG_URI, 'g')
         svgElement.setAttribute('style', 'visibility: hidden')
-        if (template.image) {
-            svgElement.insertAdjacentHTML('beforeend', `<image href="${template.image}">`)
-        } else if (template.svg) {
-            svgElement.insertAdjacentHTML('beforeend', template.svg)
+        if (template.imageData) {
+            svgElement.insertAdjacentHTML('beforeend', `<image href="${template.imageData}">`)
         }
         this.#frameGroupElement.append(svgElement)
         const bbox = svgElement.getBBox()
