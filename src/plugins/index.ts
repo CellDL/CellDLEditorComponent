@@ -56,31 +56,153 @@ export interface ConnectionStatus {
 //==============================================================================
 
 export interface PluginInterface {
+    /**
+     * A unique indentifier for the plugin
+     */
     id: string
 
+    /**
+     * The plugin as a library of component templates
+     */
     componentLibrary: ComponentLibrary
+
+    /**
+     * Get groups of properties that components might have
+     */
     getPropertyGroups: () => PropertyGroup[]
+
+    /**
+     * Get CSS style definitions for the plugin
+     */
     styleRules: () => string
+
+    /**
+     * Get SVG <defs> elements used by the plugin
+     */
     svgDefinitions: () => string
 
+    /**
+     * A CellDL diagram has been opened
+     *
+     * @param uri The diagram's URI
+     * @param rdfStore The RDF store with metadata about the diagram
+     */
     openDiagram: (uri: string, rdfStore: RdfStore) => void
+
+    /**
+     * Add statements about the diagram's plugin components to its RDF store
+     *
+     * @param rdfStore The RDF store with metadata about the diagram
+     */
     addPluginMetadataToStore: (rdfStore: RdfStore) => void
+
+    /**
+     * Get plugin specific data to store with a CellDL object
+     *
+     * @param celldlObject A CellDL object
+     * @param rdfStore The RDF store with metadata about the diagram
+     */
     getPluginData: (celldlObject: CellDLObject, rdfStore: RdfStore) => object
+
+    /**
+     * Get plugin specific text about the status of a CellDL object
+     *
+     * @param celldlObject A CellDL object
+     */
     statusText: (celldlObject: CellDLObject) => string
 
+    /**
+     * A CellDL component has been added to the diagram
+     *
+     * @param component A CellDL component object
+     * @param rdfStore The RDF store with metadata about the diagram
+     */
     addComponent: (component: CellDLObject, rdfStore: RdfStore) => void
+
+    /**
+     * A CellDL connection has been added to the diagram
+     *
+     * @param connection A CellDL connection object
+     * @param rdfStore The RDF store with metadata about the diagram
+     */
     addConnection: (connection: CellDLConnection, rdfStore: RdfStore) => void
+
+    /**
+     * Check that two CellDL objects can be connected
+     *
+     * If the objects should not be connected then the `alert` field in the result will gives the reason why not.
+     *
+     * @param sourceObject The source CellDL object for the connection
+     * @param targetObject The target CellDL object for the connection
+     */
     checkConnectionValid: (startObject: CellDLObject, endObject: CellDLObject) => ConnectionStatus|undefined
+
+    /**
+     * A CellDL component has been deleted from the diagram
+     *
+     * @param component A CellDL component object
+     * @param rdfStore The RDF store with metadata about the diagram
+     */
     deleteComponent: (component: CellDLObject, rdfStore: RdfStore) => void
+
+    /**
+     * A CellDL connection has been deleted from the diagram
+     *
+     * @param connection A CellDL connection object
+     * @param rdfStore The RDF store with metadata about the diagram
+     */
     deleteConnection: (connection: CellDLConnection, rdfStore: RdfStore) => void
+
+    /**
+     * Get the maximum number of connections that a CellDL object can have
+     *
+     * @param celldlObject A CellDL object
+     */
     getMaxConnections: (celldlObject: CellDLObject) => number
 
+    /**
+     * Return the template for an object, given its ID
+     *
+     * @param id
+     */
     getObjectTemplateById: (id: string) => ObjectTemplate|undefined
+
+    /**
+     * Return the name of a template, given its RDF type
+     *
+     * @param rdfType
+     */
     getTemplateName: (rdfType: string) => string|undefined
+
+    /**
+     * Load an object's properties into a component template ready for editing
+     *
+     * @param celldlObject A CellDL object
+     * @param componentProperties Properties about the object, ordered by their group
+     * @param rdfStore The RDF store with metadata about the diagram
+     */
     loadComponentProperties: (celldlObject: CellDLObject,
                               componentProperties: PropertyGroup[], rdfStore: RdfStore) => void
+
+    /**
+     * Update the diagram's RDF store when the value of a CellDL object property changes
+     *
+     * @param celldlObject A CellDL object
+     * @param itemId The full ID (`property_group/var_name`) of the property
+     * @param value The original and new value of the given property
+     * @param componentProperties Properties about the object, ordered by their group
+     * @param rdfStore The RDF store with metadata about the diagram
+     */
     updateObjectProperties: (celldlObject: CellDLObject, itemId: string, value: ValueChange,
                              componentProperties: PropertyGroup[], rdfStore: RdfStore) => Promise<void>
+
+    /**
+     * Update the SVG representation of a object when its styling has changed
+     *
+     * @param celldlObject A CellDL object
+     * @param objectType The type of object (`node` or `path`)
+     * @param styling Styling for the object
+     */
     updatedComponentStyling: (celldlObject: CellDLObject, objectType: string, styling: StyleObject) =>  Promise<void>
 }
 
