@@ -285,7 +285,7 @@ export class BondgraphPlugin implements PluginInterface {
         name: 'Bondgraph Elements',
         templates: BONDGRAPH_COMPONENT_DEFINITIONS.map(defn => definitionToLibraryTemplate(defn))
     }
-    #bondgraph_component_templates: Map<string, BGLibraryComponentTemplate> = new Map(
+    #componentTemplates: Map<string, BGLibraryComponentTemplate> = new Map(
         this.#componentLibrary.templates.map((c: BGLibraryComponentTemplate) => [c.id, c])
     )
 
@@ -331,7 +331,7 @@ export class BondgraphPlugin implements PluginInterface {
     }
 
     getObjectTemplateById(id: string): ObjectTemplate|undefined {
-        const componentTemplate = this.#bondgraph_component_templates.get(id)
+        const componentTemplate = this.#componentTemplates.get(id)
         if (componentTemplate) {
             const metadataProperties: MetadataProperty[] = [
                 [ RDF.uri('type'), $rdf.namedNode(componentTemplate.type)],
@@ -1130,7 +1130,7 @@ export class BondgraphPlugin implements PluginInterface {
                 }
             }
             if (lastElement?.value !== element.value) {
-                for (const componentTemplate of this.#bondgraph_component_templates.values()) {
+                for (const componentTemplate of this.#componentTemplates.values()) {
                     if (element.value === componentTemplate.type) {
                         let component = this.#baseComponents.get(componentTemplate.type)
                         if (!component) {
