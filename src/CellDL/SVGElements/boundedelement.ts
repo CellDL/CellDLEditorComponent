@@ -101,7 +101,7 @@ export class BoundedElement extends CellDLSVGElement {
             for (const path of this.#connectedPathElements.values()) {
                 path.componentBoundingBoxMoved(this, centroidDelta)
             }
-            this.#undoMoveAction!.endMove(0, this.#controlRect.centroid.point)
+            this.#undoMoveAction.endMove(0, this.#controlRect.centroid.point)
             if (this.#controlRect.dirty) {
                 this.celldlObject.redraw()
             }
@@ -173,7 +173,8 @@ export class BoundedElement extends CellDLSVGElement {
             RestrictedPoint.fromPoint(this.topLeft),
             RestrictedPoint.fromPoint(this.topLeft.add(this.size))
         )
-        const cornerDeltas = this.corners.map((corner, index) => corner.subtract(savedCorners[index]!))
+        // @ts-expect-error: `index` is in range
+        const cornerDeltas = this.corners.map((corner, index) => corner.subtract(savedCorners[index]))
         if (this.celldlObject.isConnectable) {
             // Reset any restrictions for `componentBoundingBoxResisized()`
             this.unlimitDirection()

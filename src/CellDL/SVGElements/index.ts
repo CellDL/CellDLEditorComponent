@@ -230,7 +230,8 @@ export class CellDLSVGElement {
         if (this.#svgElement.tagName === 'g') {
             const firstChild = this.#svgElement.children.item(0) as SVGGraphicsElement
             if (firstChild.dataset.centreX) {
-                this.#centroidOffset = new Point(+firstChild.dataset.centreX, +firstChild.dataset.centreY!)
+                // @ts-expect-error: `firstChild.dataset.centreY` is defined
+                this.#centroidOffset = new Point(+firstChild.dataset.centreX, +firstChild.dataset.centreY)
             }
         }
         // And set the elements bounds relative to its centroid
