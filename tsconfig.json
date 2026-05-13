@@ -25,5 +25,5 @@
     },
     "extends": "@vue/tsconfig/tsconfig.dom.json",
     "include": ["**/*.js", "**/*.ts", "**/*.vue", "package.json"],
-    "exclude": ["**/dist/**", "**/app/dist/**"]
+    "exclude": ["**/app/dist/**", "**/dist/**"]
 }

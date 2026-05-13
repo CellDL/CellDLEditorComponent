@@ -9,7 +9,7 @@
     "includeVersion": true,
     "entryPoints": [
         "./index.ts",
-        "src/**/index.ts"
+        "./src/**/index.ts"
     ],
     "entryPointStrategy": "expand",
     "excludeExternals": true,
