@@ -42,7 +42,8 @@
             "!!**/.rollup.cache/**",
             "!**/components.d.ts",
             "!!**/app/dist/**",
-            "!!**/dist/**"
+            "!!**/dist/**",
+            "!!**/docs/**"
         ]
     },
     "overrides": [
