@@ -18,7 +18,7 @@ limitations under the License.
 
 ******************************************************************************/
 
-import { base64Svg, LatexMathSvg } from '@renderer/common/svgUtils'
+import { svgToDataUrl, LatexMathSvg } from '@renderer/common/svgUtils'
 
 import type {
     BGComponentDefinition,
@@ -217,7 +217,7 @@ function typeset(latex: string, style: BGElementStyle, base64: boolean=false): s
             border: style.border || MIN_BORDER_COLOUR
         }
     )
-    return base64 ? base64Svg(svg) : svg
+    return svgToDataUrl(svg, base64)
 }
 
 function makeLatex(symbol: string, species: string|undefined,  location: string|undefined): string {
@@ -251,7 +251,7 @@ export function definitionToLibraryTemplate(defn: BGComponentDefinition): BGLibr
     const latex = defn.noSpeciesLocation ? defn.symbol : makeLatex(defn.symbol, DEFAULT_SPECIES, DEFAULT_LOCATION)
 
     return Object.assign({}, defn, {
-        imageData: typeset(latex, defn.style, true)
+        imageData: typeset(latex, defn.style)
     })
 }
 

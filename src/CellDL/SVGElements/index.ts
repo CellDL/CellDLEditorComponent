@@ -23,7 +23,7 @@ import * as vue from 'vue'
 import { CONNECTION_SPLAY_PADDING, MAX_CONNECTION_SPLAY_PADDING } from '@renderer/common/styling'
 import { CONNECTION_WIDTH, SELECTION_STROKE_WIDTH } from '@renderer/common/styling'
 import { Point, type PointLike, PointMath } from '@renderer/common/points'
-import { base64Svg, svgCircle } from '@renderer/common/svgUtils'
+import { svgCircle } from '@renderer/common/svgUtils'
 import type { UndoMovePosition } from '@editor/editor/undoredo'
 
 import { CELLDL_STYLE_CLASS, type CellDLObject } from '@editor/celldlObjects/index'
@@ -624,12 +624,14 @@ export class CellDLSVGElement {
     unlimitDirection() {}
 
     /**
-     * Update the image of the element with new data.
+     * Update the image for the element.
      *
      * Called when an element's properties have been changed.
+     *
+     * @param imageData A depiction of the element as a data URL.
      */
     async updateImageElement(imageData: string) {
-        this.svgElement.innerHTML = `<image href="${base64Svg(imageData)}"/>`
+        this.svgElement.innerHTML = `<image href="${imageData}"/>`
         await vue.nextTick()            // Wait for image to render
         this.#updatedSvgElement()
     }

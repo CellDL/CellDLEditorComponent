@@ -19,6 +19,7 @@ limitations under the License.
 ******************************************************************************/
 
 import { Buffer } from 'buffer'
+import toSvgDataUrl from "mini-svg-data-uri"
 
 //==============================================================================
 
@@ -336,16 +337,25 @@ export class LatexMathSvg {
 
 //==============================================================================
 
-export function base64Svg(svg: string): string {
-    return `data:image/svg+xml;base64,${Buffer.from(svg, 'utf8').toString('base64')}`
+export function svgToDataUrl(svg: string, base64: boolean=false): string {
+    if (base64) {
+        return `data:image/svg+xml;base64,${Buffer.from(svg, 'utf8').toString('base64')}`
+    } else {
+        return toSvgDataUrl(svg)
+    }
 }
 
 //==============================================================================
 
-export function getSvgImageFromBase64(svgText: string): string|undefined {
-    const base64 = svgText.match(/data:image\/svg\+xml;base64,(?<base64>.*)/)
-    if (base64) {
-        return Buffer.from(base64.groups!.base64!, 'base64').toString('utf8')
+export function svgFromDataUrl(dataUri: string): string|undefined {
+    const data = dataUri.match(/data:image\/svg\+xml(?<base64>;base64)?,(?<svgText>.*)/)
+    if (data) {
+        const svgText = data.groups?.svgText as string
+        if (data.groups?.base64) {
+            return Buffer.from(svgText, 'base64').toString('utf8')
+        } else {
+            return decodeURIComponent(svgText).replace(/'/g, '"')
+        }
     }
 }
 
@@ -356,7 +366,7 @@ export function getSvgFillStyle(svgText: string): string[] {
     if (!dataUrl) {
         return []
     }
-    const svgData =  getSvgImageFromBase64(dataUrl.groups!.dataUrl!)
+    const svgData = svgFromDataUrl(dataUrl.groups?.dataUrl as string)
     if (svgData) {
         const fillStyle = svgData.match(/ data-fill-style="(?<fillStyle>[^"]*)"/)
         if (fillStyle) {
