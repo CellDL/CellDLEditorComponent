@@ -27,9 +27,11 @@ out
 *.sln
 *.sw?
 docs/
+*.tgz
 
 *.sublime-project
 *.sublime-workspace
+*.theia-workspace
 *.tsbuildinfo
 
 # unplugin-vue-components
