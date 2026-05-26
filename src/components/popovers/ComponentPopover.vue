@@ -42,8 +42,8 @@ function fullId(library: ComponentLibrary, template: LibraryComponentTemplate): 
     return `${library.id}/${template.id}`
 }
 
-vue.onMounted(() => {
-    libraries.value.forEach((library: ComponentLibrary) => {
+vue.onMounted(async () => {
+    libraries!.value.forEach((library: ComponentLibrary) => {
         library.templates.forEach((template: LibraryComponentTemplate) => {
             const id = fullId(library, template)
             idToComponent.set(id, template)
@@ -53,6 +53,8 @@ vue.onMounted(() => {
         })
     })
     if (selectedId) {
+        // We want the element rendered so that it has a size
+        await vue.nextTick()
         const selectedElement = document.getElementById(selectedId) as HTMLImageElement
         if (selectedElement) {
             document.dispatchEvent(
