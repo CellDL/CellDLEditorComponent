@@ -71,7 +71,7 @@ export function setInternalIds(svgElement: SVGGraphicsElement, previousId: strin
 export class CellDLSVGElement {
     #bounds!: Bounds
     #centroid!: Point
-    #centroidOffset: Point = new Point(0.5, 0.5)
+    #normalisedCentre: Point = new Point(0.5, 0.5)
     #cornerOffsets!: [Point, Point, Point, Point] // Wrt centroid, anticlockwise from bottom right
     #selected: boolean = false
     #selectionClasses: Set<string> = new Set()
@@ -116,8 +116,8 @@ export class CellDLSVGElement {
         return this.#centroid
     }
 
-    get centroidOffset(): Point {
-        return this.#centroidOffset
+    get normalisedCentre(): Point {
+        return this.#normalisedCentre
     }
 
     get corners(): [Point, Point] {
@@ -187,7 +187,7 @@ export class CellDLSVGElement {
         const bounds = this.svgBounds(true)
         this.#size = new Point(bounds.right - bounds.left, bounds.bottom - bounds.top)
         if (this.#centroid) {
-            this.#topLeft = this.#centroid.subtract(this.#size.scale(this.#centroidOffset))
+            this.#topLeft = this.#centroid.subtract(this.#size.scale(this.#normalisedCentre))
             // Get bounds in local coordinates
             this.#bounds = new Bounds(
                 this.#topLeft.x,
@@ -198,9 +198,9 @@ export class CellDLSVGElement {
         } else {
             this.#topLeft = new Point(bounds.left, bounds.top)
             this.#bounds = bounds
-            this.#centroid = this.#size.scale(this.#centroidOffset).add(this.#topLeft)
+            this.#centroid = this.#size.scale(this.#normalisedCentre).add(this.#topLeft)
         }
-        const topLeftOffset = this.#size.scale(this.#centroidOffset).scalarScale(-1)
+        const topLeftOffset = this.#size.scale(this.#normalisedCentre).scalarScale(-1)
         // Corner offsets are wrt centroid, anticlockwise from bottom right; see comment below in ``boundaryIntersections()``
         const connectionComponentGap: number = CONNECTION_WIDTH / 2 - SELECTION_STROKE_WIDTH / 2
         if (connectionComponentGap !== 0) {
@@ -226,12 +226,12 @@ export class CellDLSVGElement {
 
     #updatedSvgElement() {
         // Find the relative offset to the element's centroid
-        this.#centroidOffset = new Point(0.5, 0.5)
+        this.#normalisedCentre = new Point(0.5, 0.5)
         if (this.#svgElement.tagName === 'g') {
             const firstChild = this.#svgElement.children.item(0) as SVGGraphicsElement
             if (firstChild.dataset.centreX) {
                 // @ts-expect-error: `firstChild.dataset.centreY` is defined
-                this.#centroidOffset = new Point(+firstChild.dataset.centreX, +firstChild.dataset.centreY)
+                this.#normalisedCentre = new Point(+firstChild.dataset.centreX, +firstChild.dataset.centreY)
             }
         }
         // And set the elements bounds relative to its centroid
@@ -264,7 +264,7 @@ export class CellDLSVGElement {
             // Indicate a component is a conduit with a circular mark at its centre
             if (this.celldlObject.isConduit) {
                 const centre = new Point(bounds.right - bounds.left, bounds.bottom - bounds.top)
-                    .scale(this.#centroidOffset)
+                    .scale(this.#normalisedCentre)
                     .add(new Point(bounds.left, bounds.top))
                 const svg = svgCircle(centre, CONDUIT_SELECTION_RADIUS, {
                     class: 'selection-element parent-id editor-specific conduit'

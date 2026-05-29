@@ -186,13 +186,13 @@ export class ControlRect {
     #bottomRight!: RestrictedPoint
     #size!: Point
     #centroid!: RestrictedPoint
-    #centroidOffset!: Point
+    #normalisedCentre!: Point
     #moveOffset: Point = new Point()
     #svgElement: SVGRectElement | null = null
 
-    constructor(corner_0: RestrictedPoint, corner_1: RestrictedPoint, centroidOffset: Point | null = null) {
+    constructor(corner_0: RestrictedPoint, corner_1: RestrictedPoint, normalisedCentre: Point | null = null) {
         this.setCornerPositions(corner_0, corner_1)
-        this.setCentroidOffset(centroidOffset || new Point(0.5, 0.5))
+        this.assignCentroid(normalisedCentre || new Point(0.5, 0.5))
     }
 
     set gridAligned(align: boolean) {
@@ -225,7 +225,7 @@ export class ControlRect {
     }
 
     copy(): ControlRect {
-        return new ControlRect(this.#topLeft, this.#bottomRight, this.#centroidOffset)
+        return new ControlRect(this.#topLeft, this.#bottomRight, this.#normalisedCentre)
     }
 
     setCornerPositions(corner_0: RestrictedPoint, corner_1: RestrictedPoint) {
@@ -246,9 +246,9 @@ export class ControlRect {
         this.#size = PointMath.subtract(this.#bottomRight.point, this.#topLeft.point)
     }
 
-    setCentroidOffset(centroidOffset: Point) {
-        this.#centroidOffset = centroidOffset
-        this.#centroid = RestrictedPoint.fromPoint(this.#size.scale(this.#centroidOffset).add(this.#topLeft.point))
+    assignCentroid(normalisedCentre: Point) {
+        this.#normalisedCentre = normalisedCentre
+        this.#centroid = RestrictedPoint.fromPoint(this.#size.scale(this.#normalisedCentre).add(this.#topLeft.point))
     }
 
     startMove(point: PointLike) {
@@ -268,7 +268,7 @@ export class ControlRect {
      */
     reposition(centroid: PointLike) {
         this.#centroid.point = centroid // this will check limits
-        this.#topLeft.point = this.#centroid.point.subtract(this.#size.scale(this.#centroidOffset))
+        this.#topLeft.point = this.#centroid.point.subtract(this.#size.scale(this.#normalisedCentre))
         this.#bottomRight.point = PointMath.add(this.#topLeft.point, this.#size)
     }
 

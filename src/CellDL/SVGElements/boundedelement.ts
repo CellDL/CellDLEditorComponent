@@ -53,7 +53,7 @@ export class BoundedElement extends CellDLSVGElement {
         this.#controlRect = new ControlRect(
             RestrictedPoint.fromPoint(this.topLeft),
             RestrictedPoint.fromPoint(this.topLeft.add(this.size)),
-            this.centroidOffset
+            this.normalisedCentre
         )
         this.setCentroid(this.#controlRect.centroid.point)
         this.#topLeftCorner = this.#controlRect.topLeftPoint
@@ -168,7 +168,7 @@ export class BoundedElement extends CellDLSVGElement {
     async updateImageElement(imageData: string) {
         const savedCorners = this.corners.map((point) => Point.fromPoint(point))
         await super.updateImageElement(imageData)
-        this.#controlRect.setCentroidOffset(this.centroidOffset)
+        this.#controlRect.assignCentroid(this.normalisedCentre)
         this.#controlRect.setCornerPositions(
             RestrictedPoint.fromPoint(this.topLeft),
             RestrictedPoint.fromPoint(this.topLeft.add(this.size))
