@@ -91,6 +91,10 @@ export class Bounds {
         return this.#right - this.#left
     }
 
+    addMargin(margin: number): Bounds {
+        return new Bounds(this.#left - margin, this.#top - margin, this.#right + margin, this.#bottom + margin)
+    }
+
     asArray(): [number, number, number, number] {
         return [this.#left, this.#top, this.#right, this.#bottom]
     }
@@ -107,10 +111,6 @@ export class Bounds {
             Math.abs(this.#right - bounds.#right) < epsilon &&
             Math.abs(this.#bottom - bounds.#bottom) < epsilon
         )
-    }
-
-    expand(margin: number): Bounds {
-        return new Bounds(this.#left - margin, this.#top - margin, this.#right + margin, this.#bottom + margin)
     }
 
     inContainer(container: Bounds): boolean {

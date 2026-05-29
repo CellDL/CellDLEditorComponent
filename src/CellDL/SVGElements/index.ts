@@ -238,7 +238,7 @@ export class CellDLSVGElement {
                 this.#svgElement.classList.contains(CELLDL_STYLE_CLASS.Compartment)
                     ? Bounds.fromSvg(this.#svgElement.firstChild as SVGGraphicsElement)
                     : Bounds.fromSvg(this.#svgElement)
-            ).expand(SELECTION_STROKE_WIDTH / 2)
+            ).addMargin(SELECTION_STROKE_WIDTH / 2)
             // Set height, width and offset of an <svg> child...
             if (this.#svgElement.firstElementChild.tagName === 'svg') {
                 const svgChild = this.#svgElement.firstElementChild
