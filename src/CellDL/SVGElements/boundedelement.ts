@@ -43,13 +43,13 @@ export class BoundedElement extends CellDLSVGElement {
     #connectedPathElements: Map<string, PathElement> = new Map()
     #controlRect: ControlRect
     #topLeftCorner: Point
-    #transform: Transform
+    #localTransform: Transform
     #undoMoveAction: EditorUndoAction | null = null
 
     constructor(object: CellDLObject, svgElement: SVGGraphicsElement, gridAligned: boolean=false, align: boolean=false) {
         super(object, svgElement)
         // local transform on the element
-        this.#transform = Transform.fromString(getComputedStyle(svgElement).transform)
+        this.#localTransform = Transform.fromString(getComputedStyle(svgElement).transform)
         this.#controlRect = new ControlRect(
             RestrictedPoint.fromPoint(this.topLeft),
             RestrictedPoint.fromPoint(this.topLeft.add(this.size)),
@@ -104,6 +104,7 @@ export class BoundedElement extends CellDLSVGElement {
             this.#undoMoveAction.endMove(0, this.#controlRect.centroid.point)
             if (this.#controlRect.dirty) {
                 this.celldlObject.redraw()
+                this.svgBounds(true)  // Recalculate the element's bounds
             }
         }
     }
@@ -130,19 +131,7 @@ export class BoundedElement extends CellDLSVGElement {
             newTopLeft.x - this.#topLeftCorner.x,
             newTopLeft.y - this.#topLeftCorner.y
         )
-        let transform: Transform
-        if (this.globalTransform) {
-            const globalInverse = this.globalTransform.inverse()
-            const globalTransform = this.updateGlobalTransform(translation)
-            if (globalTransform) {
-                transform = globalTransform.leftMultiply(globalInverse).leftMultiply(this.#transform)
-            } else {
-                transform = globalInverse.leftMultiply(this.#transform)
-            }
-        } else {
-            this.updateGlobalTransform(translation)
-            transform = translation.leftMultiply(this.#transform)
-        }
+        const transform = translation.leftMultiply(this.#localTransform)
         if (transform.isIdentity) {
             this.svgElement.removeAttribute('transform')
         } else {

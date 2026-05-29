@@ -74,14 +74,9 @@ export class Bounds {
 
     static fromSvg(svgElement: SVGGraphicsElement, globalTransform: Transform | null = null): Bounds {
         const bbox = svgElement.getBBox()
-        let topLeft = new Point(bbox.x, bbox.y)
-        let bottomRight = new Point(bbox.x + bbox.width, bbox.y + bbox.height)
-        if (globalTransform) {
-            topLeft = globalTransform.transformPoint(topLeft)
-            bottomRight = globalTransform.transformPoint(bottomRight)
-        }
-        const bounds = new Bounds(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y)
-        return bounds
+        const topLeft = new Point(bbox.x, bbox.y)
+        const bottomRight = new Point(bbox.x + bbox.width, bbox.y + bbox.height)
+        return new Bounds(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y)
     }
 
     get height(): number {

@@ -79,7 +79,7 @@ export class CellDLSVGElement {
     #size: Point = new Point()
     #svgElement: SVGGraphicsElement
     #topLeft!: Point
-    #globalTransform: Transform | null = null
+    #globalTransform: Transform = Transform.Identity()
 
     constructor(
         readonly celldlObject: CellDLObject,
@@ -90,17 +90,13 @@ export class CellDLSVGElement {
         }
         const svgDiagramElement = celldlObject.celldlDiagram?.svgDiagram
         // get all transformations that are being applied to the SVG element
-        this.#globalTransform = Transform.Identity()
-        let element = svgElement
+        let element = svgElement.parentNode as SVGGraphicsElement
         while (element !== svgDiagramElement) {
             const transform = getComputedStyle(element).transform
             if (transform !== 'none') {
                 this.#globalTransform = this.#globalTransform.leftMultiply(Transform.fromString(transform))
             }
             element = element.parentNode as SVGGraphicsElement
-        }
-        if (this.#globalTransform.isIdentity) {
-            this.#globalTransform = null
         }
         celldlObject.setCelldlSvgElement(this)
         this.#svgElement = svgElement
@@ -122,10 +118,6 @@ export class CellDLSVGElement {
 
     get corners(): [Point, Point] {
         return [this.#cornerOffsets[0], this.#cornerOffsets[2]]
-    }
-
-    get globalTransform() {
-        return this.#globalTransform
     }
 
     get height(): number {
@@ -164,23 +156,23 @@ export class CellDLSVGElement {
         this.#centroid = centroid
     }
 
-    svgBounds(recalculate: boolean = false): Bounds {
-        // Get bounds in global coordinates
-        return recalculate || this.#bounds === undefined
-            ? Bounds.fromSvg(this.#svgElement, this.#globalTransform)
-            : this.#bounds
+    #boundsFromSvg(svgElement: SVGGraphicsElement): Bounds {
+        const bbox = svgElement.getBBox()
+        let topLeft = new Point(bbox.x, bbox.y)
+        let bottomRight = new Point(bbox.x + bbox.width, bbox.y + bbox.height)
+        const localTransform = Transform.fromString(getComputedStyle(svgElement).transform)
+        const transform = this.#globalTransform.leftMultiply(localTransform)
+        topLeft = transform.transformPoint(topLeft)
+        bottomRight = transform.transformPoint(bottomRight)
+        return new Bounds(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y)
     }
 
-    updateGlobalTransform(transform: Transform): Transform | null {
-        if (this.#globalTransform) {
-            this.#globalTransform = this.#globalTransform.leftMultiply(transform)
-            if (this.#globalTransform.isIdentity) {
-                this.#globalTransform = null
-            }
-        } else {
-            this.#globalTransform = transform
+    // Bounds in global coordinates
+    svgBounds(recalculate: boolean = false): Bounds {
+        if (recalculate || this.#bounds === undefined) {
+            this.#bounds = this.#boundsFromSvg(this.#svgElement)
         }
-        return this.#globalTransform
+        return this.#bounds
     }
 
     #updateBounds() {
