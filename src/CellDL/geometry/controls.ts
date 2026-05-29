@@ -257,7 +257,7 @@ export class ControlRect {
     }
 
     move(point: PointLike) {
-        const position = this.#moveOffset!.add(point)
+        const position = this.#moveOffset?.add(point)
         this.reposition(this.#gridAligned ? editGuides.gridAlign(position) : position)
     }
 

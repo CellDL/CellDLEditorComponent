@@ -343,7 +343,7 @@ class ComponentGuides {
 
     addComponent(component: CellDLMoveableObject) {
         if (!this.#knownComponents.has(component)) {
-            const centroid = component.celldlSvgElement!.centroid
+            const centroid = component.celldlSvgElement?.centroid as Point
             this.#horizontalGuideGroup.add(centroid.y)
             this.#verticalGuideGroup.add(centroid.x)
             this.#knownComponents.add(component)
@@ -352,13 +352,13 @@ class ComponentGuides {
 
     matchGuide(component: CellDLMoveableObject): Array<number | null> {
         this.removeComponent(component)
-        const centroid = component.celldlSvgElement!.centroid
+        const centroid = component.celldlSvgElement?.centroid as Point
         return [this.#horizontalGuideGroup.show(centroid.y), this.#verticalGuideGroup.show(centroid.x)]
     }
 
     removeComponent(component: CellDLMoveableObject) {
         if (this.#knownComponents.has(component)) {
-            const centroid = component.celldlSvgElement!.centroid
+            const centroid = component.celldlSvgElement?.centroid as Point
             this.#horizontalGuideGroup.remove(centroid.y)
             this.#verticalGuideGroup.remove(centroid.x)
             this.#knownComponents.delete(component)

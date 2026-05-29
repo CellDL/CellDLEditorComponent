@@ -62,12 +62,12 @@ export class SvgConnection extends CellDLSVGElement {
             svgPaths.push(<SVGPathElement>svgElement)
         } else if (svgElement.tagName === svgGroupTag) {
             for (let i = 0; i < svgElement.children.length; ++i) {
-                const element = svgElement.children.item(i)!
+                const element = svgElement.children.item(i) as SVGPathElement
                 if (shapeTags.includes(element.tagName)) {
                     SVGPathCommander.shapeToPath(element as ShapeTypes, true)
                 }
                 if (element.tagName === 'path') {
-                    svgPaths.push(<SVGPathElement>element)
+                    svgPaths.push(element)
                 } else {
                     throw new Error(`Connection ${connection.id}: SVG paths are not all 'path' elements`)
                 }
