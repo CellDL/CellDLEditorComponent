@@ -27,9 +27,16 @@ import { svgCircle } from '@renderer/common/svgUtils'
 import type { UndoMovePosition } from '@editor/editor/undoredo'
 
 import { CELLDL_STYLE_CLASS, type CellDLObject } from '@editor/celldlObjects/index'
-import { Bounds, type RestrictedValue } from '@editor/geometry/index'
+import { Bounds, type PointMoveOptions, type RestrictedValue } from '@editor/geometry/index'
 import { FixedControlRect } from '@editor/geometry/controls'
 import { Transform } from '@editor/geometry/transforms'
+
+//==============================================================================
+
+export type ElementMoveOptions = PointMoveOptions & {
+    excludeConnectionIds?: Set<string>
+    moveEntireConnection?: boolean
+}
 
 //==============================================================================
 
@@ -312,9 +319,9 @@ export class CellDLSVGElement {
         return false
     }
 
-    startMove(_svgPoint: PointLike) {}
+    startMove(_svgPoint: PointLike, _options: ElementMoveOptions={}) {}
 
-    move(_svgPoint: PointLike) {}
+    move(_svgPoint: PointLike, _options: ElementMoveOptions={}) {}
 
     endMove() {}
 

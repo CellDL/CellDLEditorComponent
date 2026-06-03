@@ -35,7 +35,7 @@ import { ConnectionStyle } from '@editor/connections/index'
 import { ID_PART_SEPARATOR, type PathElement } from './pathelement'
 import { LinearPath } from './linearpath'
 import { RectilinearPath } from './rectilinearpath'
-import { CellDLSVGElement } from './index'
+import { CellDLSVGElement, type ElementMoveOptions } from './index'
 import type { BoundedElement } from './boundedelement'
 
 //==============================================================================
@@ -158,9 +158,9 @@ export class SvgConnection extends CellDLSVGElement {
         return false
     }
 
-    move(position: PointLike) {
+    move(svgPoint: PointLike, options: ElementMoveOptions={}) {
         if (this.#moveableElement && this.#undoMoveAction) {
-            if (this.#moveableElement.move(position)) {
+            if (this.#moveableElement.move(svgPoint)) {
                 this.#undoMoveAction.endMove(this.#moveableElement.moveIndex, this.#moveableElement.movePoint!.point)
                 this.#moveableElement.redraw()
             }
@@ -177,7 +177,7 @@ export class SvgConnection extends CellDLSVGElement {
         this.#pathElements.forEach((element) => { element.remove() })
     }
 
-    startMove(svgPoint: PointLike) {
+    startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
         if (this.#moveableElement?.movePoint) {
             this.#undoMoveAction = undoRedo.undoMoveAction()
             this.#undoMoveAction.addObjectDetails(this.celldlObject)

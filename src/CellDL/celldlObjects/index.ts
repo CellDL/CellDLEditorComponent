@@ -30,7 +30,7 @@ import type { ObjectTemplate } from '@editor/components/index'
 import type { ConnectionStyle } from '@editor/connections/index'
 import type { CellDLDiagram } from '@editor/diagram/index'
 import { SvgConnection } from '@editor/SVGElements/svgconnection'
-import type { CellDLSVGElement } from '@editor/SVGElements/index'
+import type { CellDLSVGElement, ElementMoveOptions } from '@editor/SVGElements/index'
 
 import * as $rdf from '@renderer/metadata/index'
 import type { MetadataPropertiesMap, NamedNode } from '@renderer/metadata/index'
@@ -252,12 +252,12 @@ export class CellDLObject {
         }
     }
 
-    startMove(svgPoint: PointLike) {
-        this.#celldlSvgElement?.startMove(svgPoint)
+    startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
+        this.#celldlSvgElement?.startMove(svgPoint, options)
     }
 
-    move(svgPoint: PointLike) {
-        this.#celldlSvgElement?.move(svgPoint)
+    move(svgPoint: PointLike, options: ElementMoveOptions={}) {
+        this.#celldlSvgElement?.move(svgPoint, options)
     }
 
     endMove() {
@@ -316,13 +316,13 @@ export class CellDLObject {
 //==============================================================================
 
 export class CellDLMoveableObject extends CellDLObject {
-    startMove(svgPoint: PointLike) {
+    startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
         editGuides.removeGuide(this)
-        super.startMove(svgPoint)
+        super.startMove(svgPoint, options)
     }
 
-    move(svgPoint: PointLike) {
-        super.move(svgPoint)
+    move(svgPoint: PointLike, options: ElementMoveOptions={}) {
+        super.move(svgPoint, options)
         editGuides.matchGuide(this) // Highliglight guides that our centroid's now on
     }
 
@@ -411,8 +411,8 @@ export class CellDLConnectedObject extends CellDLMoveableObject {
         this.#connections.delete(connection.id)
     }
 
-    startMove(svgPoint: PointLike) {
-        super.startMove(svgPoint)
+    startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
+        (this.celldlSvgElement as BoundedElement).startMove(svgPoint, options)
         // Remove control handles from selected connections
         this.#connections.forEach(connection => {
             connection.clearSelectedHandles()
@@ -487,15 +487,15 @@ export class CellDLCompartment extends CellDLConnectedObject {
         return false
     }
 
-    startMove(svgPoint: PointLike) {
-        super.startMove(svgPoint)
+    startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
+        super.startMove(svgPoint, options)
     }
 
-    move(svgPoint: PointLike) {
-        super.move(svgPoint)
+    move(svgPoint: PointLike, options: ElementMoveOptions={}) {
+        super.move(svgPoint, options)
         // A move of the compartment moves the end of outgoing connections.
         for (const port of this.#interfacePorts) {
-            port.move(svgPoint)
+            port.move(svgPoint, options)
         }
     }
 
@@ -608,7 +608,7 @@ export class CellDLInterface extends CellDLConnectedObject {
         this.#externalConnections.push(connection)
     }
 
-    move(_svgPoint: PointLike) {
+    move(_svgPoint: PointLike, _options: ElementMoveOptions={}) {
         const component = <BoundedElement>this.celldlSvgElement
         const svgElement = <SVGGraphicsElement>this.celldlDiagram.svgDiagram.getElementById(component.id)
         const bounds = svgElement.getBoundingClientRect()

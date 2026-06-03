@@ -26,7 +26,7 @@ import { RestrictedPoint, type RestrictedValue } from '@editor/geometry/index'
 import { ControlRect } from '@editor/geometry/controls'
 import { Transform } from '@editor/geometry/transforms'
 
-import { CellDLSVGElement } from './index'
+import { CellDLSVGElement, type ElementMoveOptions } from './index'
 import type { PathElement } from './pathelement'
 
 //==============================================================================
@@ -68,7 +68,7 @@ export class BoundedElement extends CellDLSVGElement {
         return !this.svgElement.classList.contains(CELLDL_STYLE_CLASS.Interface)
     }
 
-    startMove(svgPoint: PointLike) {
+    startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
         this.#undoMoveAction = undoRedo.undoMoveAction()
         this.#undoMoveAction.addObjectDetails(this.celldlObject)
         this.#undoMoveAction.startMove(0, this.#controlRect.centroid.point)
@@ -90,7 +90,7 @@ export class BoundedElement extends CellDLSVGElement {
         this.#controlRect.centroid.yValue.reassignMaximum(Infinity)
     }
 
-    move(svgPoint: PointLike) {
+    move(svgPoint: PointLike, _options: ElementMoveOptions={}) {
         if (this.#undoMoveAction) {
             const savedCentroid = this.centroid
             this.#controlRect.move(svgPoint)

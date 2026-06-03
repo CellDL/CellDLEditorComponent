@@ -32,6 +32,7 @@ import { ControlPoint } from '@editor/geometry/controls'
 import type { FoundPoint } from '@editor/geometry/pathutils'
 
 import type { BoundedElement } from './boundedelement'
+import type { ElementMoveOptions } from '.'
 
 //==============================================================================
 
@@ -211,13 +212,13 @@ export class PathElement {
         return false
     }
 
-    move(position: PointLike) {
+    move(svgPoint: PointLike, options: ElementMoveOptions={}) {
         let redraw = false
         if (this.#movePoint) {
             this.pathPoints.forEach((pathPoint) => {
                 pathPoint.clean()
             })
-            this.movePathPoint(position)
+            this.movePathPoint(svgPoint)
             this.pathPoints.forEach((pathPoint) => {
                 if (pathPoint.redraw()) redraw = true
             })
@@ -267,9 +268,9 @@ export class PathElement {
         return svgElement
     }
 
-    startMove(point: PointLike) {
+    startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
         if (this.#movePoint) {
-            this.#movePoint.startMove(point)
+            this.#movePoint.startMove(svgPoint)
         }
     }
 
