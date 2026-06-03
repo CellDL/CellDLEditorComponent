@@ -38,7 +38,7 @@ export class LinearPath extends PathElement {
             let pathPoint: PathPoint = new FixedPathPoint(
                 new FixedValue(pathArray[0][1]),
                 new FixedValue(pathArray[0][2]),
-                this.firstElement
+                this.firstElement.celldlObject
             )
             this.pathPoints.push(pathPoint)
             let n = 1
@@ -54,7 +54,11 @@ export class LinearPath extends PathElement {
                     pathPoint = new PathPoint(nextX, nextY)
                 } else {
                     // End of path
-                    pathPoint = new FixedPathPoint(nextX, nextY, this.lastElement)
+                    pathPoint = new FixedPathPoint(
+                        nextX,
+                        nextY,
+                        this.lastElement.celldlObject
+                    )
                 }
                 // line from lastpoint to controlpoint
                 this.pathPoints.push(pathPoint)
@@ -64,8 +68,8 @@ export class LinearPath extends PathElement {
     }
 
     protected movePathPoint(position: PointLike) {
-        const firstElement = this.pathPoints.at(0)!.component
-        const lastElement = this.pathPoints.at(-1)!.component
+        const firstElement = this.pathPoints.at(0)?.component?.celldlSvgElement
+        const lastElement = this.pathPoints.at(-1)?.component?.celldlSvgElement
         this.movePoint!.move(position)
         if ([1, 2].includes(this.moveIndex)) {
             // Index is for either the first or second point after the start point, so
@@ -87,24 +91,24 @@ export class LinearPath extends PathElement {
         }
     }
 
-    protected movedComponentBoundingBox(index: number, component: BoundedElement, _centroidDelta: Point) {
-        const position = component.centroid
+    protected movedElementBoundingBox(index: number, element: BoundedElement, _centroidDelta: Point) {
+        const position = element.centroid
 
         const pathPoint = this.pathPoints.at(index)!
         const prevPoint = index > 0 ? this.pathPoints[index - 1] : null
         const nextPoint = index < this.pathPoints.length - 1 ? this.pathPoints[index + 1] : null
         if (prevPoint) {
             if (index > 1) {
-                const component = this.pathPoints.at(index - 2)!.component
-                if (component) {
-                    const boundaryPoint = component.boundaryIntersections(prevPoint)[0]
+                const element = this.pathPoints.at(index - 2)?.component?.celldlSvgElement
+                if (element) {
+                    const boundaryPoint = element.boundaryIntersections(prevPoint)[0]
                     if (boundaryPoint) {
                         this.pathPoints.at(index - 2)!.reassignPosition(boundaryPoint)
                     }
                 }
             }
             if (prevPoint.component && !prevPoint.isConduit) {
-                const boundaryPoint = prevPoint.component.boundaryIntersections(pathPoint)[0]
+                const boundaryPoint = prevPoint.component?.celldlSvgElement?.boundaryIntersections(pathPoint)[0]
                 if (boundaryPoint) {
                     prevPoint.reassignPosition(boundaryPoint)
                 }
@@ -112,16 +116,16 @@ export class LinearPath extends PathElement {
         }
         if (nextPoint) {
             if (index < this.pathPoints.length - 2) {
-                const component = this.pathPoints.at(index + 2)!.component
-                if (component) {
-                    const boundaryPoint = component.boundaryIntersections(nextPoint)[0]
+                const element = this.pathPoints.at(index + 2)?.component?.celldlSvgElement
+                if (element) {
+                    const boundaryPoint = element.boundaryIntersections(nextPoint)[0]
                     if (boundaryPoint) {
                         this.pathPoints.at(index + 2)!.reassignPosition(boundaryPoint)
                     }
                 }
             }
             if (nextPoint.component && !nextPoint.isConduit) {
-                const boundaryPoint = nextPoint.component.boundaryIntersections(pathPoint)[0]
+                const boundaryPoint = nextPoint.component?.celldlSvgElement?.boundaryIntersections(pathPoint)[0]
                 if (boundaryPoint) {
                     nextPoint.reassignPosition(boundaryPoint)
                 }
@@ -131,17 +135,17 @@ export class LinearPath extends PathElement {
 
         // One and only one of prev/next point will be defined
         const boundaryPoint = prevPoint
-            ? pathPoint.component!.boundaryIntersections(prevPoint)[0]
+            ? pathPoint.component?.celldlSvgElement?.boundaryIntersections(prevPoint)[0]
             : nextPoint
-              ? pathPoint.component!.boundaryIntersections(nextPoint)[0]
+              ? pathPoint.component?.celldlSvgElement?.boundaryIntersections(nextPoint)[0]
               : null
         if (boundaryPoint) {
             pathPoint.reassignPosition(boundaryPoint)
         }
     }
 
-    protected resizedComponentBoundingBox(index: number, component: BoundedElement, _cornerDeltas: [Point, Point]) {
-        this.movedComponentBoundingBox(index, component, _cornerDeltas[0])
+    protected resizedElementBoundingBox(index: number, element: BoundedElement, _cornerDeltas: [Point, Point]) {
+        this.movedElementBoundingBox(index, element, _cornerDeltas[0])
     }
 
     protected simplifyPathPoints(): PathPoint[] | null {

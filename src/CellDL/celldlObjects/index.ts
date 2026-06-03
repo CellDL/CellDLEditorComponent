@@ -620,7 +620,7 @@ export class CellDLInterface extends CellDLConnectedObject {
         const centroidDelta = component.centroid.subtract(savedCentroid)
         for (const connection of this.#externalConnections) {
             for (const path of (<SvgConnection>connection.celldlSvgElement).pathElements) {
-                path.componentBoundingBoxMoved(component, centroidDelta)
+                path.elementBoundingBoxMoved(component, centroidDelta)
             }
             connection.redraw()
         }

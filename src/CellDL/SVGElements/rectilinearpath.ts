@@ -206,7 +206,7 @@ export class RectilinearPath extends PathElement {
         const boundaryPoint = new FixedPathPoint(
             new FixedValue(intersections[0]!.x),
             new FixedValue(intersections[0]!.y),
-            element
+            element.celldlObject
         )
         const splayPoint = new PathPoint(
             new RestrictedValue(intersections[1]!.x, ...element.xBounds(CONNECTION_SPLAY_PADDING)),
@@ -284,13 +284,13 @@ export class RectilinearPath extends PathElement {
         splayPoint: PathPoint,
         index: number,
         face: string,
-        component: BoundedElement,
+        element: BoundedElement,
         delta: PointLike
     ) {
         const nPoints = this.pathPoints.length
         const boundaryPoint = this.pathPoints.at(index)!
         splayPoint.adjustValue(delta)
-        const boundaryIntersection = component.boundaryIntersections(splayPoint)[0]
+        const boundaryIntersection = element.boundaryIntersections(splayPoint)[0]
         if (boundaryIntersection) {
             boundaryPoint.reassignPosition(boundaryIntersection)
         }
@@ -316,7 +316,7 @@ export class RectilinearPath extends PathElement {
         }
     }
 
-    protected resizedComponentBoundingBox(index: number, component: BoundedElement, cornerDeltas: [Point, Point]) {
+    protected resizedElementBoundingBox(index: number, element: BoundedElement, cornerDeltas: [Point, Point]) {
         //  [TL, BR]
         const nPoints = this.pathPoints.length
         let splayPoint: PathPoint
@@ -327,19 +327,19 @@ export class RectilinearPath extends PathElement {
         } else {
             return
         }
-        const face = component.boundaryFace(splayPoint)
+        const face = element.boundaryFace(splayPoint)
         if (face === 'L') {
-            this.#repositionSplayPoint(splayPoint, index, face, component, { x: cornerDeltas[1].x, y: 0 })
+            this.#repositionSplayPoint(splayPoint, index, face, element, { x: cornerDeltas[1].x, y: 0 })
         } else if (face === 'R') {
-            this.#repositionSplayPoint(splayPoint, index, face, component, { x: cornerDeltas[0].x, y: 0 })
+            this.#repositionSplayPoint(splayPoint, index, face, element, { x: cornerDeltas[0].x, y: 0 })
         } else if (face === 'T') {
-            this.#repositionSplayPoint(splayPoint, index, face, component, { x: 0, y: cornerDeltas[1].y })
+            this.#repositionSplayPoint(splayPoint, index, face, element, { x: 0, y: cornerDeltas[1].y })
         } else if (face === 'B') {
-            this.#repositionSplayPoint(splayPoint, index, face, component, { x: 0, y: cornerDeltas[0].y })
+            this.#repositionSplayPoint(splayPoint, index, face, element, { x: 0, y: cornerDeltas[0].y })
         }
     }
 
-    protected movedComponentBoundingBox(index: number, component: BoundedElement, centroidDelta: Point) {
+    protected movedElementBoundingBox(index: number, element: BoundedElement, centroidDelta: Point) {
         const nPoints = this.pathPoints.length
         let splayPoint: PathPoint
         if (index === 0) {
@@ -349,12 +349,12 @@ export class RectilinearPath extends PathElement {
         } else {
             return
         }
-        const face = component.boundaryFace(splayPoint)
-        this.#repositionSplayPoint(splayPoint, index, face, component, centroidDelta)
+        const face = element.boundaryFace(splayPoint)
+        this.#repositionSplayPoint(splayPoint, index, face, element, centroidDelta)
     }
 
     #moveSplayPoint(splayPoint: PathPoint, boundaryPoint: PathPoint, position: PointLike) {
-        let intersections = boundaryPoint.component!.boundaryIntersections(position)
+        let intersections = boundaryPoint.component?.celldlSvgElement?.boundaryIntersections(position)
         if (intersections[1]) {
             const dirn = ['L', 'R'].includes(intersections[2]) ? 'H' : 'V'
             splayPoint.move(intersections[1], {
@@ -363,7 +363,7 @@ export class RectilinearPath extends PathElement {
                 fullSnap: false,
                 resolution: 0.2
             })
-            intersections = boundaryPoint.component!.boundaryIntersections(splayPoint, 0)
+            intersections = boundaryPoint.component?.celldlSvgElement?.boundaryIntersections(splayPoint, 0)
         }
         if (intersections[0]) {
             boundaryPoint.reassignPosition(intersections[0])
@@ -371,7 +371,7 @@ export class RectilinearPath extends PathElement {
     }
 
     #updateComponentBoundaryPoint(boundaryPoint: PathPoint, position: PointLike) {
-        const intersections = boundaryPoint.component!.boundaryIntersections(position, 0)
+        const intersections = boundaryPoint.component?.celldlSvgElement?.boundaryIntersections(position, 0)
         if (intersections[0]) {
             boundaryPoint.reassignPosition(intersections[0])
         }

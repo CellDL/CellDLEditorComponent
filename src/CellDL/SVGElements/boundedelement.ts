@@ -96,10 +96,10 @@ export class BoundedElement extends CellDLSVGElement {
             this.#controlRect.move(svgPoint)
             this.setCentroid(this.#controlRect.centroid.point)
             const centroidDelta = this.centroid.subtract(savedCentroid)
-            // Reset any restrictions for `componentBoundingBoxBoxMoved()`
+            // Reset any restrictions for `elementBoundingBoxBoxMoved()`
             this.unlimitDirection()
             for (const path of this.#connectedPathElements.values()) {
-                path.componentBoundingBoxMoved(this, centroidDelta)
+                path.elementBoundingBoxMoved(this, centroidDelta)
             }
             this.#undoMoveAction.endMove(0, this.#controlRect.centroid.point)
             if (this.#controlRect.dirty) {
@@ -165,11 +165,11 @@ export class BoundedElement extends CellDLSVGElement {
         // @ts-expect-error: `index` is in range
         const cornerDeltas = this.corners.map((corner, index) => corner.subtract(savedCorners[index]))
         if (this.celldlObject.isConnectable) {
-            // Reset any restrictions for `componentBoundingBoxResisized()`
+            // Reset any restrictions for `elemntBoundingBoxResisized()`
             this.unlimitDirection()
             // Adjust boundary intersections of paths connected to the component
             for (const path of this.#connectedPathElements.values()) {
-                path.componentBoundingBoxResisized(this, cornerDeltas as [Point, Point])
+                path.elementBoundingBoxResisized(this, cornerDeltas as [Point, Point])
             }
             ;(<CellDLConnectedObject>this.celldlObject).connections.forEach((c) => { c.redraw() })
         }

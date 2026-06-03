@@ -23,7 +23,7 @@ import type { NormalArray } from 'svg-path-commander'
 
 //==============================================================================
 
-import type { CellDLConnection } from '@editor/celldlObjects/index'
+import type { CellDLConnection, CellDLObject } from '@editor/celldlObjects/index'
 import type { EditorFrame } from '@editor/editor/editorframe'
 import type { Point, PointLike } from '@renderer/common/points'
 import { svgPathElement } from '@renderer/common/svgUtils'
@@ -45,7 +45,7 @@ export class PathPoint extends ControlPoint {
     constructor(
         xValue: RestrictedValue,
         yValue: RestrictedValue,
-        readonly component: BoundedElement | null = null,
+        readonly component: CellDLObject | null = null,
         static_value: boolean = false
     ) {
         super(xValue, yValue, component)
@@ -70,7 +70,7 @@ export class FixedPathPoint extends PathPoint {
     constructor(
         xValue: FixedValue,
         yValue: FixedValue,
-        readonly component: BoundedElement | null = null
+        readonly component: CellDLObject | null = null
     ) {
         super(xValue, yValue, component)
     }
@@ -240,7 +240,7 @@ export class PathElement {
     remove() {
         this.pathPoints.forEach((cp, _) => {
             if (cp.component) {
-                cp.component.removePathElement(this)
+                (cp.component?.celldlSvgElement as BoundedElement).removePathElement(this)
             }
         })
     }
@@ -273,21 +273,21 @@ export class PathElement {
         }
     }
 
-    componentBoundingBoxMoved(component: BoundedElement, centroidDelta: Point) {
+    elementBoundingBoxMoved(element: BoundedElement, centroidDelta: Point) {
         for (const index of [0, this.#pathPoints.length - 1]) {
             // biome-ignore lint/style/noNonNullAssertion: index is in range
-            if (component === this.#pathPoints[index]!.component) {
-                this.movedComponentBoundingBox(index, component, centroidDelta)
+            if (element === this.#pathPoints[index]!.component?.celldlSvgElement) {
+                this.movedElementBoundingBox(index, element, centroidDelta)
                 return
             }
         }
     }
 
-    componentBoundingBoxResisized(component: BoundedElement, cornerDeltas: [Point, Point]) {
+    elementBoundingBoxResisized(element: BoundedElement, cornerDeltas: [Point, Point]) {
         for (const index of [0, this.#pathPoints.length - 1]) {
             // biome-ignore lint/style/noNonNullAssertion: index is in range
-            if (component === this.#pathPoints[index]!.component) {
-                this.resizedComponentBoundingBox(index, component, cornerDeltas)
+            if (element === this.#pathPoints[index]!.component?.celldlSvgElement) {
+                this.resizedElementBoundingBox(index, element, cornerDeltas)
                 return
             }
         }
@@ -308,9 +308,9 @@ export class PathElement {
 
     protected movePathPoint(_position: PointLike) {}
 
-    protected movedComponentBoundingBox(_index: number, _component: BoundedElement, _centroidDelta: Point) {}
+    protected movedElementBoundingBox(_index: number, _element: BoundedElement, _centroidDelta: Point) {}
 
-    protected resizedComponentBoundingBox(_index: number, _component: BoundedElement, _cornerDeltas: [Point, Point]) {}
+    protected resizedElementBoundingBox(_index: number, _element: BoundedElement, _cornerDeltas: [Point, Point]) {}
 
     protected setPathPoints(_pathArray: NormalArray) {}
 
