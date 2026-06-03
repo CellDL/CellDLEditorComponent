@@ -17,6 +17,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ******************************************************************************/
+/** biome-ignore-all lint/style/noNonNullAssertion: Array indices will be in range */
 
 import type { NormalArray } from 'svg-path-commander'
 
@@ -222,7 +223,7 @@ export class RectilinearPath extends PathElement {
         if (this.validPath) {  // ==> starts with 'M' command and at least two long array.
             const pathLength = pathArray.length
             let pathIndex = 1
-            let currentPathPoint = new Point(pathArray[1][1], pathArray[1][2])
+            let currentPathPoint = new Point(pathArray[1]![1], pathArray[1]![2])
             const firstPathPoints = RectilinearPath.#elementPathPoints(this.firstElement, currentPathPoint)
             this.pathPoints.push(...firstPathPoints)
             let prevPathPoint = this.pathPoints[1]!
@@ -236,7 +237,7 @@ export class RectilinearPath extends PathElement {
                 this.pathPoints.push(pathPoint)
                 prevPathPoint = pathPoint
                 pathIndex += 1
-                currentPathPoint = new Point(pathArray[pathIndex][1], pathArray[pathIndex][2])
+                currentPathPoint = new Point(pathArray[pathIndex]![1], pathArray[pathIndex]![2])
             }
             // currentPathPoint is now the second to last path point but we don't yet have a control point for it
             if (this.lastElement.pointOutside(currentPathPoint, CONNECTION_SPLAY_PADDING)) {
@@ -355,7 +356,7 @@ export class RectilinearPath extends PathElement {
 
     #moveSplayPoint(splayPoint: PathPoint, boundaryPoint: PathPoint, position: PointLike) {
         let intersections = boundaryPoint.component?.celldlSvgElement?.boundaryIntersections(position)
-        if (intersections[1]) {
+        if (intersections !== undefined && intersections[1]!) {
             const dirn = ['L', 'R'].includes(intersections[2]) ? 'H' : 'V'
             splayPoint.move(intersections[1], {
                 noAlignX: dirn === 'H',
@@ -365,14 +366,14 @@ export class RectilinearPath extends PathElement {
             })
             intersections = boundaryPoint.component?.celldlSvgElement?.boundaryIntersections(splayPoint, 0)
         }
-        if (intersections[0]) {
+        if (intersections !== undefined && intersections[0]!) {
             boundaryPoint.reassignPosition(intersections[0])
         }
     }
 
     #updateComponentBoundaryPoint(boundaryPoint: PathPoint, position: PointLike) {
         const intersections = boundaryPoint.component?.celldlSvgElement?.boundaryIntersections(position, 0)
-        if (intersections[0]) {
+        if (intersections !== undefined && intersections[0]!) {
             boundaryPoint.reassignPosition(intersections[0])
         }
     }
@@ -515,7 +516,7 @@ export class RectilinearPath extends PathElement {
         index = 0
         const newEdges: PathEdge[] = []
         while (index < cleanEdges.length) {
-            const edge = cleanEdges[index]!
+            const edge = cleanEdges[index] as PathEdge
             if (edge.direction === 'S') {
                 newEdges.push(edge)
             } else {

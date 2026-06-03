@@ -17,6 +17,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ******************************************************************************/
+/** biome-ignore-all lint/style/noNonNullAssertion: Array indices will be in range */
 
 import type { NormalArray } from 'svg-path-commander'
 
@@ -44,7 +45,7 @@ export class LinearPath extends PathElement {
             let n = 1
             while (n < pathArray.length) {
                 const drawCommand = pathArray[n]
-                if (drawCommand[0] !== 'L') {
+                if (drawCommand === undefined || drawCommand[0] !== 'L') {
                     this.validPath = false
                     break
                 }
@@ -70,31 +71,32 @@ export class LinearPath extends PathElement {
     protected movePathPoint(position: PointLike) {
         const firstElement = this.pathPoints.at(0)?.component?.celldlSvgElement
         const lastElement = this.pathPoints.at(-1)?.component?.celldlSvgElement
-        this.movePoint!.move(position)
+        this.movePoint?.move(position)
         if ([1, 2].includes(this.moveIndex)) {
             // Index is for either the first or second point after the start point, so
             // update the boundary intersection for the start point (move of second point may
             // have moved first point after start point)
-            const boundaryPoint = firstElement!.boundaryIntersections(this.pathPoints[1])[0]
+            const boundaryPoint = firstElement?.boundaryIntersections(this.pathPoints[1]!)[0]
             if (boundaryPoint) {
-                this.pathPoints[0]!.reassignPosition(boundaryPoint)
+                this.pathPoints.at(0)?.reassignPosition(boundaryPoint)
             }
         }
         if ([2, 3].includes(this.pathPoints.length - this.moveIndex)) {
             // Index is for either the first or second point before the last point, so
             // update the boundary intersection for the last point (move of second point may
             // have moved first point before last point)
-            const boundaryPoint = lastElement!.boundaryIntersections(this.pathPoints[this.pathPoints.length - 2])[0]
+            const boundaryPoint = lastElement?.boundaryIntersections(this.pathPoints[this.pathPoints.length - 2]!)[0]
             if (boundaryPoint) {
-                this.pathPoints.at(-1)!.reassignPosition(boundaryPoint)
+                this.pathPoints.at(-1)?.reassignPosition(boundaryPoint)
             }
         }
+        this.setDirty()
     }
 
     protected movedElementBoundingBox(index: number, element: BoundedElement, _centroidDelta: Point) {
         const position = element.centroid
 
-        const pathPoint = this.pathPoints.at(index)!
+        const pathPoint = this.pathPoints.at(index) as PathPoint
         const prevPoint = index > 0 ? this.pathPoints[index - 1] : null
         const nextPoint = index < this.pathPoints.length - 1 ? this.pathPoints[index + 1] : null
         if (prevPoint) {
@@ -103,7 +105,7 @@ export class LinearPath extends PathElement {
                 if (element) {
                     const boundaryPoint = element.boundaryIntersections(prevPoint)[0]
                     if (boundaryPoint) {
-                        this.pathPoints.at(index - 2)!.reassignPosition(boundaryPoint)
+                        this.pathPoints.at(index - 2)?.reassignPosition(boundaryPoint)
                     }
                 }
             }
@@ -120,7 +122,7 @@ export class LinearPath extends PathElement {
                 if (element) {
                     const boundaryPoint = element.boundaryIntersections(nextPoint)[0]
                     if (boundaryPoint) {
-                        this.pathPoints.at(index + 2)!.reassignPosition(boundaryPoint)
+                        this.pathPoints.at(index + 2)?.reassignPosition(boundaryPoint)
                     }
                 }
             }

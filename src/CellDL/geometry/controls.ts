@@ -21,7 +21,6 @@ limitations under the License.
 import type { CellDLConnection, CellDLObject } from '@editor/celldlObjects/index'
 import type { EditorFrame } from '@editor/editor/editorframe'
 import { editGuides } from '@editor/editor/editguides'
-import type { BoundedElement } from '@editor/SVGElements/boundedelement'
 
 import { svgCircle, svgRect } from '@renderer/common/svgUtils'
 
@@ -70,7 +69,7 @@ export class ControlPoint extends RestrictedPoint {
     }
 
     get isConduit() {
-        return this.celldlObject !== null && this.celldlObject.isConduit
+        return this.celldlObject?.isConduit
     }
 
     static fromPoint(point: PointLike): ControlPoint {
@@ -164,7 +163,7 @@ export class FixedControlPoint extends ControlPoint {
     constructor(
         xValue: FixedValue,
         yValue: FixedValue,
-        readonly celldlObject: CellDLObject | null = null
+        celldlObject: CellDLObject | null = null
     ) {
         super(xValue, yValue, celldlObject)
     }
