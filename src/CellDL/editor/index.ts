@@ -447,7 +447,7 @@ export class CellDLEditor {
         }
     }
 
-    #showStatus(pos: PointLike|null) {
+    #showStatus(pos: PointLike|null, currentObject: CellDLObject|null=null) {
         if (pos === null) {
             this.status = ''
             if (this.#statusPos) {
@@ -463,14 +463,17 @@ export class CellDLEditor {
             }
         } else {
             const position = `(${round(pos.x, 1)}, ${round(pos.y, 1)})`
-            if (this.#currentObject) {
-                let pluginText = componentLibraryPlugin.statusText(this.#currentObject)
+            if (currentObject === null) {
+                currentObject = this.#currentObject
+            }
+            if (currentObject) {
+                let pluginText = componentLibraryPlugin.statusText(currentObject)
                 if (pluginText !== '') {
-                    pluginText = ` (${pluginText})`
+                    pluginText = ` (xx${pluginText})`
                 }
-                this.status = (this.#currentObject.name ?? '') + pluginText
+                this.status = (currentObject.name ?? '') + pluginText
                 if (this.#statusPos) {
-                    this.#statusPos.innerText = `${this.#currentObject.id} ${position}`
+                    this.#statusPos.innerText = `${currentObject.id} ${position}`
                 }
             } else {
                 this.status = ''
@@ -634,7 +637,7 @@ export class CellDLEditor {
             // Select newly added object
             this.#unsetSelectedObjects()
             this.#setSelectedObject(celldlObject)
-            this.#showStatus(celldlObject.celldlSvgElement?.centroid as Point)
+            this.#showStatus(celldlObject.celldlSvgElement?.centroid as Point, celldlObject)
         }
     }
 
