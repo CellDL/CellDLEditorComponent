@@ -993,6 +993,91 @@ export class CellDLEditor {
             //console.log('INFO:', this.#selectedObject.asString())
         }
     } */
+
+    //==========================================================================
+
+    /** Testing */
+    testAddComponent(posn: PointLike): string|undefined {
+        console.log('ADD at', posn)
+        let component: CellDLObject|null = null
+        this.#editorState = EDITOR_STATE.AddComponent   // toolbar needs to change active button...
+        if (this.#currentTemplateDetails) {
+            const addPosn = this.#celldlDiagram!.svgToDomCoords(posn)
+            this.#addComponentTemplate(addPosn, this.#currentTemplateDetails)
+            component = this.#selectedObjectList.at(-1) as CellDLObject
+        }
+        this.#unsetSelectedObjects()
+        this.#editorState = EDITOR_STATE.Selecting      // revert to default state
+        // assert have component with centroid === posn
+        console.log(' -->', component?.id, component?.celldlSvgElement?.centroid)
+        return component?.id
+    }
+
+    /** Testing */
+    testMoveComponent(id: string, offset: PointLike) {
+        this.#editorState = EDITOR_STATE.Selecting      // toolbar needs to change active button...
+        const currentObject = this.#celldlDiagram?.objectById(id) as CellDLConnectedObject
+        if (currentObject) {
+            // pointer over
+            const element = currentObject.celldlSvgElement?.svgElement as SVGGraphicsElement
+            currentObject.initialiseMove(element)  // will set moveable
+            this.#currentObject = currentObject
+            // mouse down
+            const startPosn = Point.fromPoint(currentObject.celldlSvgElement?.centroid as PointLike)
+            currentObject.startMove(startPosn)
+            const movePosn = startPosn.add(offset)
+            console.log(`MOVE ${id} from`, startPosn, 'to', movePosn)
+            this.#moving = true
+            this.#moved = false
+            // pointer move
+            this.#pointerMoved = true
+            currentObject.move(movePosn)
+            this.#moved = true
+            // mouse up
+            currentObject.endMove()
+            currentObject.finaliseMove()
+            this.#moving = false
+            console.log(' -->', currentObject?.id, currentObject?.celldlSvgElement?.centroid)
+        }
+        // assert component's centroid === posn
+    }
+
+    /** Testing */
+    testMoveComponents(ids: string[], offset: PointLike) {
+        this.#editorState = EDITOR_STATE.Selecting      // toolbar needs to change active button...
+        this.#unsetSelectedObjects()
+        if (ids.length) {
+            const currentObject = this.#celldlDiagram?.objectById(ids[0]) as CellDLConnectedObject
+            if (currentObject) {
+                this.#currentObject = currentObject
+                const startPosn = Point.fromPoint(currentObject.celldlSvgElement?.centroid as PointLike)
+                const movePosn = startPosn.add(offset)
+                this.#setSelectedObject(currentObject)
+                for (const id of ids.slice(1)) {
+                    const object = this.#celldlDiagram?.objectById(id) as CellDLConnectedObject
+                    if (object) {
+                        this.#setSelectedObject(object)
+                    }
+                }
+                this.#celldlDiagram?.startMove(startPosn, currentObject, [...this.#selectedObjects.values()] as CellDLConnectedObject[])
+                this.#moving = true
+                this.#moved = false
+                // pointer move
+                this.#pointerMoved = true
+                this.#celldlDiagram?.move(movePosn)
+                this.#moved = true
+                // mouse up
+                this.#celldlDiagram?.endMove()
+                for (const selectObject of this.#selectedObjects.values()) {
+                    if (selectObject.id !== this.#currentObject?.id) {
+                        selectObject.finaliseMove()
+                    }
+                }
+                this.#unsetSelectedObjects()
+            this.#moving = false
+            }
+        }
+    }
 }
 
 //==============================================================================
