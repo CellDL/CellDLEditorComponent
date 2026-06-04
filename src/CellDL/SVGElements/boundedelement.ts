@@ -43,6 +43,7 @@ export class BoundedElement extends CellDLSVGElement {
     #connectedPathElements: Map<string, PathElement> = new Map()
     #controlRect: ControlRect
     #topLeftCorner: Point
+    #excludeConnectionIds: Set<string> = new Set()
     #localTransform: Transform
     #undoMoveAction: EditorUndoAction | null = null
 
@@ -73,6 +74,7 @@ export class BoundedElement extends CellDLSVGElement {
         this.#undoMoveAction.addObjectDetails(this.celldlObject)
         this.#undoMoveAction.startMove(0, this.#controlRect.centroid.point)
         this.#controlRect.startMove(svgPoint)
+        this.#excludeConnectionIds = options?.excludeConnectionIds || new Set()
     }
 
     limitDirection(direction: string, minimum: number | RestrictedValue, maximum: number | RestrictedValue) {
@@ -99,7 +101,9 @@ export class BoundedElement extends CellDLSVGElement {
             // Reset any restrictions for `elementBoundingBoxBoxMoved()`
             this.unlimitDirection()
             for (const path of this.#connectedPathElements.values()) {
-                path.elementBoundingBoxMoved(this, centroidDelta)
+                if (!this.#excludeConnectionIds.has(path.connection.id)) {
+                    path.elementBoundingBoxMoved(this, centroidDelta)
+                }
             }
             this.#undoMoveAction.endMove(0, this.#controlRect.centroid.point)
             if (this.#controlRect.dirty) {
@@ -112,7 +116,9 @@ export class BoundedElement extends CellDLSVGElement {
     endMove() {
         super.endMove()
         for (const path of this.#connectedPathElements.values()) {
-            path.endMove()
+            if (!this.#excludeConnectionIds.has(path.connection.id)) {
+                path.endMove()
+            }
         }
         this.#undoMoveAction = null
     }
