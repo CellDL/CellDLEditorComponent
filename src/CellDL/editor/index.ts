@@ -632,7 +632,7 @@ export class CellDLEditor {
         if (celldlObject) {
             this.#setActiveObject(celldlObject)
             this.#setSelectedObject(celldlObject)
-            this.#showStatus(eventPosition)
+            this.#showStatus(celldlObject.celldlSvgElement?.centroid as Point)
         }
     }
 
