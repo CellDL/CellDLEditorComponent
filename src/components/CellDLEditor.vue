@@ -7,7 +7,7 @@
                 @button-event="buttonEvent"
                 @popover-event="popoverEvent"
             )
-            div#svg-content(ref="svgContent")
+            div#svg-container(ref="svgContainer")
                 EditorContextMenu(
                     :contextMenuProps="contextMenuProps"
                 )
@@ -144,7 +144,7 @@ const defaultComponent = componentLibraryPlugin.getSelectedTemplate()!
 //==============================================================================
 //==============================================================================
 
-const svgContent = vue.ref(null)
+const svgContainer = vue.ref(null)
 
 let celldlDiagram: CellDLDiagram|undefined
 
@@ -372,19 +372,22 @@ vue.watch(
 //==============================================================================
 
 vue.onMounted(async () => {
-
     // Tell the editor about the default connection style and component
-
     despatchToolbarEvent('value', EDITOR_TOOL_IDS.DrawConnectionTool, DEFAULT_CONNECTION_STYLE_DEFINITION.id)
     despatchToolbarEvent('value', EDITOR_TOOL_IDS.AddComponentTool, defaultComponent.id)
 
-    if (svgContent.value) {
-        celldlEditor.mount(svgContent.value)
+    if (svgContainer.value) {
+        const svgContainerElement: HTMLElement = svgContainer.value
+        window.setTimeout(async () => {
+            if (svgContainerElement.clientWidth === 0 || svgContainerElement.clientHeight === 0) {
+                console.error('zero sized container!!')
+            }
+            celldlEditor.mount(svgContainerElement)
 
-        // Create a new diagram in the editor's window
-        celldlDiagram = new CellDLDiagram('', '', celldlEditor)
-
-        await celldlDiagram.edit()
+            // Create a new diagram in the editor's window
+            celldlDiagram = new CellDLDiagram('', '', celldlEditor)
+            await celldlDiagram.edit()
+        })
     }
 })
 
@@ -400,7 +403,7 @@ vue.onMounted(async () => {
     width: 40px;
     overflow: auto;
 }
-#svg-content {
+#svg-container {
     margin:  0;
     border: 2px solid var(--editor-border-color);
     flex: 1;
