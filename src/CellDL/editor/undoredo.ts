@@ -163,21 +163,21 @@ class UndoRedo {
     clean() {
         this.#redoStack = []
         this.#undoStack = []
-        window.electronAPI?.sendEditorAction('CLEAN')
+        // notify CLEAN
     }
 
     #clearRedoStack() {
         if (this.#redoStack.length) {
             this.#redoStack = []
-            window.electronAPI?.sendEditorAction('REDONE')
+            // notify no REDO
         }
     }
 
     #popRedoStack(): EditorUndoAction | null {
         if (this.#redoStack.length) {
-            const editorAction = this.#redoStack.pop()!
+            const editorAction = this.#redoStack.pop() || null
             if (this.#redoStack.length === 0) {
-                window.electronAPI?.sendEditorAction('REDONE')
+            // notify no REDO
             }
             return editorAction
         }
@@ -187,7 +187,7 @@ class UndoRedo {
     #pushRedoStack(redoAction: EditorUndoAction) {
         this.#redoStack.push(redoAction)
         if (this.#redoStack.length === 1) {
-            window.electronAPI?.sendEditorAction('REDO')
+            // notify can REDO
         }
     }
 
@@ -195,7 +195,7 @@ class UndoRedo {
         if (this.#undoStack.length) {
             const editorAction = this.#undoStack.pop()!
             if (this.#undoStack.length === 0) {
-                window.electronAPI?.sendEditorAction('CLEAN')
+                // notify CLEAN
             }
             return editorAction
         }
