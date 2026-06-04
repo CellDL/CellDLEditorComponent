@@ -24,14 +24,14 @@ import { useTippy } from "vue-tippy"
 
 import '@renderer/assets/svgContent.css'
 
-import type { CellDLObject } from '@editor/celldlObjects'
+import type { CellDLObject, CellDLConnectedObject } from '@editor/celldlObjects'
 import { PathMaker, type PathNode } from '@editor/connections/pathmaker'
 import type { TemplateEventDetails } from '@editor/components'
 import { ObjectPropertiesPanel } from '@editor/components/properties'
 import type { CellDLDiagram } from '@editor/diagram'
 import { round } from '@editor/utils'
 
-import { type PointLike, PointMath } from '@renderer/common/points'
+import { Point, type PointLike, PointMath } from '@renderer/common/points'
 import type { StringProperties } from '@renderer/common/types'
 import { componentLibraryPlugin } from '@renderer/plugins'
 
@@ -848,10 +848,18 @@ export class CellDLEditor {
                 }
             }
         } else if (this.#currentObject?.moveable) {
-            // EDITOR_STATE.Selecting or EDITOR_STATE.AddComponent
-            this.#currentObject.startMove(svgPoint)
+            if (this.#selectedObjects.has(this.#currentObject.id)) {
+                this.#celldlDiagram?.startMove(
+                    svgPoint,
+                    this.#currentObject,
+                    [...this.#selectedObjects.values()] as CellDLConnectedObject[]
+                )
+            } else {
+                this.#currentObject.startMove(svgPoint)
+            }
             this.#moving = true
             this.#moved = false
+            // EDITOR_STATE.Selecting or EDITOR_STATE.AddComponent
         } else if (this.#editorState === EDITOR_STATE.Selecting) {
             if (this.#selectionBox) {
                 this.#selectionBox.pointerEvent(event, svgPoint)
@@ -877,9 +885,13 @@ export class CellDLEditor {
             }
         } else if (this.#currentObject && this.#moving) {
             // EDITOR_STATE.Selecting or EDITOR_STATE.AddComponent
+            if (this.#selectedObjects.has(this.#currentObject.id)) {
+                this.#celldlDiagram?.move(svgPoint)
+            } else {
+                this.#currentObject.move(svgPoint)
+                this.#celldlDiagram?.objectMoved(this.#currentObject)
+            }
             this.#moved = true
-            this.#currentObject.move(svgPoint)
-            this.#celldlDiagram!.objectMoved(this.#currentObject)
             if (this.#selectionBox) {
                 this.#selectionBox.updateSelectedObjects()
             }
@@ -910,15 +922,19 @@ export class CellDLEditor {
             }
             return
         }
-        const element = event.target as SVGGraphicsElement
-        const currentObject = this.#celldlDiagram.objectById(getElementId(element))
-
         if (this.#editorState !== EDITOR_STATE.DrawPath) {
             if (this.#currentObject && this.#moving) {
                 this.#moving = false
                 if (this.#moved) {
-                    this.#currentObject.endMove()
-                    if (currentObject !== this.#currentObject) {
+                    if (this.#selectedObjects.has(this.#currentObject.id)) {
+                        this.#celldlDiagram.endMove()
+                        for (const selectObject of this.#selectedObjects.values()) {
+                            if (selectObject.id !== this.#currentObject?.id) {
+                                selectObject.finaliseMove()
+                            }
+                        }
+                    } else {
+                        this.#currentObject.endMove()
                         this.#currentObject.finaliseMove()
                     }
                 }

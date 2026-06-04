@@ -18,7 +18,7 @@ limitations under the License.
 
 ******************************************************************************/
 
-import type { PointLike } from '@renderer/common/points'
+import { Point, type PointLike } from '@renderer/common/points'
 import {
     CELLDL_BACKGROUND_CLASS,
     CellDLStylesheet,
@@ -127,6 +127,10 @@ export class CellDLDiagram {
     #imported: boolean
     #lastIdentifier: number = 0
     #layers: Map<string, SVGGElement> = new Map()
+    #moveComponents: CellDLConnectedObject[] = []
+    #moveConnections: CellDLObject[] = []
+    #movedObject: CellDLObject|null = null
+    #movedObjectOffset: Point = new Point()
     #objects: Map<string, CellDLObject> = new Map()
     #orderedLayerIds: string[] = []
     #spatialIndex = new CellDLSpatialIndex()
@@ -962,6 +966,63 @@ export class CellDLDiagram {
     objectMoved(celldlObject: CellDLObject) {
         this.#spatialIndex.update(celldlObject)
         notifyChanges()
+    }
+
+    startMove(svgPoint: PointLike, movedObject: CellDLObject, moveComponents: CellDLConnectedObject[]) {
+        this.#moveConnections = []
+        const componentIds: Set<string> = new Set(moveComponents.map(c => c.id))
+        const excludeConnectionIds: Set<string> = new Set()
+        const seenConnectionIds: Set<string> = new Set()
+        for (const component of moveComponents) {
+            for (const connection of component.connections) {
+                if (!seenConnectionIds.has(connection.id)) {
+                    if (connection.source && componentIds.has(connection.source.id)
+                     && connection.target && componentIds.has(connection.target.id)) {
+                        this.#moveConnections.push(connection)
+                        excludeConnectionIds.add(connection.id)
+                        connection.startMove(svgPoint, { moveEntireConnection: true })
+                    }
+                    seenConnectionIds.add(connection.id)
+                }
+            }
+        }
+        for (const component of moveComponents) {
+            component.startMove(svgPoint, { excludeConnectionIds: excludeConnectionIds })
+        }
+        this.#movedObject = movedObject
+        this.#movedObjectOffset = Point.fromPoint(svgPoint).subtract(this.#movedObject?.celldlSvgElement?.centroid as Point)
+        this.#moveComponents = moveComponents
+    }
+
+    move(svgPoint: PointLike) {
+        // First move this.#movedObject without moving and redrawing paths, and get its change in centroid.
+        // Use this delta to adjust svgpoint before moving other components (without grid alignment nor
+        // moving/redrawing paths) and then connections (without grid aligning or limiting control points)
+        this.#movedObject?.move(svgPoint)
+        const newPosn = this.#movedObjectOffset.add(this.#movedObject?.celldlSvgElement?.centroid as Point)
+        for (const component of this.#moveComponents) {
+            if (component.id !== this.#movedObject?.id) {
+                component.move(newPosn, { noAlign: true })
+            }
+        }
+        for (const connection of this.#moveConnections) {
+            connection.move(newPosn, { moveEntireConnection: true, noAlign: true } )
+            connection.redraw()
+        }
+        notifyChanges()
+    }
+
+    endMove() {
+        for (const component of this.#moveComponents) {
+            component.endMove()
+            this.objectMoved(component)
+        }
+        for (const connection of this.#moveConnections) {
+            connection.endMove()
+        }
+        this.#moveComponents = []
+        this.#moveConnections = []
+        this.#movedObject = null
     }
 
     deleteInsertedObject(undoAction: EditorUndoAction) {
