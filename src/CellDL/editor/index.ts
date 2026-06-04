@@ -251,7 +251,7 @@ export class CellDLEditor {
             if (targetId === CONTEXT_MENU.DELETE) {
                 this.#deleteSelectedObjects()
             } else if (targetId === CONTEXT_MENU.INFO) {
-                this.#showSelectedObjectInfo()
+// WIP               this.#showSelectedObjectInfo()
             } else if (targetId === CONTEXT_MENU.GROUP_OBJECTS) {
                 if (this.#selectionBox) {
                     this.#selectionBox.makeCompartment()
@@ -918,7 +918,7 @@ export class CellDLEditor {
             if (
                 !this.#pointerMoved &&
                 !this.#newSelectionBox &&
-//                !this.#contextMenu.isOpen &&
+// WIP                !this.#contextMenu.isOpen &&
                 this.#selectionBox &&
                 !this.#selectionBox.pointInside(domPoint)
             ) {
@@ -987,11 +987,12 @@ export class CellDLEditor {
         }
     }
 
+    /* WIP
     #showSelectedObjectInfo() {
         if (this.#selectedObject) {
             //console.log('INFO:', this.#selectedObject.asString())
         }
-    }
+    } */
 }
 
 //==============================================================================

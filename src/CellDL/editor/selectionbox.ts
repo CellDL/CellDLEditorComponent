@@ -288,7 +288,7 @@ export class SelectionBox {
 
     #updateContextMenu(enabled: boolean) {
         this.#editor.enableContextMenuItem(CONTEXT_MENU.DELETE, enabled)
-        this.#editor.enableContextMenuItem(CONTEXT_MENU.GROUP_OBJECTS, enabled)
+// WIP        this.#editor.enableContextMenuItem(CONTEXT_MENU.GROUP_OBJECTS, enabled)
     }
 
     updateSelectedObjects() {
