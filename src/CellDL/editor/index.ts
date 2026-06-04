@@ -629,8 +629,10 @@ export class CellDLEditor {
         }
         const componentGroup = this.#editorFrame!.addSvgElement(template, this.#domToSvgCoords(topLeft))
         const celldlObject = this.#celldlDiagram!.addConnectedObject(componentGroup, template)
+        this.#unsetActiveObjects()
         if (celldlObject) {
-            this.#setActiveObject(celldlObject)
+            // Select newly added object
+            this.#unsetSelectedObjects()
             this.#setSelectedObject(celldlObject)
             this.#showStatus(celldlObject.celldlSvgElement?.centroid as Point)
         }
