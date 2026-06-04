@@ -614,6 +614,9 @@ export class CellDLDiagram {
     #addMoveableObject(object: CellDLObject) {
         this.#objects.set(object.id, object)
         this.#spatialIndex.add(object)
+        if (object.hasEditGuides) {
+            editGuides.addGuide(<CellDLComponent>object)
+        }
     }
 
     #addConnection(connection: CellDLConnection) {
@@ -688,6 +691,7 @@ export class CellDLDiagram {
         let svgElement: SVGGraphicsElement
         if (svgElements.length === 0) {
             console.log('No SVG elements to connect...')
+            return
         }
         if (svgElements.length > 1) {
             svgElement = document.createElementNS(SVG_URI, 'g')
@@ -908,9 +912,6 @@ export class CellDLDiagram {
         const svgElement = <SVGGraphicsElement>this.#svgDiagram.getElementById(celldlObject.id)
         if (svgElement) {
             celldlObject.assignSvgElement(svgElement, false)
-            if (celldlObject.hasEditGuides) {
-                editGuides.addGuide(<CellDLComponent>celldlObject)
-            }
             return true
         }
         console.error(`Missing SVG element for ${celldlObject.id}`)

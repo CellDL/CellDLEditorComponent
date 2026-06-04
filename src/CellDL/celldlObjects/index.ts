@@ -417,7 +417,7 @@ export class CellDLConnectedObject extends CellDLMoveableObject {
     }
 
     startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
-        (this.celldlSvgElement as BoundedElement).startMove(svgPoint, options)
+        super.startMove(svgPoint, options)
         // Remove control handles from selected connections
         this.#connections.forEach(connection => {
             connection.clearSelectedHandles()
