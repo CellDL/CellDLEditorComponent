@@ -111,16 +111,16 @@ export class Point implements PointLike {
 
 //==============================================================================
 
-export class PointMath {
-    static add(p1: PointLike, p2: PointLike): Point {
+export namespace PointMath {
+    export function add(p1: PointLike, p2: PointLike): Point {
         return new Point(p1.x + p2.x, p1.y + p2.y)
     }
 
-    static apply(p1: PointLike, fn: (number: number) => number): Point {
+    export function apply(p1: PointLike, fn: (number: number) => number): Point {
         return new Point(fn(p1.x), fn(p1.y))
     }
 
-    static colinear(p0: PointLike, p1: PointLike, p2: PointLike, between: boolean = false): boolean {
+    export function colinear(p0: PointLike, p1: PointLike, p2: PointLike, between: boolean = false): boolean {
         const d0 = PointMath.distance(p0, p1)
         const d1 = PointMath.distance(p1, p2)
         const d2 = PointMath.distance(p0, p2)
@@ -135,27 +135,27 @@ export class PointMath {
         }
     }
 
-    static distance(p1: PointLike, p2: PointLike): number {
+    export function distance(p1: PointLike, p2: PointLike): number {
         return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2)
     }
 
-    static equals(p1: PointLike, p2: PointLike): boolean {
+    export function equals(p1: PointLike, p2: PointLike): boolean {
         return (p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2 <= POINT_EPSILON_SQUARED
     }
 
-    static isZero(pt: PointLike): boolean {
+    export function isZero(pt: PointLike): boolean {
         return pt.x ** 2 + pt.y ** 2 <= POINT_EPSILON_SQUARED
     }
 
-    static scalarScale(p1: PointLike, scale: number): Point {
+    export function scalarScale(p1: PointLike, scale: number): Point {
         return new Point(scale * p1.x, scale * p1.y)
     }
 
-    static scale(p1: PointLike, scale: PointLike): Point {
+    export function scale(p1: PointLike, scale: PointLike): Point {
         return new Point(scale.x * p1.x, scale.y * p1.y)
     }
 
-    static subtract(p1: PointLike, p2: PointLike): Point {
+    export function subtract(p1: PointLike, p2: PointLike): Point {
         return new Point(p1.x - p2.x, p1.y - p2.y)
     }
 }
