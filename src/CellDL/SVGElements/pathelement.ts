@@ -128,6 +128,9 @@ export class PathElement {
             this.redraw()
         }
     }
+    get connection(): CellDLConnection {
+        return this.#connection
+    }
 
     get firstElement() {
         return this.#firstElement
