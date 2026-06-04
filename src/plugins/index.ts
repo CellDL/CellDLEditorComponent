@@ -332,7 +332,7 @@ export class ComponentLibraryPlugin {
     }
 
     statusText(celldlObject: CellDLObject): string {
-        return [...this.#registeredPlugins.values().map(plugin => plugin.statusText(celldlObject))].join(' ')
+        return [...this.#registeredPlugins.values().map(plugin => plugin.statusText(celldlObject))].filter(t => t !== '').join(' ')
     }
 
     getObjectTemplate(uri: SubjectType, metadata: MetadataPropertiesMap, rdfStore: RdfStore): ObjectTemplate|undefined {
