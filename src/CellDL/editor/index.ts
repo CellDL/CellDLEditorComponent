@@ -393,10 +393,8 @@ export class CellDLEditor {
             } else if (detail.value && TOOL_TO_STATE.has(detail.source as EDITOR_TOOL_IDS)) {
                 this.#editorState = TOOL_TO_STATE.get(detail.source as EDITOR_TOOL_IDS)!
                 this.#setDefaultCursor()
-                if (this.#editorState !== EDITOR_STATE.Selecting) {
-                    this.#unsetSelectedObjects()
-                    this.#closeSelectionBox()
-                }
+                this.#unsetSelectedObjects()
+                this.#closeSelectionBox()
                 if (this.#editorState !== EDITOR_STATE.DrawPath) {
                     // Remove any partial path from editor frame...
                     if (this.#pathMaker) {
