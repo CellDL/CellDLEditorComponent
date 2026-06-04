@@ -121,6 +121,12 @@ export class Bounds {
             this.#bottom <= container.#bottom
         )
     }
+
+    union(other: Bounds): Bounds
+    {
+        return new Bounds(Math.min(this.#left, other.#left), Math.min(this.#top, other.#top),
+                          Math.max(this.#right, other.#right), Math.max(this.#bottom, other.#bottom))
+    }
 }
 
 //==============================================================================
