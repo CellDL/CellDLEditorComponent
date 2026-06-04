@@ -67,7 +67,7 @@ import PropertiesPanel from '@renderer/components/panels/PropertiesPanel.vue'
 
 import { componentLibraryPlugin } from '@renderer/plugins'
 import { BondgraphPlugin } from '@renderer/plugins/bondgraph'
-import { ElectricalPlugin } from '@renderer/plugins/electrical'
+// WIP import { ElectricalPlugin } from '@renderer/plugins/electrical'
 
 import EditorContextMenu from './widgets/EditorContextMenu.vue'
 import type { ContextMenuProps } from './widgets/EditorContextMenu.vue'
@@ -122,6 +122,7 @@ if (crtInstance) {
 
     componentLibraryPlugin.install(app)
     componentLibraryPlugin.registerPlugin(new BondgraphPlugin())
+// WIP    componentLibraryPlugin.registerPlugin(new ElectricalPlugin())
 }
 
 vueCommon.useTheme().setTheme(props.theme)
