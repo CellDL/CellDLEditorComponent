@@ -17,7 +17,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ******************************************************************************/
-/** biome-ignore-all lint/style/noNonNullAssertion: <explanation> */
+/** biome-ignore-all lint/style/noNonNullAssertion: values known to be non null */
 
 import * as vue from 'vue'
 import { useTippy } from "vue-tippy"

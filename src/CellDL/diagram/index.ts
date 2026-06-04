@@ -319,7 +319,7 @@ export class CellDLDiagram {
             const defsElement = this.#svgDiagram.getElementById(CELLDL_DEFINITIONS_ID)
             styleElement = document.createElementNS(SVG_URI, 'style')
             styleElement.id = CELLDL_STYLESHEET_ID
-            defsElement.prepend(styleElement)
+            defsElement?.prepend(styleElement)
             styleElement.textContent = css
         }
     }
@@ -596,7 +596,7 @@ export class CellDLDiagram {
         let result: Set<CellDLObject> = new Set()
         if (object) {
             if (object.isConnection) {
-                result = new Set((<CellDLConnection>object).connectedObjects)
+                result = new Set((<CellDLConnection>object).connectedObjects) as Set<CellDLObject>
             } else if (object.isConnectable) {
                 const objects: CellDLObject[] = []
                 for (const connection of (<CellDLConnectedObject>object).connections.values()) {
@@ -621,11 +621,11 @@ export class CellDLDiagram {
     }
 
     addConnectedObject(svgElement: SVGGraphicsElement, template: ObjectTemplate): CellDLConnectedObject | null {
-        const object = this.#addNewObject(svgElement, template) as CellDLConnectedObject
+        const object = this.#addNewObject(svgElement, template)
         this.#addMoveableObject(object)
         componentLibraryPlugin.addComponent(object, this.rdfStore)
         notifyChanges()
-        return object
+        return object as CellDLConnectedObject
     }
 
     addNewConnection(svgElement: SVGGraphicsElement, template: ObjectTemplate): CellDLConnection {
@@ -684,7 +684,7 @@ export class CellDLDiagram {
         return compartment
     }
 
-    #createConnection(connectedObjects: CellDLConnectedObject[], svgElements: SVGGraphicsElement[]): CellDLConnection {
+    #createConnection(connectedObjects: CellDLConnectedObject[], svgElements: SVGGraphicsElement[]): CellDLConnection|undefined {
         let svgElement: SVGGraphicsElement
         if (svgElements.length === 0) {
             console.log('No SVG elements to connect...')
@@ -696,6 +696,7 @@ export class CellDLDiagram {
             svgElements.forEach((element) => { element.classList.remove('selected') })
             svgElements.forEach((element) => { svgElement.appendChild(element) })
         } else {
+            // biome-ignore lint/style/noNonNullAssertion: `svgElements` is one long`
             svgElement = svgElements[0]!
             svgElement.classList.remove('parent-id', 'selected')
         }
@@ -704,7 +705,9 @@ export class CellDLDiagram {
         }
         // what ComponentPlugin was used to create the object?
         const metadataProperties = MetadataPropertiesMap.fromProperties([
+            // biome-ignore lint/style/noNonNullAssertion: `connectObjects` is at least two long
             [CELLDL.uri('hasSource'), connectedObjects[0]!.uri],
+            // biome-ignore lint/style/noNonNullAssertion: index is in range
             [CELLDL.uri('hasTarget'), connectedObjects[connectedObjects.length - 1]!.uri],
             [CELLDL.uri('hasIntermediate'), connectedObjects.slice(1, -1).map((c) => c.uri)]
         ])
@@ -721,15 +724,15 @@ export class CellDLDiagram {
         return connection
     }
 
-    #createPort<T extends CellDLConnectedObject>(newObjectClass: Constructor<CellDLObject>, point: PointLike): T {
+    #createPort<T extends CellDLConnectedObject>(newObjectClass: Constructor<CellDLInterface|CellDLUnconnectedPort>, point: PointLike): T {
         const connector = this.#addNewObject(
             svgCircleElement(point, 0, { id: this.#nextIdentifier() }), {
-                CellDLClass: newObjectClass,
+                CellDLClass: newObjectClass as Constructor<CellDLObject>,
                 metadataProperties: new MetadataPropertiesMap()
             },
             false
         ) as T
-        this.#addMoveableObject(connector)
+        this.#addMoveableObject(connector as CellDLObject)
         return connector
     }
 
@@ -780,8 +783,8 @@ export class CellDLDiagram {
         //
         const interfacePorts: CellDLInterface[] = []
         const connectors = connection.connectedObjects
-        const pathElements = (<SvgConnection>connection.celldlSvgElement!).pathElements
-        const pathStart = connectors[0]!
+        const pathElements = (<SvgConnection>connection.celldlSvgElement).pathElements
+        const pathStart = connectors[0] as CellDLConnectedObject
         const newConnectors: CellDLConnectedObject[] = []
         newConnectors.push(pathStart)
         const newElements: SVGPathElement[] = []
@@ -792,7 +795,9 @@ export class CellDLDiagram {
         let currentPathInside = objectIds.has(pathStart.id)
         let pathEnd: CellDLConnectedObject
         for (let pathElementIndex = 0; pathElementIndex < pathElements.length; pathElementIndex += 1) {
+            // biome-ignore lint/style/noNonNullAssertion: index is in range
             const pathElement = pathElements[pathElementIndex]!
+            // biome-ignore lint/style/noNonNullAssertion: index is in range
             pathEnd = connectors[pathElementIndex + 1]!
             if (
                 (currentPathInside && objectIds.has(pathEnd.id)) ||
@@ -829,14 +834,16 @@ export class CellDLDiagram {
                     const interfacePort = this.createInterfacePort(splitPoint.point)
                     interfacePorts.push(interfacePort)
                     newConnectors.push(interfacePort)
-                    const interfaceElement = <BoundedElement>interfacePort.celldlSvgElement!
+                    const interfaceElement = <BoundedElement>interfacePort.celldlSvgElement
                     compartmentGroup.appendChild(interfaceElement.svgElement)
                     const tailSvgElement = pathElement.splitPath(splitPoint, interfaceElement)
                     const headSvgElement = pathElement.svgElement.cloneNode(true) as SVGPathElement
                     headSvgElement.removeAttribute('id')
                     newElements.push(headSvgElement)
                     const newConnection = this.#createConnection(newConnectors, newElements)
-                    this.#connectCompartmentConnection(newConnection, compartmentGroup, currentPathInside)
+                    if (newConnection) {
+                        this.#connectCompartmentConnection(newConnection, compartmentGroup, currentPathInside)
+                    }
                     newConnectors.length = 0
                     newConnectors.push(interfacePort)
                     newConnectors.push(pathEnd)
@@ -849,7 +856,9 @@ export class CellDLDiagram {
         if (newConnectors.length) {
             // && newElements.length ?? Or newConnectors.length > 1
             const newConnection = this.#createConnection(newConnectors, newElements)
-            this.#connectCompartmentConnection(newConnection, compartmentGroup, currentPathInside)
+            if (newConnection) {
+                this.#connectCompartmentConnection(newConnection, compartmentGroup, currentPathInside)
+            }
         }
 
         return interfacePorts
@@ -861,13 +870,14 @@ export class CellDLDiagram {
         currentPathInside: boolean
     ) {
         if (currentPathInside) {
+            // biome-ignore lint/style/noNonNullAssertion: connection will have a CellDLSvgElement
             compartmentGroup.appendChild(connection.celldlSvgElement!.svgElement)
         } else {
             if (connection.source?.isInterface) {
-                ;(<CellDLInterface>connection.source!).addExternalConnection(connection)
+                (<CellDLInterface>connection.source).addExternalConnection(connection)
             }
             if (connection.target?.isInterface) {
-                ;(<CellDLInterface>connection.target!).addExternalConnection(connection)
+                (<CellDLInterface>connection.target).addExternalConnection(connection)
             }
         }
     }
@@ -917,10 +927,10 @@ export class CellDLDiagram {
         return this.#kb.subjectsOfType(parentType).filter((st) => st[0].value.startsWith(this.#documentNode.value))
     }
 
-    #loadObject<T extends CellDLObject>(type: NamedNode, CellDLClass: Constructor<T>) {
+    #loadObject<T>(type: NamedNode, CellDLClass: Constructor<T>) {
         for (const subjectType of this.#subjectsOfType(type)) {
             if (subjectType[1].equals(type)) {
-                const object = this.#celldlObjectFromRdf(CellDLClass, subjectType[0])
+                const object = this.#celldlObjectFromRdf(CellDLClass as Constructor<CellDLObject>, subjectType[0])
                 if (this.#setObjectSvgElement(object)) {
                     this.#addMoveableObject(object)
                 }
