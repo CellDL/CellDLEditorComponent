@@ -220,7 +220,12 @@ export class PathElement {
 
     move(svgPoint: PointLike, options: ElementMoveOptions={}) {
         let redraw = false
-        if (this.#movePoint) {
+        if (options.moveEntireConnection) {
+            this.pathPoints.forEach((pathPoint) => {
+                pathPoint.reassignValue(pathPoint.offsetPoint(svgPoint))
+            })
+            redraw = true
+        } else if (this.#movePoint) {
             this.pathPoints.forEach((pathPoint) => {
                 pathPoint.clean()
             })
@@ -279,7 +284,12 @@ export class PathElement {
     }
 
     startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
-        if (this.#movePoint) {
+        if (options.moveEntireConnection) {
+            this.#movePoint = null
+            this.pathPoints.forEach((pathPoint) => {
+                pathPoint.startMove(svgPoint)
+            })
+        } else if (this.#movePoint) {
             this.#movePoint.startMove(svgPoint)
         }
     }

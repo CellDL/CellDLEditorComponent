@@ -110,6 +110,11 @@ export class SvgConnection extends CellDLSVGElement {
         return this.#pathElements
     }
 
+    activate(active = true) {
+        super.activate(active)
+        this.#moveableElement = null
+    }
+
     clearControlHandles() {
         this.#pathElements.forEach((element) => { element.clearControlHandles(this.selected) })
     }
@@ -135,6 +140,8 @@ export class SvgConnection extends CellDLSVGElement {
             this.#moveableElement.endMove(this.selected)
             this.#moveableElement = null
             this.#undoMoveAction = null
+        } else {
+            this.#pathElements.forEach((element) => { element.endMove() })
         }
     }
 
@@ -159,7 +166,9 @@ export class SvgConnection extends CellDLSVGElement {
     }
 
     move(svgPoint: PointLike, options: ElementMoveOptions={}) {
-        if (this.#moveableElement && this.#undoMoveAction) {
+        if (options.moveEntireConnection) {
+            this.#pathElements.forEach((element) => { element.move(svgPoint, options) })
+        } else if (this.#moveableElement && this.#undoMoveAction) {
             if (this.#moveableElement.move(svgPoint)) {
                 this.#undoMoveAction.endMove(this.#moveableElement.moveIndex, this.#moveableElement.movePoint!.point)
                 this.#moveableElement.redraw()
@@ -178,7 +187,9 @@ export class SvgConnection extends CellDLSVGElement {
     }
 
     startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
-        if (this.#moveableElement?.movePoint) {
+        if (options.moveEntireConnection) {
+            this.#pathElements.forEach((element) => { element.startMove(svgPoint, options) })
+        } else if (this.#moveableElement?.movePoint) {
             this.#undoMoveAction = undoRedo.undoMoveAction()
             this.#undoMoveAction.addObjectDetails(this.celldlObject)
             this.#undoMoveAction.startMove(this.#moveableElement.moveIndex, this.#moveableElement.movePoint.point)
