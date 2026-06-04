@@ -385,7 +385,6 @@ export class CellDLEditor {
 
     #toolBarEvent(event: Event) {
         const detail = (<CustomEvent>event).detail
-
         if (detail.type === 'state') {
             if (Object.values(PANEL_IDS).includes(detail.source)) {
                 this.#openPanelId = detail.value ? detail.source : null

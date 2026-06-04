@@ -123,7 +123,7 @@ export class SelectionBox {
     makeCompartment() {
         if (this.count) {
             // biome-ignore lint/style/noNonNullAssertion: the editor has a diagram
-            this.#editor.celldlDiagram!.createCompartment(Bounds.fromPoints(this.#topLeft, this.#bottomRight), [
+            this.#editor.celldlDiagram!.createCompartment(this.bounds, [
                 ...this.#selectedObjects.values()
             ])
         }

@@ -271,7 +271,6 @@ export class RestrictedValue implements NumericRange {
     }
 
     toString() {
-        //========
         return `${this.id}: [${round(this.minimum)}, ${round(this.#value)}, ${round(this.maximum)}]`
     }
 }
