@@ -267,14 +267,14 @@ export class SelectionBox {
         for (const object of fullSelection) {
             if (!selectedObjects.has(object.id)) {
                 if (!this.#selectedObjects.has(object.id)) {
-                    object.select(true)
+                    this.#editor.selectObject(object, true)
                 }
                 selectedObjects.set(object.id, object)
             }
         }
         for (const [id, object] of this.#selectedObjects.entries()) {
             if (!selectedObjects.has(id)) {
-                object.select(false)
+                this.#editor.selectObject(object, false)
             }
         }
         this.#selectedObjects = selectedObjects
@@ -282,7 +282,7 @@ export class SelectionBox {
 
     #unsetSelectedObjects() {
         for (const object of this.#selectedObjects.values()) {
-            object.select(false)
+            this.#editor.selectObject(object, false)
         }
     }
 

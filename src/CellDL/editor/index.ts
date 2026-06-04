@@ -547,6 +547,15 @@ export class CellDLEditor {
         this.#currentObject = null
     }
 
+    // Used by selection box code
+    selectObject(selectedObject: CellDLObject, select: boolean=true) {
+        if (select) {
+            this.#setSelectedObject(selectedObject)
+        } else {
+            this.#unsetSelectedObject(selectedObject)
+        }
+    }
+
     #setSelectedObject(selectedObject: CellDLObject) {
         if (!this.#selectedObjects.has(selectedObject.id)) {
             selectedObject.select(true)
