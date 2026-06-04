@@ -131,7 +131,6 @@ export class CellDLEditor {
     #panning: boolean = false
     #panzoom: PanZoom | null = null
     #pointerMoved: boolean = false
-    #pointerPosition: DOMPoint | null = null
     #moving: boolean = false
     #moved: boolean = false
 
@@ -870,7 +869,6 @@ export class CellDLEditor {
             return
         }
         this.#pointerMoved = true
-        this.#pointerPosition = new DOMPoint(event.x, event.y)
         const svgPoint = this.#domToSvgCoords(event)
         this.#showStatus(svgPoint)
         if (this.#editorState === EDITOR_STATE.DrawPath) {
