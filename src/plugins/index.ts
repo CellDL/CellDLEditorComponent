@@ -279,42 +279,52 @@ export class ComponentLibraryPlugin {
 
     addComponent(component: CellDLObject, rdfStore: RdfStore) {
         for (const plugin of this.#registeredPlugins.values()) {
-            plugin.addComponent(component, rdfStore)
+            if (Object.keys(component.pluginData(plugin.id)).length) {
+                plugin.addComponent(component, rdfStore)
+            }
         }
     }
 
     addConnection(connection: CellDLConnection, rdfStore: RdfStore) {
         for (const plugin of this.#registeredPlugins.values()) {
-            plugin.addConnection(connection, rdfStore)
+            if (Object.keys(connection.pluginData(plugin.id)).length) {
+                plugin.addConnection(connection, rdfStore)
+            }
         }
     }
 
     checkConnectionValid(startObject: CellDLObject, endObject: CellDLObject): ConnectionStatus|undefined
     {
         for (const plugin of this.#registeredPlugins.values()) {
-            const status = plugin.checkConnectionValid(startObject, endObject)
-            if (status) {
-                return status
+            if (Object.keys(startObject.pluginData(plugin.id)).length) {
+                const status = plugin.checkConnectionValid(startObject, endObject)
+                if (status) {
+                    return status
+                }
             }
         }
     }
 
     deleteComponent(component: CellDLObject, rdfStore: RdfStore) {
         for (const plugin of this.#registeredPlugins.values()) {
-            plugin.deleteComponent(component, rdfStore)
+            if (Object.keys(component.pluginData(plugin.id)).length) {
+                plugin.deleteComponent(component, rdfStore)
+            }
         }
     }
 
     deleteConnection(connection: CellDLConnection, rdfStore: RdfStore) {
         for (const plugin of this.#registeredPlugins.values()) {
-            plugin.deleteConnection(connection, rdfStore)
+            if (Object.keys(connection.pluginData(plugin.id)).length) {
+                plugin.deleteConnection(connection, rdfStore)
+            }
         }
     }
 
     getMaxConnections(celldlObject: CellDLObject): number {
         for (const pluginId of celldlObject.pluginIds) {
             const plugin = this.#registeredPlugins.get(pluginId)
-            if (plugin) {
+            if (plugin && Object.keys(celldlObject.pluginData(pluginId)).length) {
                 return plugin.getMaxConnections(celldlObject)
             }
         }
@@ -389,7 +399,7 @@ export class ComponentLibraryPlugin {
                             componentProperties: PropertyGroup[], rdfStore: RdfStore): void {
         for (const pluginId of celldlObject.pluginIds) {
             const plugin = this.#registeredPlugins.get(pluginId)
-            if (plugin) {
+            if (plugin && Object.keys(celldlObject.pluginData(pluginId)).length) {
                 plugin.loadComponentProperties(celldlObject, componentProperties, rdfStore)
             }
         }
@@ -398,7 +408,7 @@ export class ComponentLibraryPlugin {
     async updatedComponentStyling(celldlObject: CellDLObject, objectType: string, styling: StyleObject) {
         for (const pluginId of celldlObject.pluginIds) {
             const plugin = this.#registeredPlugins.get(pluginId)
-            if (plugin) {
+            if (plugin && Object.keys(celldlObject.pluginData(pluginId)).length) {
                 await plugin.updatedComponentStyling(celldlObject, objectType, styling)
             }
         }
@@ -408,7 +418,7 @@ export class ComponentLibraryPlugin {
                                     componentProperties: PropertyGroup[], rdfStore: RdfStore) {
         for (const pluginId of celldlObject.pluginIds) {
             const plugin = this.#registeredPlugins.get(pluginId)
-            if (plugin) {
+            if (plugin && Object.keys(celldlObject.pluginData(pluginId)).length) {
                 await plugin.updateObjectProperties(celldlObject, itemId, value, componentProperties, rdfStore)
             }
         }
