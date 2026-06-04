@@ -49,10 +49,11 @@ import '@renderer/assets/icons.css'
 import * as vueCommon from '@renderer/common/vueCommon'
 
 import type { StyleObject } from '@editor/components/properties'
-import { CellDLDiagram } from '@editor/diagram/index'
+import { DEFAULT_CONNECTION_STYLE_DEFINITION } from '@editor/connections'
+import { CellDLDiagram } from '@editor/diagram'
 
-import { CellDLEditor } from '@editor/editor/index'
-import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS, PANEL_IDS } from '@editor/editor/index'
+import { CellDLEditor } from '@editor/editor'
+import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS, PANEL_IDS } from '@editor/editor'
 import { editGuides } from '@editor/editor/editguides'
 import { undoRedo } from '@editor/editor/undoredo'
 
@@ -64,19 +65,12 @@ import ConnectionStylePopover from '@renderer/components/popovers/ConnectionStyl
 
 import PropertiesPanel from '@renderer/components/panels/PropertiesPanel.vue'
 
-import { componentLibraryPlugin } from '@renderer/plugins/index'
-import { BondgraphPlugin } from '@renderer/plugins/bondgraph/index'
+import { componentLibraryPlugin } from '@renderer/plugins'
+import { BondgraphPlugin } from '@renderer/plugins/bondgraph'
+import { ElectricalPlugin } from '@renderer/plugins/electrical'
 
 import EditorContextMenu from './widgets/EditorContextMenu.vue'
 import type { ContextMenuProps } from './widgets/EditorContextMenu.vue'
-
-//==============================================================================
-
-import * as $rdf from '@celldl/editor-rdf'
-
-if (!$rdf.initialised()) {
-    window.alert('The RDF module must be initialised before using the CellDL Editor component')
-}
 
 //==============================================================================
 
@@ -90,9 +84,18 @@ import type {
     EditorViewCommand
 } from '../../index'
 
-const props = defineProps<CellDLEditorProps>()
+//==============================================================================
+
+import * as $rdf from '@celldl/editor-rdf'
+
+if (!$rdf.initialised()) {
+    window.alert('The RDF module must be initialised before using the CellDL Editor component')
+}
 
 //==============================================================================
+
+const props = defineProps<CellDLEditorProps>()
+
 //==============================================================================
 
 // Setup PrimeVue's theme, vue-tippy, and our plugins
@@ -160,8 +163,6 @@ function despatchToolbarEvent(type: string, source: string, value: boolean|strin
 }
 
 //==============================================================================
-
-import { DEFAULT_CONNECTION_STYLE_DEFINITION } from '@editor/connections/index'
 
 function connectionStylePrompt(name: string): string {
     return `Draw ${name.toLowerCase()} connection`
