@@ -66,6 +66,7 @@ export class LinearPath extends PathElement {
                 n += 1
             }
         }
+        this.setDirty()
     }
 
     protected movePathPoint(position: PointLike) {
@@ -144,6 +145,7 @@ export class LinearPath extends PathElement {
         if (boundaryPoint) {
             pathPoint.reassignPosition(boundaryPoint)
         }
+        this.setDirty()
     }
 
     protected resizedElementBoundingBox(index: number, element: BoundedElement, _cornerDeltas: [Point, Point]) {

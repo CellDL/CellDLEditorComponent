@@ -262,6 +262,7 @@ export class RectilinearPath extends PathElement {
             }
             this.pathPoints.push(...lastPathPoints)
         }
+        this.setDirty()
     }
 
     #splitPath(dirn: string, firstIndex: number) {
@@ -315,6 +316,7 @@ export class RectilinearPath extends PathElement {
                 }
             }
         }
+        this.setDirty()
     }
 
     protected resizedElementBoundingBox(index: number, element: BoundedElement, cornerDeltas: [Point, Point]) {
@@ -462,6 +464,7 @@ export class RectilinearPath extends PathElement {
                 }
             }
         }
+        this.setDirty()
     }
 
     /*

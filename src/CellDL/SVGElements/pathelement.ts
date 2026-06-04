@@ -85,6 +85,7 @@ export class FixedPathPoint extends PathPoint {
 
 export class PathElement {
     #connection: CellDLConnection
+    #dirty: boolean = false
     #pathPoints: PathPoint[] = []
     #editorFrame: EditorFrame
     #firstElement: BoundedElement
@@ -123,6 +124,7 @@ export class PathElement {
         const simplifiedPath = this.simplifyPathPoints()
         if (simplifiedPath) {
             this.#pathPoints = simplifiedPath
+            this.#dirty = true
             this.redraw()
         }
     }
@@ -160,6 +162,10 @@ export class PathElement {
     }
     protected set validPath(valid: boolean) {
         this.#validPath = valid
+    }
+
+    protected setDirty() {
+        this.#dirty = true
     }
 
     clearControlHandles(selected: boolean) {
@@ -223,6 +229,7 @@ export class PathElement {
                 if (pathPoint.redraw()) redraw = true
             })
         }
+        this.#dirty = redraw
         return redraw
     }
 
@@ -234,8 +241,11 @@ export class PathElement {
     }
 
     redraw() {
-        this.#pathArray = this.pathArrayFromPathPoints()
-        this.#svgElement.setAttribute('d', SVGPathCommander.pathToString(this.#pathArray))
+        if (this.#dirty) {
+            this.#pathArray = this.pathArrayFromPathPoints()
+            this.#svgElement.setAttribute('d', SVGPathCommander.pathToString(this.#pathArray))
+            this.#dirty = false
+        }
     }
 
     remove() {
