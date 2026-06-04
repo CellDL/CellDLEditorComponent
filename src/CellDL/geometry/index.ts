@@ -261,7 +261,7 @@ export class RestrictedValue implements NumericRange {
     }
 
     reassignValue(value: number) {
-        this.#value = value
+        this.adjustValue(value - this.#value)
     }
 
     toString() {
