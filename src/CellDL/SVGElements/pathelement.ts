@@ -197,15 +197,10 @@ export class PathElement {
         this.#setSelectionClass('selected', selected)
     }
 
-    clearControlHandles(selected: boolean) {
-        // This only removes handles we know about which is why simplifyPathPoints()
-        // needs to remove handles for the points it deletes
-        for (let index = 1; index < this.#pathPoints.length - 1; ++index) {
-            if (!selected) {
-                // biome-ignore lint/style/noNonNullAssertion: index is in range
-                this.#pathPoints[index]!.removeSvgElement()
-            }
-        }
+    clearControlHandles() {
+        this.pathPoints.forEach((pathPoint, _) => {
+            pathPoint.removeSvgElement()
+        })
     }
 
     drawControlHandles(selected: boolean) {
@@ -223,8 +218,8 @@ export class PathElement {
         this.#movePoint = null
     }
 
-    endMove(selected: boolean=false) {
-        this.clearControlHandles(selected)
+    endMove() {
+        this.clearControlHandles()
         const newPoints = this.simplifyPathPoints()
         if (newPoints) {
             this.#pathPoints = newPoints
@@ -289,6 +284,7 @@ export class PathElement {
             if (pathPoint.component) {
                 (pathPoint.component?.celldlSvgElement as BoundedElement).removePathElement(this)
             }
+            pathPoint.removeSvgElement()
         })
     }
 

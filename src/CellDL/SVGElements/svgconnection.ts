@@ -125,7 +125,7 @@ export class SvgConnection extends CellDLSVGElement {
     }
 
     clearControlHandles() {
-        this.#pathElements.forEach((element) => { element.clearControlHandles(this.selected) })
+        this.#pathElements.forEach((element) => { element.clearControlHandles() })
     }
 
     drawControlHandles() {
@@ -134,7 +134,7 @@ export class SvgConnection extends CellDLSVGElement {
 
     clearSelectedHandles() {
         if (this.selected) {
-            this.#pathElements.forEach((element) => { element.clearControlHandles(false) })
+            this.#pathElements.forEach((element) => { element.clearControlHandles() })
         }
     }
 
@@ -146,7 +146,7 @@ export class SvgConnection extends CellDLSVGElement {
 
     endMove() {
         if (this.#moveableElement) {
-            this.#moveableElement.endMove(this.selected)
+            this.#moveableElement.endMove()
             this.#moveableElement = null
             this.#undoMoveAction = null
         } else {
