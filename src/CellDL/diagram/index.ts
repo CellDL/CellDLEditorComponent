@@ -593,22 +593,15 @@ export class CellDLDiagram {
     }
 
     #associatedObjects(object: CellDLObject | undefined): Set<CellDLObject> {
-        let result: Set<CellDLObject> = new Set()
-        if (object) {
-            if (object.isConnection) {
-                result = new Set((<CellDLConnection>object).connectedObjects) as Set<CellDLObject>
-            } else if (object.isConnectable) {
-                const objects: CellDLObject[] = []
-                for (const connection of (<CellDLConnectedObject>object).connections.values()) {
-                    objects.push(connection)
-                    const associatedObjects = this.#associatedObjects(connection)
-                    objects.push(...associatedObjects)
-                }
-                result = new Set(objects)
-                result.delete(object)
-            }
+        if (!object) {
+            return new Set() as Set<CellDLObject>
+        } else if (object.isConnection) {
+             return new Set((<CellDLConnection>object).connectedObjects) as Set<CellDLObject>
+        } else if (object.isConnectable) {
+            return new Set((<CellDLConnectedObject>object).connections.values())
+        } else {
+            return new Set() as Set<CellDLObject>
         }
-        return result
     }
 
     #addMoveableObject(object: CellDLObject) {

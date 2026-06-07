@@ -519,9 +519,7 @@ export class CellDLEditor {
 
     #activateObject(object: CellDLObject, active: boolean) {
         object.activate(active)
-        if (object.isConnection) {
-            this.#highlightAssociatedObjects(object, active)
-        }
+        this.#highlightAssociatedObjects(object, active)
     }
 
     #setActiveObjects(activeObjects: CellDLObject[]) {

@@ -18,7 +18,7 @@ svg {
     user-select: none;
     /* Element states while editing */
     --active: #0f8;
-    --highlighted: #05f;
+    --highlighted: #58f8;
     --selected: #0df;
     --active-selected: #0ff;
     --connection-selected: #f00;
