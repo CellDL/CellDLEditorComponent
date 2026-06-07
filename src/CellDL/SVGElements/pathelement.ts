@@ -93,7 +93,9 @@ export class PathElement {
     #moveIndex: number = 0
     #movePoint: PathPoint | null = null
     #pathArray: NormalArray
+    #selectionClasses: Set<string> = new Set()
     #svgElement: SVGPathElement
+    #svgShadow: SVGPathElement
     #svgParentId: string
     #validPath: boolean = false
 
@@ -109,17 +111,21 @@ export class PathElement {
         this.#editorFrame = connection.celldlDiagram.editorFrame!
         this.#svgElement = svgElement
         this.#svgParentId = id.split(ID_PART_SEPARATOR).slice(0, -1).join(ID_PART_SEPARATOR)
+        this.#svgShadow = this.#editorFrame.addElementAsString('<path class="shadow"/>', true) as SVGPathElement
+        this.#svgShadow.dataset.parentId = this.#svgParentId
         this.#firstElement = firstElement
         this.#firstElement.addPathElement(this)
         this.#lastElement = lastElement
         this.#lastElement.addPathElement(this)
 
-        const description = this.#svgElement.getAttribute('d') as string
+        let description = this.#svgElement.getAttribute('d') as string
         this.#pathArray = SVGPathCommander.normalizePath(description)
         if (this.#pathArray.length >= 2 && this.#pathArray[0][0] === 'M') {
             this.#validPath = true
-            this.#svgElement.setAttribute('d', SVGPathCommander.pathToString(this.#pathArray))
+            description = SVGPathCommander.pathToString(this.#pathArray)
+            this.#svgElement.setAttribute('d', description)
         }
+        this.#svgShadow.setAttribute('d', description)
         this.setPathPoints(this.#pathArray)
         const simplifiedPath = this.simplifyPathPoints()
         if (simplifiedPath) {
@@ -169,6 +175,26 @@ export class PathElement {
 
     protected setDirty() {
         this.#dirty = true
+    }
+
+    #setSelectionClass(cls: string, enable: boolean) {
+        if (enable) {
+            this.#svgShadow.classList.add(cls)
+            this.#selectionClasses.add(cls)
+        } else {
+            this.#svgShadow.classList.remove(cls)
+            this.#selectionClasses.delete(cls)
+        }
+    }
+
+    activate(active = true) {
+        this.#setSelectionClass('active', active)
+    }
+    highlight(highlight = true) {
+        this.#setSelectionClass('highlight', highlight)
+    }
+    select(selected = true) {
+        this.#setSelectionClass('selected', selected)
     }
 
     clearControlHandles(selected: boolean) {
@@ -252,14 +278,16 @@ export class PathElement {
         if (this.#dirty) {
             this.#pathArray = this.pathArrayFromPathPoints()
             this.#svgElement.setAttribute('d', SVGPathCommander.pathToString(this.#pathArray))
+            this.#svgShadow.setAttribute('d', SVGPathCommander.pathToString(this.#pathArray))
             this.#dirty = false
         }
     }
 
     remove() {
-        this.pathPoints.forEach((cp, _) => {
-            if (cp.component) {
-                (cp.component?.celldlSvgElement as BoundedElement).removePathElement(this)
+        this.#svgShadow.remove()
+        this.pathPoints.forEach((pathPoint, _) => {
+            if (pathPoint.component) {
+                (pathPoint.component?.celldlSvgElement as BoundedElement).removePathElement(this)
             }
         })
     }

@@ -309,10 +309,7 @@ export class CellDLEditor {
 
         // Make sure we have a group in which to put selection related objects
         // This MUST remain as the last group in the diagram when new layer groups are added...
-        this.#editorFrame = new EditorFrame(this.#svgDiagram!)
-
-        // Note the selection group's element so that it's not saved
-        celldlDiagram.addEditorElement(this.#editorFrame.svgGroup!)
+        this.#editorFrame = new EditorFrame(celldlDiagram)
 
         // Initialise alignment guides and grid
         editGuides.newDiagram(celldlDiagram, true)

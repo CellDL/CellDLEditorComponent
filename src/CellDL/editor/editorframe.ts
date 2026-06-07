@@ -18,74 +18,100 @@ limitations under the License.
 
 ******************************************************************************/
 
-import type { ObjectTemplate } from '@editor/components/index'
+import type { ObjectTemplate } from '@editor/components'
+import type { CellDLDiagram } from '@editor/diagram'
 import { type PointLike, PointMath } from '@renderer/common/points'
 import { SVG_URI } from '@renderer/common/svgUtils'
 
 //==============================================================================
 
+export const EDITOR_BACKGROUND_ID = 'celldl-editor-background'
 export const EDITOR_FRAME_ID = 'celldl-editor-selection-frame'
 
 //==============================================================================
 
+function addElementAsString(svgGroup: SVGGElement, element: string): SVGGraphicsElement {
+    svgGroup.insertAdjacentHTML('beforeend', element)
+    return svgGroup.lastChild as SVGGraphicsElement
+}
+
+function addSvgElement(svgGroup: SVGGElement, template: ObjectTemplate, topLeft: PointLike): SVGGElement {
+    const svgElement: SVGGElement = document.createElementNS(SVG_URI, 'g')
+    svgElement.setAttribute('style', 'visibility: hidden')
+    if (template.imageData) {
+        svgElement.insertAdjacentHTML('beforeend', `<image href="${template.imageData}">`)
+    }
+    svgGroup.append(svgElement)
+    const bbox = svgElement.getBBox()
+    const translation = PointMath.subtract(topLeft, bbox)
+    svgElement.setAttribute('transform', `translate(${translation.x}, ${translation.y})`)
+    svgElement.removeAttribute('style')
+    return svgElement
+}
+
+function clearGroup(svgGroup: SVGGElement) {
+    while (svgGroup.hasChildNodes()) {
+        const child = svgGroup.lastChild
+        if (child !== null) {
+            svgGroup.removeChild(child)
+        }
+    }
+}
+
+//==============================================================================
+
 export class EditorFrame {
+    #backgroundGroup: SVGGElement
     #frameGroupElement: SVGGElement
 
-    constructor(svgDiagram: SVGSVGElement) {
-        let editorFrameGroup = svgDiagram.getElementById(EDITOR_FRAME_ID) as SVGGraphicsElement
-        if (editorFrameGroup === null) {
-            // Create a new group at the end of our SVG
-            svgDiagram.insertAdjacentHTML('beforeend', `<g id="${EDITOR_FRAME_ID}"/>`)
-            editorFrameGroup = svgDiagram.getElementById(EDITOR_FRAME_ID) as SVGGraphicsElement
-        }
-        this.#frameGroupElement = editorFrameGroup
+    constructor(celldlDiagram: CellDLDiagram) {
+        this.#backgroundGroup = this.#addEditorGroup(celldlDiagram, EDITOR_BACKGROUND_ID, true)
+        this.#frameGroupElement = this.#addEditorGroup(celldlDiagram, EDITOR_FRAME_ID)
 
         // Remove any children that might be present
         this.clear()
     }
 
-    get svgGroup() {
-        return this.#frameGroupElement
+    #addEditorGroup(celldlDiagram: CellDLDiagram, groupId: string, prepend: boolean=false): SVGGElement {
+        const svgDiagram = celldlDiagram.svgDiagram
+        let editorGroup = svgDiagram.getElementById(groupId) as SVGGElement
+        if (editorGroup) {
+            return editorGroup
+        }
+        editorGroup = document.createElementNS(SVG_URI, 'g')
+        editorGroup.id = groupId
+        celldlDiagram.addEditorElement(editorGroup, prepend)
+        return editorGroup
     }
 
-    addElementAsString(element: string): SVGGraphicsElement | null {
-        if (this.#frameGroupElement) {
-            this.#frameGroupElement.insertAdjacentHTML('beforeend', element)
-            return this.#frameGroupElement.lastChild as SVGGraphicsElement
+    addElementAsString(element: string, background: boolean=false): SVGGraphicsElement {
+        if (background) {
+            return addElementAsString(this.#backgroundGroup, element)
+        } else {
+            return addElementAsString(this.#frameGroupElement, element)
         }
-        return null
     }
 
-    addSvgElement(template: ObjectTemplate, topLeft: PointLike): SVGGElement {
-        const svgElement: SVGGElement = document.createElementNS(SVG_URI, 'g')
-        svgElement.setAttribute('style', 'visibility: hidden')
-        if (template.imageData) {
-            svgElement.insertAdjacentHTML('beforeend', `<image href="${template.imageData}">`)
+    addSvgElement(template: ObjectTemplate, topLeft: PointLike, background: boolean=false): SVGGElement {
+        if (background) {
+            return addSvgElement(this.#backgroundGroup, template, topLeft)
+        } else {
+            return addSvgElement(this.#frameGroupElement, template, topLeft)
         }
-        this.#frameGroupElement.append(svgElement)
-        const bbox = svgElement.getBBox()
-        const translation = PointMath.subtract(topLeft, bbox)
-        svgElement.setAttribute('transform', `translate(${translation.x}, ${translation.y})`)
-        svgElement.removeAttribute('style')
-        return svgElement
     }
 
     clear() {
-        while (this.#frameGroupElement?.hasChildNodes()) {
-            const child = this.#frameGroupElement.lastChild
-            if (child !== null) {
-                this.#frameGroupElement.removeChild(child)
-            }
-        }
-    }
-
-    contains(feature: SVGGraphicsElement) {
-        return this.#frameGroupElement.contains(feature)
+        clearGroup(this.#backgroundGroup)
+        clearGroup(this.#frameGroupElement)
     }
 
     removeElement(element: SVGGraphicsElement | null) {
-        if (element && this.#frameGroupElement.contains(element)) {
-            this.#frameGroupElement.removeChild(element)
+        if (element) {
+            if (this.#backgroundGroup.contains(element)) {
+                this.#backgroundGroup.removeChild(element)
+            } else if (this.#frameGroupElement.contains(element)) {
+                this.#frameGroupElement.removeChild(element)
+            }
         }
     }
 }

@@ -112,7 +112,16 @@ export class SvgConnection extends CellDLSVGElement {
 
     activate(active = true) {
         super.activate(active)
+        this.#pathElements.forEach((element) => { element.activate(active) })
         this.#moveableElement = null
+    }
+    highlight(highlight = true) {
+        super.highlight(highlight)
+        this.#pathElements.forEach((element) => { element.highlight(highlight) })
+    }
+    select(selected = true) {
+        super.select(selected)
+        this.#pathElements.forEach((element) => { element.select(selected) })
     }
 
     clearControlHandles() {
