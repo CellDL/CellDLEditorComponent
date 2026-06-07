@@ -84,7 +84,7 @@ export class CellDLObject {
 
     #label: string | null = null
     #name: string = ''
-    #moveable: boolean = false
+    #moveInitialised: boolean = false
 
     #metadataProperties!: MetadataPropertiesMap
     #objectTemplate: ObjectTemplate|undefined
@@ -200,8 +200,8 @@ export class CellDLObject {
         return this.#metadataProperties
     }
 
-    get moveable() {
-        return this.#moveable
+    get moveInitialised() {
+        return this.#moveInitialised
     }
 
     get name() {
@@ -246,8 +246,8 @@ export class CellDLObject {
     }
 
     initialiseMove(svgElement: SVGGraphicsElement) {
-        this.#moveable = this.#celldlSvgElement?.isMoveable(svgElement) || false
-        if (this.#moveable) {
+        this.#moveInitialised = this.#celldlSvgElement?.isMoveable(svgElement) || false
+        if (this.#moveInitialised) {
             svgElement.style.setProperty('cursor', 'move')
         }
     }
@@ -265,7 +265,7 @@ export class CellDLObject {
     }
 
     finaliseMove() {
-        this.#moveable = false
+        this.#moveInitialised = false
     }
 
     clearControlHandles() {

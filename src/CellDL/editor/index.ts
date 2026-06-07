@@ -846,7 +846,7 @@ export class CellDLEditor {
                     }
                 }
             }
-        } else if (this.#currentObject?.moveable) {
+        } else if (this.#currentObject?.moveInitialised) {
             if (this.#selectedObjects.has(this.#currentObject.id)) {
                 this.#celldlDiagram?.startMove(
                     svgPoint,
