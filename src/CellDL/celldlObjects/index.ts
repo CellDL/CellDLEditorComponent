@@ -138,6 +138,10 @@ export class CellDLObject {
         this.#celldlSvgElement = celldlSvgElement
     }
 
+    get connections(): CellDLConnection[] {
+        return []
+    }
+
     get hasEditGuides() {
         return false
     }
@@ -193,6 +197,10 @@ export class CellDLObject {
 
     get label() {
         return this.#label
+    }
+
+    get maxConnections(): number {
+        return 0
     }
 
     // Additional metadata about sub-classed instances
