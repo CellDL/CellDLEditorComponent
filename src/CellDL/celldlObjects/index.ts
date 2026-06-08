@@ -175,16 +175,16 @@ export class CellDLObject {
         return this.#celldlTypeName === 'Connection'
     }
 
-    get isConnector() {
-        return this.#celldlTypeName === 'Connector'
-    }
-
     get isCompartment() {
         return this.#celldlTypeName === 'Compartment'
     }
 
     get isInterface() {
         return this.#celldlTypeName === 'Interface'
+    }
+
+    get isMoveable() {
+        return false
     }
 
     get isUnconnectedPort() {
@@ -324,6 +324,10 @@ export class CellDLMoveableObject extends CellDLObject {
     startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
         editGuides.removeGuide(this)
         super.startMove(svgPoint, options)
+    }
+
+    get isMoveable() {
+        return true
     }
 
     move(svgPoint: PointLike, options: ElementMoveOptions={}) {
