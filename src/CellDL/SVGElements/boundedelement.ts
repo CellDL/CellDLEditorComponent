@@ -42,9 +42,9 @@ export class BoundedElement extends CellDLSVGElement {
 
     #connectedPathElements: Map<string, PathElement> = new Map()
     #controlRect: ControlRect
-    #topLeftCorner: Point
     #excludeConnectionIds: Set<string> = new Set()
     #localTransform: Transform
+    #topLeftCorner: Point
     #undoMoveAction: EditorUndoAction | null = null
 
     constructor(object: CellDLObject, svgElement: SVGGraphicsElement, gridAligned: boolean=false, align: boolean=false) {

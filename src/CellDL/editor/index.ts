@@ -1056,7 +1056,7 @@ export class CellDLEditor {
         this.#editorState = EDITOR_STATE.Selecting      // toolbar needs to change active button...
         this.#unsetSelectedObjects()
         if (ids.length) {
-            const currentObject = this.#celldlDiagram?.objectById(ids[0]) as CellDLConnectedObject
+            const currentObject = this.#celldlDiagram?.objectById(ids[0]!) as CellDLConnectedObject
             if (currentObject) {
                 this.#currentObject = currentObject
                 const startPosn = Point.fromPoint(currentObject.celldlSvgElement?.centroid as PointLike)

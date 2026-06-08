@@ -224,16 +224,16 @@ export class CellDLObject {
         return this.#objectTemplate
     }
 
+    get pluginIds(): string[] {
+        return [...this.#pluginData.keys()]
+    }
+
     get selected() {
         return this.#celldlSvgElement?.selected
     }
 
     get svgElement() {
         return this.#celldlSvgElement?.svgElement || null
-    }
-
-    get pluginIds(): string[] {
-        return [...this.#pluginData.keys()]
     }
 
     pluginData(pluginId: string): object {
