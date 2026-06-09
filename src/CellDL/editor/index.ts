@@ -29,6 +29,7 @@ import { PathMaker, type PathNode } from '@editor/connections/pathmaker'
 import type { TemplateEventDetails } from '@editor/components'
 import { ObjectPropertiesPanel } from '@editor/components/properties'
 import type { CellDLDiagram } from '@editor/diagram'
+import { SelectionSet } from '@editor/diagram/selectionset'
 import { round } from '@editor/utils'
 
 import { Point, type PointLike, PointMath } from '@renderer/common/points'
@@ -154,9 +155,7 @@ export class CellDLEditor {
     // * set of selected objects.
     #activeObjects: Map<string, CellDLObject> = new Map()
     #currentObject: CellDLObject | null = null
-    #firstObjectSelected: CellDLObject | null = null
-    #moveableSelected: boolean = false
-    #selectedObjects: Map<string, CellDLObject> = new Map()
+    #selectionSet: SelectionSet | null = null
     #selectionBox: SelectionBox | null = null
     #newSelectionBox: boolean = false
 
@@ -306,6 +305,7 @@ export class CellDLEditor {
             this.closeDiagram()
         }
         this.#celldlDiagram = celldlDiagram
+        this.#selectionSet = new SelectionSet(celldlDiagram!)
         this.#svgDiagram = celldlDiagram.svgDiagram
 
         // Make sure we have a group in which to put selection related objects
@@ -337,10 +337,8 @@ export class CellDLEditor {
         this.#editorState = EDITOR_STATE.Selecting
         this.#currentObject = null
         this.#pointerMoved = false
-        this.#activeObjects = new Map()
-        this.#firstObjectSelected = null
-        this.#moveableSelected = false
-        this.#selectedObjects = new Map()
+        this.#activeObjects.clear()
+        this.#selectionSet.clear()
         this.#propertiesPanel.clearObjectProperties()
     }
 
@@ -412,10 +410,10 @@ export class CellDLEditor {
     async #panelEvent(event: Event) {
         const detail = (<CustomEvent>event).detail
         if (detail.source === this.#openPanelId) {
-            if (this.#selectedObjects.size === 1 && this.#openPanelId === PANEL_IDS.PropertyPanel) {
+            if (this.#selectionSet?.size === 1 && this.#openPanelId === PANEL_IDS.PropertyPanel) {
                 const values = detail.value
                 if (values.oldValue !== values.newValue) {
-                    await this.#propertiesPanel.updateObjectProperties(this.#firstObjectSelected, detail.itemId, detail.value,
+                    await this.#propertiesPanel.updateObjectProperties(this.#selectionSet.objects[0]!, detail.itemId, detail.value,
                                                                        this.#celldlDiagram!.rdfStore)
                     notifyChanges()
                 }
@@ -426,8 +424,8 @@ export class CellDLEditor {
     async #styleEvent(event: Event) {
         const detail = (<CustomEvent>event).detail
         if (detail.source === this.#openPanelId) {
-            if (this.#selectedObjects.size === 1 && this.#openPanelId === PANEL_IDS.PropertyPanel) {
-                await this.#propertiesPanel.updateObjectStyling(this.#firstObjectSelected, detail.object, detail.styling)
+            if (this.#selectionSet?.size === 1 && this.#openPanelId === PANEL_IDS.PropertyPanel) {
+                await this.#propertiesPanel.updateObjectStyling(this.#selectionSet.objects[0]!, detail.object, detail.styling)
                 notifyChanges()
             }
         }
@@ -553,14 +551,7 @@ export class CellDLEditor {
     }
 
     #setSelectedObject(selectedObject: CellDLObject) {
-        if (!this.#selectedObjects.has(selectedObject.id)) {
-            selectedObject.select(true)
-            this.#selectedObjects.set(selectedObject.id, selectedObject)
-            this.#moveableSelected = selectedObject.isMoveable
-            if (this.#selectedObjects.size === 1) {
-                // For shift-click selection
-                this.#firstObjectSelected = selectedObject
-            }
+        if (this.#selectionSet?.select(selectedObject)) {
             this.#propertiesPanel.setObjectProperties(selectedObject, this.#celldlDiagram!.rdfStore)
             this.enableContextMenuItem(CONTEXT_MENU.DELETE, true)
             this.enableContextMenuItem(CONTEXT_MENU.INFO, true)
@@ -568,14 +559,7 @@ export class CellDLEditor {
     }
 
     #unsetSelectedObject(selectedObject: CellDLObject|null) {
-        if (selectedObject && this.#selectedObjects.has(selectedObject.id)) {
-            selectedObject.select(false)
-            this.#selectedObjects.delete(selectedObject.id)
-            if (this.#selectedObjects.size === 0) {
-                this.#firstObjectSelected = null
-            } else if (this.#firstObjectSelected?.id === selectedObject.id) {
-                this.#firstObjectSelected = [...this.#selectedObjects.values()][0]!
-            }
+        if (selectedObject && this.#selectionSet?.unselect(selectedObject)) {
             this.#propertiesPanel.setObjectProperties(null, this.#celldlDiagram!.rdfStore)
             this.enableContextMenuItem(CONTEXT_MENU.DELETE, false)
             this.enableContextMenuItem(CONTEXT_MENU.INFO, false)
@@ -583,18 +567,14 @@ export class CellDLEditor {
     }
 
     #unsetSelectedObjects() {
-        for (const selectedObject of this.#selectedObjects.values()) {
+        for (const selectedObject of this.#selectionSet?.objects || []) {
             this.#unsetSelectedObject(selectedObject)
         }
     }
 
     #deleteSelectedObjects() {
         this.#unsetActiveObjects()
-        for (const selectedObject of this.#selectedObjects.values()) {
-            // Delete the object
-            this.#celldlDiagram?.removeObject(selectedObject)
-            this.#unsetSelectedObject(selectedObject)
-        }
+        this.#selectionSet?.deleteObjects()
         if (this.#selectionBox) {
             this.#selectionBox.close()
             this.#selectionBox = null
@@ -693,19 +673,12 @@ export class CellDLEditor {
 
     #selectionClickEvent(event: MouseEvent, _element: SVGGraphicsElement, clickedObject: CellDLObject|null) {
         if (clickedObject === null
-         || !(event.metaKey || event.shiftKey)
-         || !this.#moveableSelected
+         || !event.metaKey
+         || !this.#selectionSet?.firstMoveableObject
          || !clickedObject.isMoveable
         ) {
             // Forget all selected objects
-            this.#unsetSelectedObjects()
-            if (clickedObject === null
-             || !event.shiftKey
-             || !this.#moveableSelected
-             || !clickedObject.isMoveable
-            ) {
-                this.#firstObjectSelected = null
-            }
+            this.#selectionSet?.clear(!event.shiftKey)
         }
         // Select when active object is clicked
         if (clickedObject && clickedObject === this.#currentObject) {
@@ -718,8 +691,9 @@ export class CellDLEditor {
             } else {
                 if (event.shiftKey
                  && clickedObject.isMoveable
-                 && clickedObject !== this.#firstObjectSelected) {
-                    const boundingBox = this.#firstObjectSelected?.celldlSvgElement?.svgBounds().union(clickedObject.celldlSvgElement!.svgBounds())
+                 && this.#selectionSet?.firstMoveableObject
+                 && clickedObject !== this.#selectionSet.firstMoveableObject) {
+                    const boundingBox = this.#selectionSet.firstMoveableObject?.celldlSvgElement?.svgBounds().union(clickedObject.celldlSvgElement!.svgBounds())
                     if (boundingBox) {
                         const selectedObjects = this.celldlDiagram!.objectsContainedIn(boundingBox)
                                                                     .filter(c => c.exact)
@@ -805,8 +779,8 @@ export class CellDLEditor {
                 this.#unsetActiveObjects()
             }
             if (currentObject) {
-                if (this.#selectedObjects.has(currentObject.id)) {
-                    this.#setActiveObjects([...this.#selectedObjects.values()])
+                if (this.#selectionSet?.has(currentObject)) {
+                    this.#setActiveObjects(this.#selectionSet.objects)
                 } else {
                     this.#setActiveObjects([currentObject])
                 }
@@ -861,12 +835,8 @@ export class CellDLEditor {
                 }
             }
         } else if (this.#currentObject?.moveInitialised) {
-            if (this.#selectedObjects.has(this.#currentObject.id)) {
-                this.#celldlDiagram?.startMove(
-                    svgPoint,
-                    this.#currentObject,
-                    [...this.#selectedObjects.values()] as CellDLConnectedObject[]
-                )
+            if (this.#selectionSet?.has(this.#currentObject)) {
+                this.#selectionSet.startMove(svgPoint, this.#currentObject)
             } else {
                 this.#currentObject.startMove(svgPoint)
             }
@@ -898,8 +868,8 @@ export class CellDLEditor {
             }
         } else if (this.#currentObject && this.#moving) {
             // EDITOR_STATE.Selecting or EDITOR_STATE.AddComponent
-            if (this.#selectedObjects.has(this.#currentObject.id)) {
-                this.#celldlDiagram?.move(svgPoint)
+            if (this.#selectionSet?.has(this.#currentObject)) {
+                this.#selectionSet.move(svgPoint)
             } else {
                 this.#currentObject.move(svgPoint)
                 this.#celldlDiagram?.objectMoved(this.#currentObject)
@@ -939,13 +909,8 @@ export class CellDLEditor {
             if (this.#currentObject && this.#moving) {
                 this.#moving = false
                 if (this.#moved) {
-                    if (this.#selectedObjects.has(this.#currentObject.id)) {
-                        this.#celldlDiagram.endMove()
-                        for (const selectObject of this.#selectedObjects.values()) {
-                            if (selectObject.id !== this.#currentObject?.id) {
-                                selectObject.finaliseMove()
-                            }
-                        }
+                    if (this.#selectionSet?.has(this.#currentObject)) {
+                        this.#selectionSet.endMove()
                     } else {
                         this.#currentObject.endMove()
                         this.#currentObject.finaliseMove()
@@ -1013,7 +978,7 @@ export class CellDLEditor {
         if (this.#currentTemplateDetails) {
             const addPosn = this.#celldlDiagram!.svgToDomCoords(posn)
             this.#addComponentTemplate(addPosn, this.#currentTemplateDetails)
-            component = this.#firstObjectSelected as CellDLObject
+            component = this.#selectionSet?.objects[0] as CellDLObject
         }
         this.#unsetSelectedObjects()
         this.#editorState = EDITOR_STATE.Selecting      // revert to default state
@@ -1068,18 +1033,18 @@ export class CellDLEditor {
                         this.#setSelectedObject(object)
                     }
                 }
-                this.#celldlDiagram?.startMove(startPosn, currentObject, [...this.#selectedObjects.values()] as CellDLConnectedObject[])
+                this.#selectionSet?.startMove(startPosn, currentObject)
                 this.#moving = true
                 this.#moved = false
                 // pointer move
                 this.#pointerMoved = true
-                this.#celldlDiagram?.move(movePosn)
+                this.#selectionSet?.move(movePosn)
                 this.#moved = true
                 // mouse up
-                this.#celldlDiagram?.endMove()
-                for (const selectObject of this.#selectedObjects.values()) {
-                    if (selectObject.id !== this.#currentObject?.id) {
-                        selectObject.finaliseMove()
+                this.#selectionSet?.endMove()
+                for (const object of this.#selectionSet?.objects ||[]) {
+                    if (object.id !== this.#currentObject?.id) {
+                        object.finaliseMove()
                     }
                 }
                 this.#unsetSelectedObjects()

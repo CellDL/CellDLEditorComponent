@@ -972,63 +972,6 @@ export class CellDLDiagram {
         notifyChanges()
     }
 
-    startMove(svgPoint: PointLike, movedObject: CellDLObject, moveComponents: CellDLConnectedObject[]) {
-        this.#moveConnections = []
-        const componentIds: Set<string> = new Set(moveComponents.map(c => c.id))
-        const excludeConnectionIds: Set<string> = new Set()
-        const seenConnectionIds: Set<string> = new Set()
-        for (const component of moveComponents) {
-            for (const connection of component.connections) {
-                if (!seenConnectionIds.has(connection.id)) {
-                    if (connection.source && componentIds.has(connection.source.id)
-                     && connection.target && componentIds.has(connection.target.id)) {
-                        this.#moveConnections.push(connection)
-                        excludeConnectionIds.add(connection.id)
-                        connection.startMove(svgPoint, { moveEntireConnection: true })
-                    }
-                    seenConnectionIds.add(connection.id)
-                }
-            }
-        }
-        for (const component of moveComponents) {
-            component.startMove(svgPoint, { excludeConnectionIds: excludeConnectionIds })
-        }
-        this.#movedObject = movedObject
-        this.#movedObjectOffset = Point.fromPoint(svgPoint).subtract(this.#movedObject?.celldlSvgElement?.centroid as Point)
-        this.#moveComponents = moveComponents
-    }
-
-    move(svgPoint: PointLike) {
-        // First move this.#movedObject without moving and redrawing paths, and get its change in centroid.
-        // Use this delta to adjust svgpoint before moving other components (without grid alignment nor
-        // moving/redrawing paths) and then connections (without grid aligning or limiting control points)
-        this.#movedObject?.move(svgPoint)
-        const newPosn = this.#movedObjectOffset.add(this.#movedObject?.celldlSvgElement?.centroid as Point)
-        for (const component of this.#moveComponents) {
-            if (component.id !== this.#movedObject?.id) {
-                component.move(newPosn, { noAlign: true })
-            }
-        }
-        for (const connection of this.#moveConnections) {
-            connection.move(newPosn, { moveEntireConnection: true, noAlign: true } )
-            connection.redraw()
-        }
-        notifyChanges()
-    }
-
-    endMove() {
-        for (const component of this.#moveComponents) {
-            component.endMove()
-            this.objectMoved(component)
-        }
-        for (const connection of this.#moveConnections) {
-            connection.endMove()
-        }
-        this.#moveComponents = []
-        this.#moveConnections = []
-        this.#movedObject = null
-    }
-
     deleteInsertedObject(undoAction: EditorUndoAction) {
         for (const objectDetails of [...undoAction.objectDetails].reverse()) {
             const celldlObject = objectDetails.object
