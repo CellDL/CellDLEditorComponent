@@ -22,22 +22,15 @@ import type { CellDLConnection, CellDLObject } from "@editor/celldlObjects"
 import { notifyChanges } from "@editor/editor"
 import { Point, type PointLike } from "@renderer/common/points"
 
-import type { CellDLDiagram } from "."
-
 //==============================================================================
 
 export class SelectionSet {
-    #celldlDiagram: CellDLDiagram
     #movedObject: CellDLObject|null = null
     #movedObjectOffset: Point = new Point()
     #selectedConnections: CellDLConnection[] = []
     #selectedObjects: Map<string, CellDLObject> = new Map()
 
     #firstMoveableObject: CellDLObject | null = null
-
-    constructor(celldlDiagram: CellDLDiagram) {
-        this.#celldlDiagram = celldlDiagram
-    }
 
     get firstMoveableObject() {
         return this.#firstMoveableObject
@@ -131,7 +124,7 @@ export class SelectionSet {
     deleteObjects() {
         for (const object of this.#selectedObjects.values()) {
             // Delete the object
-            this.#celldlDiagram.removeObject(object)
+            object.celldlDiagram.removeObject(object)
             object.select(false)
         }
     }
@@ -176,7 +169,7 @@ export class SelectionSet {
             if (object.isMoveable) {
                 object.endMove()
                 object.finaliseMove()
-                this.#celldlDiagram.objectMoved(object)
+                object.celldlDiagram.objectMoved(object)
             }
         }
         for (const connection of this.#selectedConnections) {
