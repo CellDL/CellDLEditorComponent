@@ -66,7 +66,7 @@ import type { SvgConnection } from '@editor/SVGElements/svgconnection'
 
 import { type CellDLEditor, notifyChanges } from '@editor/editor/index'
 import { editGuides } from '@editor/editor/editguides'
-import { type EditorUndoAction, undoRedo } from '@editor/editor/undoredo'
+import type { UndoState } from '@editor/diagram/undoredo'
 
 import type { ObjectTemplate } from '@editor/components/index'
 

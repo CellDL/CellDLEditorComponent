@@ -30,8 +30,10 @@ import type { TemplateEventDetails } from '@editor/components'
 import { ObjectPropertiesPanel } from '@editor/components/properties'
 import type { CellDLDiagram } from '@editor/diagram'
 import { SelectionSet } from '@editor/diagram/selectionset'
+import { undoRedo, UndoAction } from '@editor/diagram/undoredo'
 import { round } from '@editor/utils'
 
+import { isMacOs } from '@renderer/common/common'
 import { Point, type PointLike, PointMath } from '@renderer/common/points'
 import type { StringProperties } from '@renderer/common/types'
 import { componentLibraryPlugin } from '@renderer/plugins'
@@ -42,7 +44,6 @@ import { EditorFrame } from './editorframe'
 import { editGuides, EDITOR_GRID_CLASS } from './editguides'
 import PanZoom from './panzoom'
 import { SelectionBox } from './selectionbox'
-import { undoRedo } from './undoredo'
 
 //==============================================================================
 
@@ -835,8 +836,15 @@ export class CellDLEditor {
             }
         } else if (this.#currentObject?.moveInitialised) {
             if (this.#selectionSet.has(this.#currentObject)) {
+                undoRedo.setActiveUndoState(UndoAction.MOVE, this.#selectionSet, {
+                    position: svgPoint,
+                    selection: this.#selectionSet
+                })
                 this.#selectionSet.startMove(svgPoint, this.#currentObject)
             } else {
+                undoRedo.setActiveUndoState(UndoAction.MOVE, this.#currentObject, {
+                    position: svgPoint
+                })
                 this.#currentObject.startMove(svgPoint)
             }
             this.#moving = true
@@ -950,6 +958,12 @@ export class CellDLEditor {
             } else if (event.target === document.body) {
                 // Prevent the default browser action (navigating back)
                 event.preventDefault()
+            }
+        } else if (isMacOs() && event.metaKey || !isMacOs() && event.ctrlKey) {
+            if (event.key === 'z') {
+                undoRedo.undo(this.#celldlDiagram!)
+            } else if (event.key === 'Z') {
+                undoRedo.redo(this.#celldlDiagram!)
             }
         }
     }
