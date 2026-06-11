@@ -440,24 +440,24 @@ export class BondgraphPlugin implements PluginInterface {
     //==========================================================================
     //==========================================================================
 
-    addComponent(component: CellDLObject, _rdfStore: $rdf.RdfStore) {
+    addComponent(component: CellDLObject) {
         const pluginData = <PluginData>component.pluginData(this.id)
         this.#domainGraph.addNode(component.uri.value,
             pluginData.elementTemplate?.domain,
             pluginData.baseComponent.type === this.#transformNodeType)
     }
 
-    deleteComponent(component: CellDLObject, _rdfStore: $rdf.RdfStore) {
+    componentDeleted(component: CellDLObject) {
         this.#domainGraph.deleteNode(component.uri.value)
     }
 
-    getPluginData(celldlObject: CellDLObject, rdfStore: $rdf.RdfStore): object {
+    getPluginData(celldlObject: CellDLObject): object {
         if (celldlObject.isConnection) {
             return {
                 baseComponent: {}
             }
         }
-        const rows = rdfStore.query(`${SPARQL_PREFIXES}
+        const rows = celldlObject.rdfStore.query(`${SPARQL_PREFIXES}
             PREFIX : <${this.#currentDocumentUri}#>
             SELECT ?type ?symbol WHERE {
                 ${celldlObject.uri.toString()} a ?type
@@ -509,10 +509,10 @@ export class BondgraphPlugin implements PluginInterface {
     //==========================================================================
     //==========================================================================
 
-    addConnection(connection: CellDLConnection, rdfStore: $rdf.RdfStore) {
+    addConnection(connection: CellDLConnection) {
         this.#domainGraph.addEdge(connection.uri.value, [connection.source!.uri.value, connection.target!.uri.value])
         const uri = connection.uri.toString()
-        rdfStore.update(`${SPARQL_PREFIXES}
+        connection.rdfStore.update(`${SPARQL_PREFIXES}
             PREFIX : <${this.#currentDocumentUri}#>
             INSERT DATA {
                 ${uri} bgf:hasSource ${connection.source!.uri.toString()} .
@@ -561,7 +561,7 @@ export class BondgraphPlugin implements PluginInterface {
         }
     }
 
-    deleteConnection(connection: CellDLConnection, rdfStore: $rdf.RdfStore) {
+    connectionDeleted(connection: CellDLConnection) {
         this.#domainGraph.deleteEdge([connection.source!.uri.value, connection.target!.uri.value])
         const uri = connection.uri.toString()
         rdfStore.update(`${SPARQL_PREFIXES}
@@ -580,7 +580,7 @@ export class BondgraphPlugin implements PluginInterface {
 
     //==========================================================================
 
-    loadComponentProperties(celldlObject: CellDLObject, componentProperties: PropertyGroup[], rdfStore: $rdf.RdfStore) {
+    loadComponentProperties(celldlObject: CellDLObject, componentProperties: PropertyGroup[]) {
         alert.clear()
         if (celldlObject.isConnection) {
             componentProperties.forEach(group => {
@@ -592,14 +592,14 @@ export class BondgraphPlugin implements PluginInterface {
             const pluginData = (<PluginData>celldlObject.pluginData(this.id))
             componentProperties.forEach(group => {
                 if (group.groupId === BG_GROUP.ElementGroup) {
-                    this.#loadElementProperties(celldlObject, group, rdfStore)
+                    this.#loadElementProperties(celldlObject, group)
                 } else if (pluginData.elementTemplate) {
                     if (group.groupId === BG_GROUP.ParameterGroup) {
                         this.#setVariableTemplates(pluginData.elementTemplate.parameters, group)
-                        this.#loadVariableProperties(celldlObject, group, rdfStore)
+                        this.#loadVariableProperties(celldlObject, group)
                     } else if (group.groupId === BG_GROUP.VariableGroup) {
                         this.#setVariableTemplates(pluginData.elementTemplate.variables, group)
-                        this.#loadVariableProperties(celldlObject, group, rdfStore)
+                        this.#loadVariableProperties(celldlObject, group)
                     }
                 } else if (group.groupId === STYLING_GROUP_ID) {
                     this.#loadElementStyling(celldlObject, group, false)
@@ -609,7 +609,7 @@ export class BondgraphPlugin implements PluginInterface {
     }
 
     #loadElementProperties(celldlObject: CellDLObject,
-                          group: PropertyGroup, rdfStore: $rdf.RdfStore) {
+                          group: PropertyGroup) {
         const propertyTemplates = this.#propertyGroups[ELEMENT_GROUP_INDEX]!
         const pluginData = <PluginData>celldlObject.pluginData(this.id)
         const elementTemplate = pluginData.elementTemplate
@@ -621,7 +621,7 @@ export class BondgraphPlugin implements PluginInterface {
             } else if (itemTemplate.itemId === BG_INPUT.ElementSpecies ||
                        itemTemplate.itemId === BG_INPUT.ElementLocation ||
                        itemTemplate.itemId === BG_INPUT.ElementValue) {
-                let item = getItemProperty(celldlObject, itemTemplate, rdfStore)
+                let item = getItemProperty(celldlObject, itemTemplate)
                 if (!item
                  && itemTemplate.itemId === BG_INPUT.ElementValue
                  && elementTemplate && elementTemplate.value) {
@@ -663,11 +663,11 @@ export class BondgraphPlugin implements PluginInterface {
         }
     }
 
-    #loadVariableProperties(celldlObject: CellDLObject, group: PropertyGroup, rdfStore: $rdf.RdfStore) {
+    #loadVariableProperties(celldlObject: CellDLObject, group: PropertyGroup) {
         const objectUri = celldlObject.uri.toString()
 
         const values: Map<string, string> = new Map()
-        rdfStore.query(`${SPARQL_PREFIXES}
+        celldlObject.rdfStore.query(`${SPARQL_PREFIXES}
             PREFIX : <${this.#currentDocumentUri}#>
 
             SELECT ?name ?value
@@ -694,9 +694,9 @@ export class BondgraphPlugin implements PluginInterface {
 
     //==========================================================================
 
-    #deleteElementValue(celldlObject: CellDLObject, rdfStore: $rdf.RdfStore) {
+    #deleteElementValue(celldlObject: CellDLObject) {
         const item = this.#propertyGroups[ELEMENT_GROUP_INDEX]!.items[ELEMENT_VALUE_INDEX]!
-        updateItemProperty(item.property, { newValue: '', oldValue: ''}, celldlObject, rdfStore)
+        updateItemProperty(item.property, { newValue: '', oldValue: ''}, celldlObject)
     }
 
     #setElementValueTemplate(variable: Variable|undefined, group: PropertyGroup) {
@@ -743,10 +743,10 @@ export class BondgraphPlugin implements PluginInterface {
     //==========================================================================
     //==========================================================================
 
-    #printObjectProperties(celldlObject: CellDLObject, rdfStore: $rdf.RdfStore) {
+    #printObjectProperties(celldlObject: CellDLObject) {
         const objectUri = celldlObject.uri.toString()
 
-        rdfStore.query(`${SPARQL_PREFIXES}
+        celldlObject.rdfStore.query(`${SPARQL_PREFIXES}
             PREFIX : <${this.#currentDocumentUri}#>
 
             SELECT ?p ?o WHERE {
@@ -760,8 +760,8 @@ export class BondgraphPlugin implements PluginInterface {
     //==========================================================================
 
     async updateObjectProperties(celldlObject: CellDLObject, itemId: string, value: ValueChange,
-                                 componentProperties: PropertyGroup[], rdfStore: $rdf.RdfStore) {
-        await this.#updateElementProperties(value, itemId, celldlObject, rdfStore)
+                                 componentProperties: PropertyGroup[]) {
+        await this.#updateElementProperties(value, itemId, celldlObject)
         const pluginData = (<PluginData>celldlObject.pluginData(this.id))
         const elementTemplate = pluginData.elementTemplate
         if (elementTemplate) {
@@ -774,7 +774,7 @@ export class BondgraphPlugin implements PluginInterface {
                 this.#setElementValueTemplate(elementTemplate.value,
                                               componentProperties[ELEMENT_GROUP_INDEX]!)
                 if (!elementTemplate.value) {
-                    this.#deleteElementValue(celldlObject, rdfStore)
+                    this.#deleteElementValue(celldlObject)
                 }
                 // And parameters and variables
                 this.#setVariableTemplates(elementTemplate.parameters,
@@ -782,7 +782,7 @@ export class BondgraphPlugin implements PluginInterface {
                 this.#setVariableTemplates(elementTemplate.variables,
                                            componentProperties[VARS_GROUP_INDEX]!, true)
             }
-            this.#updateVariableProperties(value, itemId, celldlObject, elementTemplate, rdfStore)
+            this.#updateVariableProperties(value, itemId, celldlObject, elementTemplate)
         }
     }
 
@@ -804,7 +804,7 @@ export class BondgraphPlugin implements PluginInterface {
     //==================================
 
     async #updateElementProperties(value: ValueChange, itemId: string,
-                             celldlObject: CellDLObject, rdfStore: $rdf.RdfStore) {
+                             celldlObject: CellDLObject) {
         const propertyTemplates = this.#propertyGroups[ELEMENT_GROUP_INDEX]!
         const pluginData = (<PluginData>celldlObject.pluginData(this.id))
 
@@ -812,11 +812,11 @@ export class BondgraphPlugin implements PluginInterface {
             if (itemId === item.itemId) {
                 alert.clear()
                 if (itemId === BG_INPUT.ElementType) {
-                    await this.#updateElementType(item, value, celldlObject, rdfStore)
+                    await this.#updateElementType(item, value, celldlObject)
                 } else if (itemId === BG_INPUT.ElementSpecies) {
                     const errorMsg = await this.#updateSvgElement(celldlObject, value.newValue, pluginData.location)
                     if (errorMsg === '') {
-                        updateItemProperty(item.property, value, celldlObject, rdfStore)
+                        updateItemProperty(item.property, value, celldlObject)
                         pluginData.species = value.newValue
                     } else {
                         alert.error(errorMsg)
@@ -825,13 +825,13 @@ export class BondgraphPlugin implements PluginInterface {
                     pluginData.location = value.newValue
                     const errorMsg = await this.#updateSvgElement(celldlObject, pluginData.species, value.newValue)
                     if (errorMsg === '') {
-                        updateItemProperty(item.property, value, celldlObject, rdfStore)
+                        updateItemProperty(item.property, value, celldlObject)
                         pluginData.location = value.newValue
                     } else {
                         alert.error(errorMsg)
                     }
                 } else if (itemId === BG_INPUT.ElementValue) {
-                    this.#updateElementValue(value, celldlObject, rdfStore)
+                    this.#updateElementValue(value, celldlObject)
                 }
                 break
             }
@@ -840,10 +840,10 @@ export class BondgraphPlugin implements PluginInterface {
 
     //==================================
 
-    #updateElementValue(value: ValueChange, celldlObject: CellDLObject, rdfStore: $rdf.RdfStore) {
+    #updateElementValue(value: ValueChange, celldlObject: CellDLObject) {
         const objectUri = celldlObject.uri.toString()
 
-        rdfStore.update(`${SPARQL_PREFIXES}
+        celldlObject.rdfStore.update(`${SPARQL_PREFIXES}
             PREFIX : <${this.#currentDocumentUri}#>
 
             DELETE {
@@ -856,7 +856,7 @@ export class BondgraphPlugin implements PluginInterface {
         const elementTemplate = (<PluginData>celldlObject.pluginData(this.id)).elementTemplate
         const variable = elementTemplate!.value
         if (newValue) {
-            rdfStore.update(`${SPARQL_PREFIXES}
+            celldlObject.rdfStore.update(`${SPARQL_PREFIXES}
                 PREFIX : <${this.#currentDocumentUri}#>
 
                 INSERT DATA {
@@ -869,7 +869,7 @@ export class BondgraphPlugin implements PluginInterface {
     //==================================
 
     #updateVariableProperties(value: ValueChange, itemId: string, celldlObject: CellDLObject,
-                              elementTemplate: ElementTemplate, rdfStore: $rdf.RdfStore) {
+                              elementTemplate: ElementTemplate) {
         const itemVariable = itemId.split('/')
         if (itemVariable.length !== 2) {
             return
@@ -880,7 +880,7 @@ export class BondgraphPlugin implements PluginInterface {
         }
         const varName = itemVariable[1]!
         const objectUri = celldlObject.uri.toString()
-        rdfStore.update(`${SPARQL_PREFIXES}
+        celldlObject.rdfStore.update(`${SPARQL_PREFIXES}
             PREFIX : <${this.#currentDocumentUri}#>
 
             DELETE WHERE {
@@ -894,7 +894,7 @@ export class BondgraphPlugin implements PluginInterface {
         if (!variable) {
             return
         }
-        rdfStore.update(`${SPARQL_PREFIXES}
+        celldlObject.rdfStore.update(`${SPARQL_PREFIXES}
             PREFIX : <${this.#currentDocumentUri}#>
 
             INSERT DATA {
@@ -991,7 +991,7 @@ export class BondgraphPlugin implements PluginInterface {
     //==========================================================================
 
     async #updateElementType(_itemTemplate: ItemDetails, value: ValueChange,
-                       celldlObject: CellDLObject, rdfStore: $rdf.RdfStore) {
+                       celldlObject: CellDLObject) {
         const objectUri = celldlObject.uri.toString()
         const pluginData = (<PluginData>celldlObject.pluginData(this.id))
         const baseComponent = pluginData.baseComponent
@@ -1008,13 +1008,13 @@ export class BondgraphPlugin implements PluginInterface {
         if (oldSymbol) {
             deleteTriples.push(`${objectUri} bgf:hasSymbol "${oldSymbol}"`)
         }
-        rdfStore.update(`${SPARQL_PREFIXES}
+        celldlObject.rdfStore.update(`${SPARQL_PREFIXES}
             PREFIX : <${this.#currentDocumentUri}#>
             DELETE DATA {
                 ${deleteTriples.join('\n')}
             }`)
 
-        rdfStore.update(`${SPARQL_PREFIXES}
+        celldlObject.rdfStore.update(`${SPARQL_PREFIXES}
             PREFIX : <${this.#currentDocumentUri}#>
             INSERT DATA { ${objectUri} a <${value.newValue}> }
         `)
@@ -1031,7 +1031,7 @@ export class BondgraphPlugin implements PluginInterface {
         }
         if (newSymbol) {
             pluginData.symbol = newSymbol
-            rdfStore.update(`${SPARQL_PREFIXES}
+            celldlObject.rdfStore.update(`${SPARQL_PREFIXES}
                 PREFIX : <${this.#currentDocumentUri}#>
                 INSERT DATA { ${objectUri} bgf:hasSymbol "${newSymbol}" }
             `)

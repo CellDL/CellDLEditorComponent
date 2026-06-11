@@ -26,7 +26,7 @@ import type { CellDLObject } from '@editor/celldlObjects/index'
 import type { NamedProperty } from '@editor/components/index'
 
 import type { IPathStyle } from '@renderer/common/svgUtils'
-import { DCT, RDFS, type RdfStore, SPARQL_PREFIXES } from '@renderer/metadata/index'
+import { DCT, RDFS, SPARQL_PREFIXES } from '@renderer/metadata/index'
 import { componentLibraryPlugin } from '@renderer/plugins/index'
 
 //==============================================================================
@@ -109,11 +109,11 @@ export const STYLING_GROUP: PropertyGroup = {
 //==============================================================================
 
 export function getItemProperty(celldlObject: CellDLObject,
-                                itemTemplate: ItemDetails, rdfStore: RdfStore): ItemDetails|undefined {
+                                itemTemplate: ItemDetails): ItemDetails|undefined {
     const objectUri = celldlObject.uri.toString()
     let value: string|undefined
 
-    rdfStore.query(`${SPARQL_PREFIXES}
+    celldlObject.rdfStore.query(`${SPARQL_PREFIXES}
         PREFIX : <${celldlObject.celldlDiagram.uri}#>
 
         SELECT ?value WHERE {
@@ -151,10 +151,10 @@ export function getItemProperty(celldlObject: CellDLObject,
 //==============================================================================
 
 export function updateItemProperty(property: string, value: ValueChange,
-                                   celldlObject: CellDLObject, rdfStore: RdfStore) {
+                                   celldlObject: CellDLObject) {
     const objectUri = celldlObject.uri.toString()
 
-    rdfStore.update(`${SPARQL_PREFIXES}
+    celldlObject.rdfStore.update(`${SPARQL_PREFIXES}
         PREFIX : <${celldlObject.celldlDiagram.uri}#>
 
         DELETE {
@@ -165,7 +165,7 @@ export function updateItemProperty(property: string, value: ValueChange,
         }`)
     const newValue = String(value.newValue).trim()
     if (newValue) {
-        rdfStore.update(`${SPARQL_PREFIXES}
+        celldlObject.rdfStore.update(`${SPARQL_PREFIXES}
             PREFIX : <${celldlObject.celldlDiagram.uri}#>
 
             INSERT DATA { ${objectUri} <${property}> """${newValue.replace('\\', '\\\\')}""" }
@@ -212,12 +212,12 @@ export class ObjectPropertiesPanel {
         }
     }
 
-    setObjectProperties(celldlObject: CellDLObject|null, rdfStore: RdfStore) {
+    setObjectProperties(celldlObject: CellDLObject|null) {
         this.clearObjectProperties()
         if (celldlObject) {
             // Update component properties with plugin specific values
 
-            componentLibraryPlugin.loadComponentProperties(celldlObject, this.#componentProperties.value, rdfStore)
+            componentLibraryPlugin.loadComponentProperties(celldlObject, this.#componentProperties.value)
 
             if (this.#metadataIndex >= 0) {
                 // Update component properties in the METADATA_GROUP
@@ -225,7 +225,7 @@ export class ObjectPropertiesPanel {
                 // biome-ignore lint/style/noNonNullAssertion: `metadataIndex` is in range
                 const group = this.#componentProperties.value[this.#metadataIndex]!
                 METADATA_GROUP().items.forEach((itemTemplate: ItemDetails) => {
-                    const item = getItemProperty(celldlObject, itemTemplate, rdfStore)
+                    const item = getItemProperty(celldlObject, itemTemplate)
                     if (item) {
                         group.items.push(item)
                     }
@@ -237,12 +237,12 @@ export class ObjectPropertiesPanel {
     //==================================
 
     async updateObjectProperties(celldlObject: CellDLObject|null,
-                                 itemId: string, value: ValueChange, rdfStore: RdfStore) {
+                                 itemId: string, value: ValueChange) {
         if (celldlObject) {
             // Save plugin specific component properties
 
             await componentLibraryPlugin.updateObjectProperties(celldlObject, itemId, value,
-                                                             this.#componentProperties.value, rdfStore)
+                                                             this.#componentProperties.value)
 
             // Save component properties in the METADATA_GROUP
 
@@ -250,7 +250,7 @@ export class ObjectPropertiesPanel {
             const metadataGroup = this.#propertyGroups[this.#metadataIndex]!
             for (const itemTemplate of metadataGroup.items) {
                 if (itemId === itemTemplate.itemId) {
-                    updateItemProperty(itemTemplate.property, value, celldlObject, rdfStore)
+                    updateItemProperty(itemTemplate.property, value, celldlObject)
                     break
                 }
             }

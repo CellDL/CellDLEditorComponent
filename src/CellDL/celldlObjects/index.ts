@@ -33,8 +33,8 @@ import { SvgConnection } from '@editor/SVGElements/svgconnection'
 import type { CellDLSVGElement, ElementMoveOptions } from '@editor/SVGElements/index'
 
 import * as $rdf from '@renderer/metadata/index'
-import type { MetadataPropertiesMap, NamedNode } from '@renderer/metadata/index'
 import { CELLDL, RDF, RDFS } from '@renderer/metadata/index'
+import type { Literal, MetadataPropertiesMap, NamedNode, RdfStore } from '@renderer/metadata'
 import { componentLibraryPlugin } from '@renderer/plugins/index'
 
 //==============================================================================
@@ -116,7 +116,7 @@ export class CellDLObject {
         }
 
         // Get data that plugins need to associate with the object
-        this.#pluginData = componentLibraryPlugin.getPluginData(this, celldlDiagram.rdfStore)
+        this.#pluginData = componentLibraryPlugin.getPluginData(this)
     }
 
     toString(): string {
@@ -226,6 +226,10 @@ export class CellDLObject {
 
     get pluginIds(): string[] {
         return [...this.#pluginData.keys()]
+    }
+
+    get rdfStore(): RdfStore {
+        return this.#celldlDiagram.rdfStore
     }
 
     get selected() {

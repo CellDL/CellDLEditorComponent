@@ -413,8 +413,7 @@ export class CellDLEditor {
             if (this.#selectionSet.size === 1 && this.#openPanelId === PANEL_IDS.PropertyPanel) {
                 const values = detail.value
                 if (values.oldValue !== values.newValue) {
-                    await this.#propertiesPanel.updateObjectProperties(this.#selectionSet.objects[0]!, detail.itemId, detail.value,
-                                                                       this.#celldlDiagram!.rdfStore)
+                    await this.#propertiesPanel.updateObjectProperties(this.#selectionSet.objects[0]!, detail.itemId, detail.value)
                     notifyChanges()
                 }
             }
@@ -552,7 +551,7 @@ export class CellDLEditor {
 
     #setSelectedObject(selectedObject: CellDLObject) {
         if (this.#selectionSet.select(selectedObject)) {
-            this.#propertiesPanel.setObjectProperties(selectedObject, this.#celldlDiagram!.rdfStore)
+            this.#propertiesPanel.setObjectProperties(selectedObject)
             this.enableContextMenuItem(CONTEXT_MENU.DELETE, true)
             this.enableContextMenuItem(CONTEXT_MENU.INFO, true)
         }
@@ -560,7 +559,7 @@ export class CellDLEditor {
 
     #unsetSelectedObject(selectedObject: CellDLObject|null) {
         if (selectedObject && this.#selectionSet.unselect(selectedObject)) {
-            this.#propertiesPanel.setObjectProperties(null, this.#celldlDiagram!.rdfStore)
+            this.#propertiesPanel.setObjectProperties(null)
             this.enableContextMenuItem(CONTEXT_MENU.DELETE, false)
             this.enableContextMenuItem(CONTEXT_MENU.INFO, false)
         }

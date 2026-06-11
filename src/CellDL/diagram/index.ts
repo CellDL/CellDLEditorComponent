@@ -619,7 +619,7 @@ export class CellDLDiagram {
     addConnectedObject(svgElement: SVGGraphicsElement, template: ObjectTemplate): CellDLConnectedObject | null {
         const object = this.#addNewObject(svgElement, template)
         this.#addMoveableObject(object)
-        componentLibraryPlugin.addComponent(object, this.rdfStore)
+        componentLibraryPlugin.addComponent(object)
         notifyChanges()
         return object as CellDLConnectedObject
     }
@@ -627,7 +627,7 @@ export class CellDLDiagram {
     addNewConnection(svgElement: SVGGraphicsElement, template: ObjectTemplate): CellDLConnection {
         const connection = this.#addNewObject(svgElement, template) as CellDLConnection
         // let the plugins know
-        componentLibraryPlugin.addConnection(connection, this.rdfStore)
+        componentLibraryPlugin.addConnection(connection)
         notifyChanges()
         return connection
     }
@@ -717,7 +717,7 @@ export class CellDLDiagram {
         ) as CellDLConnection
         this.#addConnection(connection)
         // let the plugins know
-        componentLibraryPlugin.addConnection(connection, this.rdfStore)
+        componentLibraryPlugin.addConnection(connection)
         return connection
     }
 
@@ -1024,11 +1024,11 @@ export class CellDLDiagram {
                 this.#removeObject(connection, undoAction)
                 connector.deleteConnection(connection)
             }
-            componentLibraryPlugin.deleteComponent(celldlObject, this.rdfStore)
+            componentLibraryPlugin.componentDeleted(celldlObject)
         }
         if (celldlObject.isConnection) {
             const connection = <CellDLConnection>celldlObject
-            componentLibraryPlugin.deleteConnection(connection, this.rdfStore)
+            componentLibraryPlugin.connectionDeleted(connection)
             for (const connector of connection.connectedObjects) {
                 connector.deleteConnection(connection)
             }

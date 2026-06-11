@@ -100,9 +100,8 @@ export interface PluginInterface {
      * Get plugin specific data to store with a CellDL object.
      *
      * @param celldlObject A CellDL object.
-     * @param rdfStore The RDF store with metadata about the diagram.
      */
-    getPluginData: (celldlObject: CellDLObject, rdfStore: RdfStore) => object
+    getPluginData: (celldlObject: CellDLObject) => object
 
     /**
      * Get plugin specific text about the status of a CellDL object.
@@ -115,17 +114,15 @@ export interface PluginInterface {
      * A CellDL component has been added to the diagram.
      *
      * @param component A CellDL component object.
-     * @param rdfStore The RDF store with metadata about the diagram.
      */
-    addComponent: (component: CellDLObject, rdfStore: RdfStore) => void
+    addComponent: (component: CellDLObject) => void
 
     /**
      * A CellDL connection has been added to the diagram.
      *
      * @param connection A CellDL connection object.
-     * @param rdfStore The RDF store with metadata about the diagram.
      */
-    addConnection: (connection: CellDLConnection, rdfStore: RdfStore) => void
+    addConnection: (connection: CellDLConnection) => void
 
     /**
      * Check that two CellDL objects can be connected.
@@ -141,17 +138,15 @@ export interface PluginInterface {
      * A CellDL component has been deleted from the diagram.
      *
      * @param component A CellDL component object.
-     * @param rdfStore The RDF store with metadata about the diagram.
      */
-    deleteComponent: (component: CellDLObject, rdfStore: RdfStore) => void
+    componentDeleted: (component: CellDLObject) => void
 
     /**
      * A CellDL connection has been deleted from the diagram.
      *
      * @param connection A CellDL connection object.
-     * @param rdfStore The RDF store with metadata about the diagram.
      */
-    deleteConnection: (connection: CellDLConnection, rdfStore: RdfStore) => void
+    connectionDeleted: (connection: CellDLConnection) => void
 
     /**
      * Get the maximum number of connections that a CellDL object can have.
@@ -179,10 +174,9 @@ export interface PluginInterface {
      *
      * @param celldlObject A CellDL object.
      * @param componentProperties Properties about the object, ordered by their group.
-     * @param rdfStore The RDF store with metadata about the diagram.
      */
     loadComponentProperties: (celldlObject: CellDLObject,
-                              componentProperties: PropertyGroup[], rdfStore: RdfStore) => void
+                              componentProperties: PropertyGroup[]) => void
 
     /**
      * Update the diagram's RDF store when the value of a CellDL object property changes.
@@ -191,10 +185,9 @@ export interface PluginInterface {
      * @param itemId The full ID (`property_group/var_name`) of the property.
      * @param value The original and new value of the given property.
      * @param componentProperties Properties about the object, ordered by their group.
-     * @param rdfStore The RDF store with metadata about the diagram.
      */
     updateObjectProperties: (celldlObject: CellDLObject, itemId: string, value: ValueChange,
-                             componentProperties: PropertyGroup[], rdfStore: RdfStore) => Promise<void>
+                             componentProperties: PropertyGroup[]) => Promise<void>
 
     /**
      * Update the SVG representation of a object when its styling has changed.
@@ -277,18 +270,18 @@ export class ComponentLibraryPlugin {
 
     //==========================================================================
 
-    addComponent(component: CellDLObject, rdfStore: RdfStore) {
+    addComponent(component: CellDLObject) {
         for (const plugin of this.#registeredPlugins.values()) {
             if (Object.keys(component.pluginData(plugin.id)).length) {
-                plugin.addComponent(component, rdfStore)
+                plugin.addComponent(component)
             }
         }
     }
 
-    addConnection(connection: CellDLConnection, rdfStore: RdfStore) {
+    addConnection(connection: CellDLConnection) {
         for (const plugin of this.#registeredPlugins.values()) {
             if (Object.keys(connection.pluginData(plugin.id)).length) {
-                plugin.addConnection(connection, rdfStore)
+                plugin.addConnection(connection)
             }
         }
     }
@@ -305,18 +298,18 @@ export class ComponentLibraryPlugin {
         }
     }
 
-    deleteComponent(component: CellDLObject, rdfStore: RdfStore) {
+    componentDeleted(component: CellDLObject) {
         for (const plugin of this.#registeredPlugins.values()) {
             if (Object.keys(component.pluginData(plugin.id)).length) {
-                plugin.deleteComponent(component, rdfStore)
+                plugin.componentDeleted(component)
             }
         }
     }
 
-    deleteConnection(connection: CellDLConnection, rdfStore: RdfStore) {
+    connectionDeleted(connection: CellDLConnection) {
         for (const plugin of this.#registeredPlugins.values()) {
             if (Object.keys(connection.pluginData(plugin.id)).length) {
-                plugin.deleteConnection(connection, rdfStore)
+                plugin.connectionDeleted(connection)
             }
         }
     }
@@ -333,10 +326,10 @@ export class ComponentLibraryPlugin {
 
     //==========================================================================
 
-    getPluginData(celldlObject: CellDLObject, rdfStore: RdfStore): Map<string, object> {
+    getPluginData(celldlObject: CellDLObject): Map<string, object> {
         const pluginDataMap: Map<string, object> = new Map()
         for (const plugin of this.#registeredPlugins.values()) {
-            pluginDataMap.set(plugin.id, plugin.getPluginData(celldlObject, rdfStore))
+            pluginDataMap.set(plugin.id, plugin.getPluginData(celldlObject))
         }
         return pluginDataMap
     }
@@ -396,11 +389,11 @@ export class ComponentLibraryPlugin {
     //==========================================================================
 
     loadComponentProperties(celldlObject: CellDLObject,
-                            componentProperties: PropertyGroup[], rdfStore: RdfStore): void {
+                            componentProperties: PropertyGroup[]): void {
         for (const pluginId of celldlObject.pluginIds) {
             const plugin = this.#registeredPlugins.get(pluginId)
             if (plugin && Object.keys(celldlObject.pluginData(pluginId)).length) {
-                plugin.loadComponentProperties(celldlObject, componentProperties, rdfStore)
+                plugin.loadComponentProperties(celldlObject, componentProperties)
             }
         }
     }
@@ -415,11 +408,11 @@ export class ComponentLibraryPlugin {
     }
 
     async updateObjectProperties(celldlObject: CellDLObject, itemId: string, value: ValueChange,
-                                    componentProperties: PropertyGroup[], rdfStore: RdfStore) {
+                                    componentProperties: PropertyGroup[]) {
         for (const pluginId of celldlObject.pluginIds) {
             const plugin = this.#registeredPlugins.get(pluginId)
             if (plugin && Object.keys(celldlObject.pluginData(pluginId)).length) {
-                await plugin.updateObjectProperties(celldlObject, itemId, value, componentProperties, rdfStore)
+                await plugin.updateObjectProperties(celldlObject, itemId, value, componentProperties)
             }
         }
     }
