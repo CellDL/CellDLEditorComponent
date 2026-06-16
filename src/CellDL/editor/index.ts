@@ -313,7 +313,7 @@ export class CellDLEditor {
         this.#editorFrame = new EditorFrame(celldlDiagram)
 
         // Initialise alignment guides and grid
-        editGuides.newDiagram(celldlDiagram, true)
+        editGuides.newDiagram(celldlDiagram, DEFAULT_VIEW_STATE)
 
         // Show the diagram in the editor's window
         if (this.#container) {
@@ -536,7 +536,7 @@ export class CellDLEditor {
             activeObject.clearControlHandles()
             this.#activateObject(activeObject, false)
         }
-        this.#activeObjects = new Map()
+        this.#activeObjects.clear()
         this.#currentObject = null
     }
 
@@ -895,7 +895,7 @@ export class CellDLEditor {
         if (this.#celldlDiagram === null) {
             return
         }
-        const domPoint = this.#domToSvgCoords(event)
+        const svgPoint = this.#domToSvgCoords(event)
         if (this.#panning) {
             this.#panzoom!.pointerUp(event)
             this.#panning = false
@@ -905,7 +905,7 @@ export class CellDLEditor {
                 !this.#newSelectionBox &&
 // WIP                !this.#contextMenu.isOpen &&
                 this.#selectionBox &&
-                !this.#selectionBox.pointInside(domPoint)
+                !this.#selectionBox.pointInside(svgPoint)
             ) {
                 this.#closeSelectionBox()
             }
@@ -923,7 +923,7 @@ export class CellDLEditor {
                     }
                 }
             } else if (this.#editorState === EDITOR_STATE.Selecting) {
-                if (this.#selectionBox && !this.#selectionBox.pointerEvent(event, domPoint)) {
+                if (this.#selectionBox && !this.#selectionBox.pointerEvent(event, svgPoint)) {
                     this.#closeSelectionBox()
                 }
                 this.#newSelectionBox = false
