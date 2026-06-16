@@ -545,6 +545,11 @@ export class BondgraphPlugin implements PluginInterface {
                 undefined <---> Any
                 Same <---> Same
         */
+        if (this.#domainGraph.hasEdge([sourceObject.uri.value, targetObject.uri.value])
+         || this.#domainGraph.hasEdge([targetObject.uri.value, sourceObject.uri.value])
+        ) {
+            return { alert: 'Components are already connected' }
+        }
         const sourceData = <PluginData>sourceObject.pluginData(this.id)
         const targetData = <PluginData>targetObject.pluginData(this.id)
         if (sourceData.junctionType === targetData.junctionType) {

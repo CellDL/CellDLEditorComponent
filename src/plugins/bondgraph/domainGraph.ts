@@ -208,6 +208,10 @@ export class DomainGraph {
         }
     }
 
+    hasEdge(edgeNodeUris: [string, string]): boolean {
+        return this.#graph.hasEdge(edgeNodeUris[0], edgeNodeUris[1])
+    }
+
     deleteEdge(edgeNodeUris: [string, string]) {
         this.#graph.dropEdge(edgeNodeUris[0], edgeNodeUris[1])
         const domainNode0 = this.#graph.getNodeAttribute(edgeNodeUris[0], 'domain')
