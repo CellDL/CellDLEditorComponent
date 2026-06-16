@@ -125,6 +125,14 @@ const viewItems = {
             }
         },
         {
+            label: 'Guides',
+            icon: getCheckedIcon(!!props.viewState.alignmentGuides),
+            command: (e: MenuItemCommandEvent) => {
+                e.item.icon = toggleCheckedIcon(e.item)
+                emit('view-action', 'show-guides', itemChecked(e.item))
+            }
+        },
+        {
             label: 'Snap',
             icon: 'pi',
             items: snapToGridItems

@@ -87,6 +87,7 @@ export type ViewState = {
     showGrid?: boolean
     gridSpacing?: number
     snapToGrid?: number
+    alignmentGuides?: boolean
 }
 
 //==============================================================================

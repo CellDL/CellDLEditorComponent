@@ -80,7 +80,8 @@ const defaultGridOptions: GridOptions = {
 export const DEFAULT_VIEW_STATE: ViewState = {
     showGrid: true,
     gridSpacing: GRID_SPACING,
-    snapToGrid: defaultGridOptions.snapGrid ? (defaultGridOptions.fullSnap ? 1 : 0.5) : 0
+    snapToGrid: defaultGridOptions.snapGrid ? (defaultGridOptions.fullSnap ? 1 : 0.5) : 0,
+    alignmentGuides: true
 }
 
 //==============================================================================
@@ -395,6 +396,7 @@ class EditGuides {
 
     #alignmentGrid: AlignmentGrid | null = null
     #componentGuides: ComponentGuides | null = null
+    #guidesEnabled: boolean = true
 
     private constructor() {
         if (EditGuides.#instance) {
@@ -427,12 +429,14 @@ class EditGuides {
     }
 
     matchGuide(component: CellDLMoveableObject): MatchGuideResult {
-        return this.#componentGuides ? this.#componentGuides.matchGuide(component) : [null, null]
+        return this.#guidesEnabled && this.#componentGuides
+                ? this.#componentGuides.matchGuide(component)
+                : [null, null]
     }
 
-    newDiagram(celldlDiagram: CellDLDiagram, showGrid: boolean) {
+    newDiagram(celldlDiagram: CellDLDiagram, viewState: ViewState) {
         this.#alignmentGrid = new AlignmentGrid(celldlDiagram)
-        this.setState({showGrid: showGrid})
+        this.setState(viewState)
         this.#componentGuides = new ComponentGuides(celldlDiagram)
     }
 
@@ -454,6 +458,7 @@ class EditGuides {
                 })
             }
         }
+        this.#guidesEnabled = !!state.alignmentGuides
     }
 
     viewboxUpdated(viewbox: Extent) {
