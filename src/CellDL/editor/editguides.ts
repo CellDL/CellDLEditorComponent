@@ -85,6 +85,10 @@ export const DEFAULT_VIEW_STATE: ViewState = {
 
 //==============================================================================
 
+type MatchGuideResult = [number | null, number | null]
+
+//==============================================================================
+
 class AlignmentGrid {
     #options: GridOptions
     #gridSpacing: number
@@ -230,7 +234,7 @@ class IntervalGuide {
 class ComponentGuideGroup {
     #svgGroup: SVGGElement
     #intervalGuides: IntervalGuide[] = []
-    #lastMatched: IntervalGuide | null = null
+    #lastMatched: Map<string, IntervalGuide> = new Map()
     #extent: [number, number]
     #type: string // 'H' | 'V'
 
@@ -245,8 +249,9 @@ class ComponentGuideGroup {
         return this.#svgGroup
     }
 
-    add(position: number): IntervalGuide {
-        const n = this.match(position)
+    add(componentId: string, position: number): IntervalGuide {
+        this.#clearLastMatched(componentId)
+        const n = this.#match(position)
         let guide: IntervalGuide
         if (n >= 0) {
             // @ts-expect-error: `n` is a valid index
@@ -260,11 +265,14 @@ class ComponentGuideGroup {
         return guide
     }
 
-    match(position: number): number {
-        if (this.#lastMatched !== null) {
-            this.#lastMatched.show(false)
-            this.#lastMatched = null
+    #clearLastMatched(componentId: string) {
+        if (this.#lastMatched.has(componentId)) {
+            this.#lastMatched.get(componentId)?.show(false)
+            this.#lastMatched.delete(componentId)
         }
+    }
+
+    #match(position: number): number {
         let L = 0
         let R = this.#intervalGuides.length - 1
         while (L <= R) {
@@ -283,8 +291,9 @@ class ComponentGuideGroup {
         return -(L + 1)
     }
 
-    remove(position: number) {
-        const n = this.match(position)
+    remove(componentId: string, position: number) {
+        this.#clearLastMatched(componentId)
+        const n = this.#match(position)
         if (n >= 0) {
             // @ts-expect-error: `n` is a valid index
             this.#intervalGuides[n].removeUser()
@@ -295,18 +304,16 @@ class ComponentGuideGroup {
         }
     }
 
-    show(position: number): number | null {
-        const guideIndex = this.match(position)
+    show(componentId: string, position: number): number | null {
+        this.#clearLastMatched(componentId)
+        const guideIndex = this.#match(position)
         if (guideIndex >= 0) {
-            // @ts-expect-error: `guideIndex` is a valid index
-            this.#lastMatched = this.#intervalGuides[guideIndex]
-            // @ts-expect-error: `guideIndex` is a valid index
-            this.#lastMatched.show()
-            // @ts-expect-error: `guideIndex` is a valid index
-            return this.#lastMatched.centre
-        } else {
-            return 0
+            const lastMatched = this.#intervalGuides[guideIndex] as IntervalGuide
+            lastMatched.show()
+            this.#lastMatched.set(componentId, lastMatched)
+            return lastMatched.centre
         }
+        return null
     }
 
     setTransform(viewbox: Extent) {
@@ -341,26 +348,36 @@ class ComponentGuides {
         celldlDiagram.addEditorElement(this.#verticalGuideGroup.svgGroup)
     }
 
+    aligning(component: CellDLMoveableObject, aligning: boolean) {
+        if (aligning) {
+            this.removeComponent(component)
+        } else {
+            this.addComponent(component)
+        }
+    }
+
     addComponent(component: CellDLMoveableObject) {
         if (!this.#knownComponents.has(component)) {
             const centroid = component.celldlSvgElement?.centroid as Point
-            this.#horizontalGuideGroup.add(centroid.y)
-            this.#verticalGuideGroup.add(centroid.x)
+            this.#horizontalGuideGroup.add(component.id, centroid.y)
+            this.#verticalGuideGroup.add(component.id, centroid.x)
             this.#knownComponents.add(component)
         }
     }
 
-    matchGuide(component: CellDLMoveableObject): Array<number | null> {
-        this.removeComponent(component)
+    matchGuide(component: CellDLMoveableObject): MatchGuideResult {
         const centroid = component.celldlSvgElement?.centroid as Point
-        return [this.#horizontalGuideGroup.show(centroid.y), this.#verticalGuideGroup.show(centroid.x)]
+        return [
+            this.#horizontalGuideGroup.show(component.id, centroid.y),
+            this.#verticalGuideGroup.show(component.id, centroid.x)
+        ]
     }
 
     removeComponent(component: CellDLMoveableObject) {
         if (this.#knownComponents.has(component)) {
             const centroid = component.celldlSvgElement?.centroid as Point
-            this.#horizontalGuideGroup.remove(centroid.y)
-            this.#verticalGuideGroup.remove(centroid.x)
+            this.#horizontalGuideGroup.remove(component.id, centroid.y)
+            this.#verticalGuideGroup.remove(component.id, centroid.x)
             this.#knownComponents.delete(component)
         }
     }
@@ -397,13 +414,19 @@ class EditGuides {
         return this.#alignmentGrid ? this.#alignmentGrid.align(point, options) : Point.fromPoint(point)
     }
 
+    aligning(component: CellDLMoveableObject, aligning: boolean) {
+        if (this.#componentGuides) {
+            this.#componentGuides.aligning(component, aligning)
+        }
+    }
+
     addGuide(component: CellDLMoveableObject) {
         if (this.#componentGuides) {
             this.#componentGuides.addComponent(component)
         }
     }
 
-    matchGuide(component: CellDLMoveableObject): Array<number | null> {
+    matchGuide(component: CellDLMoveableObject): MatchGuideResult {
         return this.#componentGuides ? this.#componentGuides.matchGuide(component) : [null, null]
     }
 

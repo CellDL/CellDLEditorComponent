@@ -334,7 +334,8 @@ export class CellDLObject {
 
 export class CellDLMoveableObject extends CellDLObject {
     startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
-        editGuides.removeGuide(this)
+        // Finding alignment guides as we move
+        editGuides.aligning(this, true)
         super.startMove(svgPoint, options)
     }
 
@@ -344,18 +345,18 @@ export class CellDLMoveableObject extends CellDLObject {
 
     move(svgPoint: PointLike, options: ElementMoveOptions={}) {
         super.move(svgPoint, options)
-        editGuides.matchGuide(this) // Highliglight guides that our centroid's now on
+        // Highliglight guides of objects that our centroid's aligned with
+        editGuides.matchGuide(this)
     }
 
     endMove() {
         super.endMove()
-        editGuides.addGuide(this)
+        // We've stopped finding our alignment guides
+        editGuides.aligning(this, false)
     }
 
     redraw() {
-        editGuides.removeGuide(this)
         super.redraw()
-        editGuides.addGuide(this)
     }
 
     assignSvgElement(svgElement: SVGGraphicsElement, align: boolean) {
