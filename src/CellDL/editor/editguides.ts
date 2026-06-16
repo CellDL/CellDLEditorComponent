@@ -157,6 +157,12 @@ class AlignmentGrid {
         return Point.fromPoint(point)
     }
 
+    redraw(viewbox: Extent) {
+        if (this.#gridLinesElement) {
+            this.#gridLinesElement.setAttribute('d', this.#gridLines(viewbox))
+        }
+    }
+
     setOptions(options = {}) {
         this.#options = {...this.#options, ...options}
     }
@@ -168,12 +174,6 @@ class AlignmentGrid {
             } else {
                 this.#gridLinesElement.setAttribute('visibility', 'hidden')
             }
-        }
-    }
-
-    redraw(viewbox: Extent) {
-        if (this.#gridLinesElement) {
-            this.#gridLinesElement.setAttribute('d', this.#gridLines(viewbox))
         }
     }
 }
@@ -304,18 +304,6 @@ class ComponentGuideGroup {
         }
     }
 
-    show(componentId: string, position: number): number | null {
-        this.#clearLastMatched(componentId)
-        const guideIndex = this.#match(position)
-        if (guideIndex >= 0) {
-            const lastMatched = this.#intervalGuides[guideIndex] as IntervalGuide
-            lastMatched.show()
-            this.#lastMatched.set(componentId, lastMatched)
-            return lastMatched.centre
-        }
-        return null
-    }
-
     setTransform(viewbox: Extent) {
         if (this.#type === 'H') {
             const scale = viewbox[2] / this.#extent[1]
@@ -330,6 +318,18 @@ class ComponentGuideGroup {
                 `matrix(1, 0, 0, ${scale}, 0, ${viewbox[1] - scale * this.#extent[0]})`
             )
         }
+    }
+
+    show(componentId: string, position: number): number | null {
+        this.#clearLastMatched(componentId)
+        const guideIndex = this.#match(position)
+        if (guideIndex >= 0) {
+            const lastMatched = this.#intervalGuides[guideIndex] as IntervalGuide
+            lastMatched.show()
+            this.#lastMatched.set(componentId, lastMatched)
+            return lastMatched.centre
+        }
+        return null
     }
 }
 
@@ -348,20 +348,20 @@ class ComponentGuides {
         celldlDiagram.addEditorElement(this.#verticalGuideGroup.svgGroup)
     }
 
-    aligning(component: CellDLMoveableObject, aligning: boolean) {
-        if (aligning) {
-            this.removeComponent(component)
-        } else {
-            this.addComponent(component)
-        }
-    }
-
     addComponent(component: CellDLMoveableObject) {
         if (!this.#knownComponents.has(component)) {
             const centroid = component.celldlSvgElement?.centroid as Point
             this.#horizontalGuideGroup.add(component.id, centroid.y)
             this.#verticalGuideGroup.add(component.id, centroid.x)
             this.#knownComponents.add(component)
+        }
+    }
+
+    aligning(component: CellDLMoveableObject, aligning: boolean) {
+        if (aligning) {
+            this.removeComponent(component)
+        } else {
+            this.addComponent(component)
         }
     }
 
@@ -410,8 +410,10 @@ class EditGuides {
         return EditGuides.#instance
     }
 
-    gridAlign(point: PointLike, options: GridAlignOptions = {}): Point {
-        return this.#alignmentGrid ? this.#alignmentGrid.align(point, options) : Point.fromPoint(point)
+    addGuide(component: CellDLMoveableObject) {
+        if (this.#componentGuides) {
+            this.#componentGuides.addComponent(component)
+        }
     }
 
     aligning(component: CellDLMoveableObject, aligning: boolean) {
@@ -420,10 +422,8 @@ class EditGuides {
         }
     }
 
-    addGuide(component: CellDLMoveableObject) {
-        if (this.#componentGuides) {
-            this.#componentGuides.addComponent(component)
-        }
+    gridAlign(point: PointLike, options: GridAlignOptions = {}): Point {
+        return this.#alignmentGrid ? this.#alignmentGrid.align(point, options) : Point.fromPoint(point)
     }
 
     matchGuide(component: CellDLMoveableObject): MatchGuideResult {
@@ -434,6 +434,12 @@ class EditGuides {
         this.#alignmentGrid = new AlignmentGrid(celldlDiagram)
         this.setState({showGrid: showGrid})
         this.#componentGuides = new ComponentGuides(celldlDiagram)
+    }
+
+    removeGuide(component: CellDLMoveableObject) {
+        if (this.#componentGuides) {
+            this.#componentGuides.removeComponent(component)
+        }
     }
 
     setState(state: ViewState) {
@@ -456,12 +462,6 @@ class EditGuides {
         }
         if (this.#componentGuides) {
             this.#componentGuides.setTransform(viewbox)
-        }
-    }
-
-    removeGuide(component: CellDLMoveableObject) {
-        if (this.#componentGuides) {
-            this.#componentGuides.removeComponent(component)
         }
     }
 }
