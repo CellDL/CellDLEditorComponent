@@ -569,7 +569,7 @@ export class BondgraphPlugin implements PluginInterface {
     connectionDeleted(connection: CellDLConnection) {
         this.#domainGraph.deleteEdge([connection.source!.uri.value, connection.target!.uri.value])
         const uri = connection.uri.toString()
-        rdfStore.update(`${SPARQL_PREFIXES}
+        connection.rdfStore.update(`${SPARQL_PREFIXES}
             PREFIX : <${this.#currentDocumentUri}#>
             DELETE DATA {
                 ${uri} bgf:hasSource ${connection.source!.uri.toString()} .
