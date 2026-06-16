@@ -282,7 +282,7 @@ export class BondgraphPlugin implements PluginInterface {
 
     #componentLibrary: BGComponentLibrary = {
         id: this.id,
-        name: 'Bondgraph Elements',
+        name: 'Bondgraph',
         templates: BONDGRAPH_COMPONENT_DEFINITIONS.map(defn => definitionToLibraryTemplate(defn))
     }
     #componentTemplates: Map<string, BGLibraryComponentTemplate> = new Map(
