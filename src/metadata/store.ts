@@ -39,13 +39,20 @@ export interface PredicateValue {
 //==============================================================================
 
 export class RdfStore extends $rdf.RdfStore {
+    #objectStatementCache: Map<$rdf.SubjectType, $rdf.Statement[]> = new Map()
+
     // A dummy constructor is needed otherwise instance creation is optimised to
     // the uninitialised $rdf module.
     constructor(_: string='') {
         super()
     }
 
+    #clearStatementCache() {
+        this.#objectStatementCache.clear()
+    }
+
     addMetadataPropertiesForSubject(subject: $rdf.SubjectType, properties: MetadataPropertiesMap): $rdf.Statement[] {
+        this.#clearStatementCache()
         const statements: $rdf.Statement[] = []
         for (const [predicate, value] of properties.predicateValues()) {
             statements.push(...this.#addMetadataProperties(subject, predicate, value))
@@ -76,6 +83,7 @@ export class RdfStore extends $rdf.RdfStore {
 
     addStatementList(statements: $rdf.Statement[]) {
         statements.forEach((s) => {
+            this.#objectStatementCache.delete(s.subject)
             super.add(s.subject, s.predicate, s.object, null)
         })
     }
@@ -96,10 +104,37 @@ export class RdfStore extends $rdf.RdfStore {
         return this.#metadataFromPredicates(predicateValues)
     }
 
+    statementsForSubject(subject: $rdf.SubjectType): $rdf.Statement[] {
+        if (this.#objectStatementCache.has(subject)) {
+            return this.#objectStatementCache.get(subject) as $rdf.Statement[]
+        }
+        const statements: $rdf.Statement[] = super.statementsMatching(subject, null, null, null)
+        const bnStatements: $rdf.Statement[] = []
+        for (const statement of statements) {
+            if ($rdf.isBlankNode(statement.object)) {
+                // @ts-expect-error: `object` is a BlankNode
+                bnStatements.push(...this.statementsForSubject(statement.object))
+            }
+        }
+        const result = [...statements, ...bnStatements]
+        this.#objectStatementCache.set(subject, result)
+        return result
+    }
+
     removeStatements(statements: $rdf.Statement[]) {
         statements.forEach((s) => {
+            this.#objectStatementCache.delete(s.subject)
             super.removeStatementsMatching(s.subject, s.predicate, s.object, null)
         })
+    }
+
+    removeStatementsForSubject(subject: $rdf.SubjectType) {
+        this.removeStatements(this.statementsForSubject(subject))
+    }
+
+    update(sparql: string) {
+        this.#clearStatementCache()
+        super.update(sparql)
     }
 
     async serialise(
