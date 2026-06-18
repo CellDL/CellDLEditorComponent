@@ -609,7 +609,7 @@ export class CellDLEditor {
             console.error(`Drop of unknown component template '${details.id}'`)
             return
         }
-        const componentGroup = this.#editorFrame!.addSvgElement(template, this.#domToSvgCoords(topLeft))
+        const componentGroup = this.#editorFrame!.addSvgElementFromTemplate(template, this.#domToSvgCoords(topLeft))
         const celldlObject = this.#celldlDiagram!.addConnectedObject(componentGroup, template)
         this.#unsetActiveObjects()
         if (celldlObject) {

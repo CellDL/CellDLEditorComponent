@@ -23,7 +23,7 @@ import { CONNECTION_COLOUR, CONNECTION_WIDTH } from '@renderer/common/styling'
 import { svgPath, svgPathDescription, SVG_URI } from '@renderer/common/svgUtils'
 import { CELLDL, RDF } from '@renderer/metadata/index'
 import { MetadataPropertiesMap } from '@renderer/metadata/index'
-import { componentLibraryPlugin, type ConnectionStatus } from '@renderer/plugins/index'
+import { componentLibraryPlugin } from '@renderer/plugins/index'
 
 import { type CellDLConnectedObject, CellDLConnection, type CellDLObject } from '@editor/celldlObjects/index'
 import { alert } from '@editor/editor/alerts'
@@ -450,6 +450,7 @@ export class PathMaker {
 
         const lastPoints = this.#pathPoints.slice(-2)
         if (rectilinear) {
+            // biome-ignore lint/style/noNonNullAssertion: indices are in range
             const delta = PointMath.subtract(lastPoints[1]!.point, lastPoints[0]!.point)
             if (Math.abs(delta.x) > Math.abs(delta.y)) {
                 this.#rectilinearDirn = `H${delta.x > 0 ? '+' : '-'}`
@@ -457,6 +458,7 @@ export class PathMaker {
                 this.#rectilinearDirn = `V${delta.y > 0 ? '+' : '-'}`
             }
         } else if (this.#style === ConnectionStyle.Linear) {
+            // biome-ignore lint/style/noNonNullAssertion: index is in range
             this.#pointBeforeNode = Point.fromPoint(lastPoints[0]!.point)
         }
         this.#pathPoints = []
@@ -515,10 +517,12 @@ export class PathMaker {
             this.#setCurrentSvgPath(this.#pathPoints)
         }
         const lastPointIndex = this.#pathPoints.length - 1
+        // biome-ignore lint/style/noNonNullAssertion: index is in range
         const connector = celldlDiagram.createUnconnectedPort(this.#pathPoints[lastPointIndex]!.point)
         if (connector) {
             // biome-ignore lint/style/noNonNullAssertion: connector has an SVG element
             const pathEnd = connector.celldlSvgElement!.boundaryIntersections(
+                // biome-ignore lint/style/noNonNullAssertion: index is in range
                 this.#pathPoints[lastPointIndex - 1]!.point
             )[0]
             if (pathEnd) {

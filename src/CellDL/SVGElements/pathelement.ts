@@ -299,18 +299,17 @@ export class PathElement {
 
     splitPath(splitPoint: FoundPoint, interfaceElement: BoundedElement): SVGPathElement {
         const point = splitPoint.point
-        const headArray: NormalArray = this.#pathArray.slice(0, splitPoint.segment! + 1)
+        const headArray = this.#pathArray.slice(0, splitPoint.segment as number + 1)
         headArray.push(['L', point.x, point.y])
 
-        const tailPoints = this.#pathArray.slice(splitPoint.segment! + 1).map((p: number[]) => {
-            // biome-ignore lint/style/noNonNullAssertion: indices are in range
-            return { x: p[1]!, y: p[2]! }
+        const tailPoints = this.#pathArray.slice(splitPoint.segment as number + 1).map((p): PointLike => {
+            return { x: p[1] as number, y: p[2] as number }
         })
         tailPoints.splice(0, 0, point)
         this.#lastElement.removePathElement(this)
         this.#lastElement = interfaceElement
         this.#lastElement.addPathElement(this)
-        this.#pathArray = headArray
+        this.#pathArray = headArray as NormalArray
 
         const svgElement = svgPathElement(tailPoints)
         this.#svgElement.setAttribute('d', SVGPathCommander.pathToString(this.#pathArray))

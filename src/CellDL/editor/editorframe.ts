@@ -35,7 +35,7 @@ function addElementAsString(svgGroup: SVGGElement, element: string): SVGGraphics
     return svgGroup.lastChild as SVGGraphicsElement
 }
 
-function addSvgElement(svgGroup: SVGGElement, template: ObjectTemplate, topLeft: PointLike): SVGGElement {
+function addSvgElementFromTemplate(svgGroup: SVGGElement, template: ObjectTemplate, topLeft: PointLike): SVGGElement {
     const svgElement: SVGGElement = document.createElementNS(SVG_URI, 'g')
     svgElement.setAttribute('style', 'visibility: hidden')
     if (template.imageData) {
@@ -92,11 +92,11 @@ export class EditorFrame {
         }
     }
 
-    addSvgElement(template: ObjectTemplate, topLeft: PointLike, background: boolean=false): SVGGElement {
+    addSvgElementFromTemplate(template: ObjectTemplate, topLeft: PointLike, background: boolean=false): SVGGElement {
         if (background) {
-            return addSvgElement(this.#backgroundGroup, template, topLeft)
+            return addSvgElementFromTemplate(this.#backgroundGroup, template, topLeft)
         } else {
-            return addSvgElement(this.#frameGroupElement, template, topLeft)
+            return addSvgElementFromTemplate(this.#frameGroupElement, template, topLeft)
         }
     }
 

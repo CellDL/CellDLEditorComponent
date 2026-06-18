@@ -75,7 +75,7 @@ export class SvgConnection extends CellDLSVGElement {
             throw new Error(`Connection ${connection.id}: SVG is not a 'path' element`)
         }
 
-        const connectorElements = connection.connectedObjects.map((cn) => <BoundedElement>cn.celldlSvgElement!)
+        const connectorElements = connection.connectedObjects.map((cn) => <BoundedElement>cn.celldlSvgElement)
         if (svgPaths.length === connectorElements.length - 1) {
             for (let n = 0; n < svgPaths.length; n += 1) {
                 const pathId = `${svgElement.id}${ID_PART_SEPARATOR}${n + 1}`
