@@ -32,7 +32,7 @@ import { FixedPathPoint, PathElement, PathPoint } from './pathelement'
 //==============================================================================
 
 export class LinearPath extends PathElement {
-    protected setPathPoints(pathArray: NormalArray) {
+    setPathPoints(pathArray: NormalArray) {
         if (this.validPath) {
             // set by constructor when path starts with 'M' command
             this.pathPoints.length = 0

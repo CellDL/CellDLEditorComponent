@@ -20,7 +20,6 @@ limitations under the License.
 
 import { CELLDL_STYLE_CLASS, type CellDLConnectedObject, type CellDLObject } from '@editor/celldlObjects/index'
 import { editGuides } from '@editor/editor/editguides'
-import { undoRedo, type EditorUndoAction, type UndoMovePosition } from '@editor/editor/undoredo'
 import { Point, type PointLike } from '@renderer/common/points'
 import { RestrictedPoint, type RestrictedValue } from '@editor/geometry/index'
 import { ControlRect } from '@editor/geometry/controls'
@@ -45,7 +44,6 @@ export class BoundedElement extends CellDLSVGElement {
     #excludeConnectionIds: Set<string> = new Set()
     #localTransform: Transform
     #topLeftCorner: Point
-    #undoMoveAction: EditorUndoAction | null = null
 
     constructor(object: CellDLObject, svgElement: SVGGraphicsElement, gridAligned: boolean=false, align: boolean=false) {
         super(object, svgElement)
@@ -70,9 +68,6 @@ export class BoundedElement extends CellDLSVGElement {
     }
 
     startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
-        this.#undoMoveAction = undoRedo.undoMoveAction()
-        this.#undoMoveAction.addObjectDetails(this.celldlObject)
-        this.#undoMoveAction.startMove(0, this.#controlRect.centroid.point)
         this.#controlRect.startMove(svgPoint)
         this.#excludeConnectionIds = options?.excludeConnectionIds || new Set()
     }
@@ -93,23 +88,21 @@ export class BoundedElement extends CellDLSVGElement {
     }
 
     move(svgPoint: PointLike, _options: ElementMoveOptions={}) {
-        if (this.#undoMoveAction) {
-            const savedCentroid = this.centroid
-            this.#controlRect.move(svgPoint)
-            this.setCentroid(this.#controlRect.centroid.point)
-            const centroidDelta = this.centroid.subtract(savedCentroid)
-            // Reset any restrictions for `elementBoundingBoxBoxMoved()`
-            this.unlimitDirection()
-            for (const path of this.#connectedPathElements.values()) {
-                if (!this.#excludeConnectionIds.has(path.connection.id)) {
-                    path.elementBoundingBoxMoved(this, centroidDelta)
-                }
+        const savedCentroid = this.centroid
+        // This sets the control rect's attributes but doesn't paint anything
+        this.#controlRect.move(svgPoint)
+        this.setCentroid(this.#controlRect.centroid.point)
+        const centroidDelta = this.centroid.subtract(savedCentroid)
+        // Reset any restrictions for `elementBoundingBoxBoxMoved()`
+        this.unlimitDirection()
+        for (const path of this.#connectedPathElements.values()) {
+            if (!this.#excludeConnectionIds.has(path.connection.id)) {
+                path.elementBoundingBoxMoved(this, centroidDelta)
             }
-            this.#undoMoveAction.endMove(0, this.#controlRect.centroid.point)
-            if (this.#controlRect.dirty) {
-                this.celldlObject.redraw()
-                this.svgBounds(true)  // Recalculate the element's bounds
-            }
+        }
+        if (this.#controlRect.dirty) {
+            this.celldlObject.redraw()
+            this.svgBounds(true)  // Recalculate the element's bounds
         }
     }
 
@@ -120,7 +113,6 @@ export class BoundedElement extends CellDLSVGElement {
                 path.endMove()
             }
         }
-        this.#undoMoveAction = null
     }
 
     addPathElement(path: PathElement) {
@@ -151,12 +143,6 @@ export class BoundedElement extends CellDLSVGElement {
         this.#controlRect.reposition(centroid)
         if (this.#controlRect.dirty) {
             this.redraw()
-        }
-    }
-
-    undoControlMove(undoPosition: UndoMovePosition) {
-        if (undoPosition && undoPosition[0] === 0 && undoPosition[1]) {
-            this.#reposition(undoPosition[1])
         }
     }
 

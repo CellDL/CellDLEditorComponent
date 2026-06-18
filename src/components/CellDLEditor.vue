@@ -55,7 +55,7 @@ import { CellDLDiagram } from '@editor/diagram'
 import { CellDLEditor } from '@editor/editor'
 import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS, PANEL_IDS } from '@editor/editor'
 import { editGuides } from '@editor/editor/editguides'
-import { undoRedo } from '@editor/editor/undoredo'
+import { undoRedo } from '@editor/diagram/undoredo'
 
 import type { EditorToolButton } from '@renderer/common/EditorState'
 import EditorToolbar from '@renderer/components/toolbar/EditorToolbar.vue'

@@ -114,6 +114,14 @@ export class EditorFrame {
             }
         }
     }
+
+    restoreElement(element: SVGGraphicsElement, background: boolean=false) {
+        if (background) {
+            this.#backgroundGroup.appendChild(element)
+        } else {
+            this.#frameGroupElement.appendChild(element)
+        }
+    }
 }
 
 //==============================================================================

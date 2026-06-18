@@ -217,7 +217,7 @@ export class RectilinearPath extends PathElement {
         return [boundaryPoint, splayPoint]
     }
 
-    protected setPathPoints(pathArray: NormalArray) {
+    setPathPoints(pathArray: NormalArray) {
         this.pathPoints.length = 0
         // `validPath` is set by the constructor when path starts
         if (this.validPath) {  // ==> starts with 'M' command and at least two long array.

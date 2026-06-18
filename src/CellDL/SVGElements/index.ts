@@ -24,7 +24,6 @@ import { CONNECTION_SPLAY_PADDING, MAX_CONNECTION_SPLAY_PADDING } from '@rendere
 import { CONNECTION_WIDTH, SELECTION_STROKE_WIDTH } from '@renderer/common/styling'
 import { Point, type PointLike, PointMath } from '@renderer/common/points'
 import { svgCircle } from '@renderer/common/svgUtils'
-import type { UndoMovePosition } from '@editor/editor/undoredo'
 
 import { CELLDL_STYLE_CLASS, type CellDLObject } from '@editor/celldlObjects/index'
 import { Bounds, type PointMoveOptions, type RestrictedValue } from '@editor/geometry/index'
@@ -36,6 +35,11 @@ import { Transform } from '@editor/geometry/transforms'
 export type ElementMoveOptions = PointMoveOptions & {
     excludeConnectionIds?: Set<string>
     moveEntireConnection?: boolean
+}
+
+export type DomLocation = {
+    parentId?: string
+    priorSiblingId?: string
 }
 
 //==============================================================================
@@ -87,6 +91,7 @@ export class CellDLSVGElement {
     #svgElement: SVGGraphicsElement
     #topLeft!: Point
     #globalTransform: Transform = Transform.Identity()
+    #svgDiagramElement: SVGSVGElement
 
     constructor(
         readonly celldlObject: CellDLObject,
@@ -95,10 +100,10 @@ export class CellDLSVGElement {
         if (svgElement === null) {
             throw new Error(`CellDL object '${celldlObject.id}' isn't represented in SVG...`)
         }
-        const svgDiagramElement = celldlObject.celldlDiagram?.svgDiagram
+        this.#svgDiagramElement = celldlObject.celldlDiagram?.svgDiagram
         // get all transformations that are being applied to the SVG element
         let element = svgElement.parentNode as SVGGraphicsElement
-        while (element !== svgDiagramElement) {
+        while (element !== this.#svgDiagramElement) {
             const transform = getComputedStyle(element).transform
             if (transform !== 'none') {
                 this.#globalTransform = this.#globalTransform.leftMultiply(Transform.fromString(transform))
@@ -304,6 +309,16 @@ export class CellDLSVGElement {
 
     activate(active = true) {
         this.#setSelectionClass('active', active)
+    }
+
+    domLocation(): DomLocation {
+        if (this.svgElement) {
+            return {
+                parentId: this.svgElement.parentElement?.id,
+                priorSiblingId: this.svgElement.previousElementSibling?.id
+            }
+        }
+        return { }
     }
 
     /**
@@ -602,8 +617,6 @@ export class CellDLSVGElement {
         this.#setSelectionClass('highlight', highlight)
     }
 
-    undoControlMove(_undoPosition: UndoMovePosition) {}
-
     pointerEvent(_eventType: string, _svgElement: SVGGraphicsElement, _svgCoords: PointLike): boolean {
         return false
     }
@@ -612,6 +625,20 @@ export class CellDLSVGElement {
 
     remove() {
         this.svgElement.remove()
+    }
+
+    restore(domLocation: DomLocation) {
+        const parent = domLocation.parentId
+                        ? this.#svgDiagramElement.getElementById(domLocation.parentId)
+                        : null
+        const priorSibling = domLocation.priorSiblingId
+                                ? this.#svgDiagramElement.getElementById(domLocation.priorSiblingId)
+                                : null
+        if (priorSibling) {
+            priorSibling.insertAdjacentElement('afterend', this.#svgElement)
+        } else if (parent) {
+            parent.prepend(this.#svgElement)
+        }
     }
 
     select(selected = true) {

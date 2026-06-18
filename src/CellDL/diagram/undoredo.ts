@@ -18,12 +18,16 @@ limitations under the License.
 
 ******************************************************************************/
 
-import type { CellDLObject } from '@editor/celldlObjects'
+import type { NormalArray } from 'svg-path-commander'
+
+import { type CellDLConnection, CellDLObject } from '@editor/celldlObjects'
 import type { CellDLDiagram } from '@editor/diagram'
+import type { SvgConnection } from '@editor/SVGElements/svgconnection'
 
 import { Point, PointMath, type PointLike } from '@renderer/common/points'
 
-import type { SelectionSet } from './selectionset'
+import { SelectionSet } from './selectionset'
+import { StoredObject } from './storedobject'
 
 //==============================================================================
 
@@ -39,78 +43,115 @@ export type UndoActionOptions = {
     selection?: SelectionSet
 }
 
-//==============================================================================
-
-class MoveDetails {
-    // what is being moved; index > 0 ==> a connection's control point
-    index: number = 0
-    // where we've been moved to
-    nextPosition: Point | null = null
-    // where we've moved from
-    prevPosition: Point | null = null
-}
+export type UndoObject = CellDLObject | SelectionSet
 
 //==============================================================================
 
 export class UndoState {
-    #moveDetails: MoveDetails = new MoveDetails()
-    #selection: SelectionSet|null = null
+    #selectionSet: SelectionSet|null = null
+    #storedObjects: Map<string, StoredObject> = new Map()
 
     constructor(
         readonly action: UndoAction,
-        readonly undoObject: CellDLObject,
+        readonly undoObject: UndoObject,
         options: UndoActionOptions={}
     ) {
-        this.setOptions(options)
+        const saveKnowledge = action !== UndoAction.MOVE
+        if (undoObject instanceof CellDLObject) {
+            this.#storedObjects.set(undoObject.id, new StoredObject(undoObject, saveKnowledge))
+        }
+        if (options.selection) {
+            this.#selectionSet = options.selection
+        } else if (undoObject instanceof SelectionSet) {
+            this.#selectionSet = undoObject
+        }
+        if (this.#selectionSet) {
+            for (const object of this.#selectionSet.objects) {
+                this.#storedObjects.set(object.id, new StoredObject(object, saveKnowledge))
+            }
+        }
     }
 
-    setOptions(options: UndoActionOptions) {
-        this.#selection = options.selection || null
-        if (this.action === UndoAction.MOVE) {
-            this.#moveDetails.index = options.index || 0
-        }
+    protected get selectionSet() {
+        return this.#selectionSet
+    }
+
+    get storedObjects() {
+        return this.#storedObjects
+    }
+
+    setOptions(_options: UndoActionOptions) {
+    }
+
+    storeObject(celldlObject: CellDLObject) {
+        this.#storedObjects.set(celldlObject.id,
+            new StoredObject(celldlObject, this.action !== UndoAction.MOVE))
     }
 
     // also for a selectionSet of components and connections
 // or is this simple done by iterating through the set? But not
 // auto connections??
 
-    get moveDetails() {
-        return this.#moveDetails
+
+}
+
+//==============================================================================
+
+type Direction = 'backwards' | 'forwards'
+
+//==============================================================================
+
+export class MoveUndoState extends UndoState {
+    #nextPosition: Point | null = null
+    #pathElementPathArrays: NormalArray[] = []
+    #prevPosition: Point | null = null
+
+    constructor(
+        readonly undoObject: UndoObject,
+        options: UndoActionOptions={}
+    ) {
+        super(UndoAction.MOVE, undoObject, options)
+        const movedObject = this.undoObject as CellDLObject
+        if (movedObject.isConnection) {
+            const pathElements = ((movedObject as CellDLConnection).celldlSvgElement as SvgConnection)?.pathElements
+            this.#pathElementPathArrays = pathElements.map(pathElement => pathElement.pathArray)
+        }
+        this.#startMove(options.position, options)
     }
 
-    startMove(options: UndoActionMoveOptions) {
-        this.#moveDetails.index = options.index || 0
-        if (options.position !== undefined) {
-            this.#moveDetails.prevPosition = Point.fromPoint(options.position)
+    #startMove(position: PointLike|undefined, _options: UndoActionOptions) {
+        if (position !== undefined) {
+            this.#prevPosition = Point.fromPoint(position)
         }
     }
 
     endMove(position: PointLike|undefined) {
         if (position !== undefined) {
-            this.#moveDetails.nextPosition = Point.fromPoint(position)
+            this.#nextPosition = Point.fromPoint(position)
         }
-
-
     }
 
-    redoMove(startPosition: PointLike, endPosition: PointLike) {
-        if (this.action === UndoAction.MOVE
-         && !PointMath.equals(startPosition, endPosition)) {
-            if (this.#selection) {
-                this.#selection.startMove(startPosition, this.undoObject)
-                this.#selection.move(endPosition)
-                this.#selection.endMove()
-            } else if (!this.undoObject.isConnection) {
-                this.undoObject.startMove(startPosition)
-                this.undoObject.move(endPosition)
-                this.undoObject.celldlDiagram.objectMoved(this.undoObject)
-                this.undoObject.endMove()
-            } else {
-                // need control point index
+    reposition(direction: Direction) {
+        const movedObject = this.undoObject as CellDLObject
+        if (movedObject.isConnection) {
+            const pathElements = ((movedObject as CellDLConnection).celldlSvgElement as SvgConnection)?.pathElements
+            pathElements.forEach((pathElement, index) => {
+                // biome-ignore lint/style/noNonNullAssertion: index is in range
+                pathElement.setPathPoints(this.#pathElementPathArrays[index]!)
+            })
+            movedObject.redraw()
+        } else {
+            const position = (direction === 'backwards') ? this.#prevPosition : this.#nextPosition
+            const startPosition = (direction === 'backwards') ? this.#nextPosition : this.#prevPosition
+            if (position && startPosition && !PointMath.equals(startPosition, position)) {
+                const movedObject = this.undoObject as CellDLObject
+                if (this.selectionSet) {
+                    this.selectionSet.reposition(movedObject, startPosition, position)
+
+                } else {
+                    movedObject.reposition(startPosition, position)
+                }
             }
-
-
         }
     }
 }
@@ -148,11 +189,9 @@ class UndoRedo {
         // notify CLEAN
     }
 
-    setActiveUndoState(action: UndoAction, undoObject: UndoObject, options: UndoActionOptions={}) {
+    setActiveUndoState(action: UndoAction, undoObject: UndoObject, options: UndoActionOptions={}): UndoState {
         this.#activeUndoState = this.#newUndoState(action, undoObject, options)
-        if (action === UndoAction.MOVE) {
-            this.#activeUndoState.startMove(options)
-        }
+        return this.#activeUndoState
     }
 
     setActiveStateOptions(options: UndoActionOptions) {
@@ -205,8 +244,11 @@ class UndoRedo {
         return undoState
     }
 
-    #newUndoState(action: UndoAction, undoObject: UndoObject): UndoState {
-        return this.#pushUndoStack(new UndoState(action, undoObject), false)
+    #newUndoState(action: UndoAction, undoObject: UndoObject, options: UndoActionOptions): UndoState {
+        const undoState = (action === UndoAction.MOVE) ? new MoveUndoState(undoObject, options)
+                                                       : new UndoState(action, undoObject, options)
+        this.#pushUndoStack(undoState, false)
+        return undoState
     }
 
     redo(diagram: CellDLDiagram) {
@@ -214,26 +256,11 @@ class UndoRedo {
         if (undoState) {
             this.#pushUndoStack(undoState, true)
             if (undoState.action === UndoAction.DELETE) {
-                diagram.undoObjectDelete(undoState)
+                diagram.undoInsert(undoState)
             } else if (undoState.action === UndoAction.INSERT) {
-                diagram.undoObjectInsert(undoState)
+                diagram.undoDelete(undoState)
             } else if (undoState.action === UndoAction.MOVE) {
-                const position = undoState.moveDetails.nextPosition
-                const startPosition = undoState.moveDetails.prevPosition
-                if (position && startPosition) {
-
-                    for (const object of undoState.storedObjects) {
-                        object.celldlObject.celldlSvgElement?.reposition(position, {
-                            controlPointIndex: undoState.moveDetails.index,
-                            startPosition: startPosition
-                        })
-                    }
-
-
-                }
-                // via diagram to update spatial index??
-//                diagram.undoObjectMove(undoState, MovePosition.CURRENT)
-//                undoState.storedObjects[0]?.celldlObject.undoControlMove(undoState.moveDetails(MovePosition.CURRENT))
+                (undoState as MoveUndoState).reposition('forwards')
             }
         }
     }
@@ -243,42 +270,14 @@ class UndoRedo {
         if (undoState) {
             this.#pushRedoStack(undoState)
             if (undoState.action === UndoAction.DELETE) {
-                diagram.undoObjectInsert(undoState)
+                diagram.undoDelete(undoState)
             } else if (undoState.action === UndoAction.INSERT) {
-                diagram.undoObjectDelete(undoState)
+                diagram.undoInsert(undoState)
             } else if (undoState.action === UndoAction.MOVE) {
-                const position = undoState.moveDetails.prevPosition
-                const startPosition = undoState.moveDetails.nextPosition
-                if (position && startPosition) {
-                    for (const object of undoState.storedObjects) {
-                        object.celldlObject.celldlSvgElement?.reposition(position, {
-                            controlPointIndex: undoState.moveDetails.index,
-                            startPosition: startPosition
-                        })
-                    }
-                }
-                // via diagram to update spatial index??
+                (undoState as MoveUndoState).reposition('backwards')
             }
         }
     }
-/*
-    // to be replaced by calling setActiveUndoState
-    deleteObject(celldlObject: CellDLObject, rdfStore: RdfStore): UndoState {
-        const undoState = this.#newUndoState(UndoAction.INSERT)
-        undoState.storeObject(celldlObject, rdfStore)
-        return undoState
-    }
-
-    // to be replaced by calling setActiveUndoState
-    insertObject(celldlObject: CellDLObject, rdfStore: RdfStore): UndoState {
-        const undoState = this.#newUndoState(UndoAction.DELETE)
-        undoState.storeObject(celldlObject, rdfStore)
-        return undoState
-    }
-*/
-//    undoMoveAction(): UndoState {
-//        return this.#newUndoState(UndoAction.MOVE)
-//    }
 }
 
 //==============================================================================

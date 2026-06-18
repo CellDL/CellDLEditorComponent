@@ -288,6 +288,15 @@ export class PathElement {
         })
     }
 
+    restore() {
+        this.pathPoints.forEach((pathPoint, _) => {
+            if (pathPoint.component) {
+                (pathPoint.component?.celldlSvgElement as BoundedElement).addPathElement(this)
+            }
+        })
+       this.#editorFrame.restoreElement(this.#svgShadow, true)
+    }
+
     splitPath(splitPoint: FoundPoint, interfaceElement: BoundedElement): SVGPathElement {
         const point = splitPoint.point
         const headArray: NormalArray = this.#pathArray.slice(0, splitPoint.segment! + 1)
@@ -341,26 +350,13 @@ export class PathElement {
         }
     }
 
-    undoControlMove(moveIndex: number, movePoint: Point | null) {
-        if (moveIndex > 0 && moveIndex < this.#pathPoints.length - 1 && movePoint) {
-            // biome-ignore lint/style/noNonNullAssertion: index is in range
-            const pathPoint = this.#pathPoints[moveIndex]!
-            pathPoint.point = movePoint
-            let redraw = false
-            this.#pathPoints.forEach((pathPoint) => {
-                if (pathPoint.redraw()) redraw = true
-            })
-            if (redraw) this.redraw()
-        }
-    }
-
     protected movePathPoint(_position: PointLike) {}
 
     protected movedElementBoundingBox(_index: number, _element: BoundedElement, _centroidDelta: Point) {}
 
     protected resizedElementBoundingBox(_index: number, _element: BoundedElement, _cornerDeltas: [Point, Point]) {}
 
-    protected setPathPoints(_pathArray: NormalArray) {}
+    setPathPoints(_pathArray: NormalArray) {}
 
     protected simplifyPathPoints(): PathPoint[] | null {
         return null

@@ -23,7 +23,6 @@ import type { Constructor, PropertiesType } from '@renderer/common/types'
 
 import { alert } from '@editor/editor/alerts'
 import { editGuides } from '@editor/editor/editguides'
-import type { UndoMovePosition } from '@editor/editor/undoredo'
 
 import { BoundedElement } from '@editor/SVGElements/boundedelement'
 import type { ObjectTemplate } from '@editor/components/index'
@@ -280,6 +279,13 @@ export class CellDLObject {
         this.#moveInitialised = false
     }
 
+    reposition(startPosn: PointLike, endPosn: PointLike, options: ElementMoveOptions={}) {
+        this.startMove(startPosn, options)
+        this.move(endPosn, options)
+        this.celldlDiagram.objectMoved(this)
+        this.endMove()
+    }
+
     clearControlHandles() {
         this.#celldlSvgElement?.clearControlHandles()
     }
@@ -290,10 +296,6 @@ export class CellDLObject {
 
     highlight(highlight: boolean=true) {
         this.#celldlSvgElement?.highlight(highlight)
-    }
-
-    undoControlMove(undoPosition: UndoMovePosition) {
-        this.#celldlSvgElement?.undoControlMove(undoPosition)
     }
 
     redraw() {

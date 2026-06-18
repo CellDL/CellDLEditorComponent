@@ -18,7 +18,7 @@ limitations under the License.
 
 ******************************************************************************/
 
-import { Point, type PointLike } from '@renderer/common/points'
+import type { PointLike } from '@renderer/common/points'
 import {
     CELLDL_BACKGROUND_CLASS,
     CellDLStylesheet,
@@ -66,7 +66,7 @@ import type { SvgConnection } from '@editor/SVGElements/svgconnection'
 
 import { type CellDLEditor, notifyChanges } from '@editor/editor/index'
 import { editGuides } from '@editor/editor/editguides'
-import type { UndoState } from '@editor/diagram/undoredo'
+import { undoRedo, UndoAction, type UndoState } from '@editor/diagram/undoredo'
 
 import type { ObjectTemplate } from '@editor/components/index'
 
@@ -127,10 +127,6 @@ export class CellDLDiagram {
     #imported: boolean
     #lastIdentifier: number = 0
     #layers: Map<string, SVGGElement> = new Map()
-    #moveComponents: CellDLConnectedObject[] = []
-    #moveConnections: CellDLObject[] = []
-    #movedObject: CellDLObject|null = null
-    #movedObjectOffset: Point = new Point()
     #objects: Map<string, CellDLObject> = new Map()
     #orderedLayerIds: string[] = []
     #spatialIndex = new CellDLSpatialIndex()
@@ -895,9 +891,7 @@ export class CellDLDiagram {
             this.#addConnection(<CellDLConnection>celldlObject)
         }
         celldlObject.assignSvgElement(svgElement, true)
-        const undoAction = undoRedo.undoInsertAction()
-        undoAction.addObjectDetails(celldlObject)
-        // WIP... undoAction.addKnowledge(celldlObject.knowledge)
+        undoRedo.setActiveUndoState(UndoAction.INSERT, celldlObject)
         return celldlObject
     }
 
@@ -972,66 +966,80 @@ export class CellDLDiagram {
         notifyChanges()
     }
 
-    deleteInsertedObject(undoAction: EditorUndoAction) {
-        for (const objectDetails of [...undoAction.objectDetails].reverse()) {
-            const celldlObject = objectDetails.object
-            if (celldlObject.isComponent) {
-                editGuides.removeGuide(<CellDLComponent>celldlObject)
-            }
-            celldlObject.celldlSvgElement?.remove() // Will remove SVG element from DOM
-            const statements = this.#kb.statementsMatching(celldlObject.uri)
-            this.#kb.removeStatements(statements)
-            this.#objects.delete(celldlObject.id)
-        }
-    }
-
-    insertDeletedObject(undoAction: EditorUndoAction) {
-        // Add back objects in reverse order, so last removed is first reinserted
-        for (const objectDetails of [...undoAction.objectDetails].reverse()) {
-            objectDetails.insertSvg(this.svgDiagram) // adds SVG element to DOM
-            const celldlObject = objectDetails.object
+    undoDelete(undoState: UndoState) {
+        const connections: CellDLConnection[] = []
+        for (const storedObject of undoState.storedObjects.values()) {
+            storedObject.restoreSvgElement() // adds SVG element to DOM
+            const celldlObject = storedObject.celldlObject
             if (celldlObject.isComponent) {
                 editGuides.addGuide(<CellDLComponent>celldlObject)
             }
             this.#objects.set(celldlObject.id, celldlObject)
+            this.#kb.addStatementList(storedObject.knowledge)
+            if (celldlObject.isConnectable) {
+                const component = <CellDLConnectedObject>celldlObject
+                const connections = (<CellDLConnectedObject>celldlObject).connections
+                for (const connection of connections) {
+                    component.addConnection(connection)
+                }
+                componentLibraryPlugin.addComponent(celldlObject)
+            } else if (celldlObject.isConnection) {
+                connections.push(celldlObject as CellDLConnection)
+            }
+            if (storedObject.selected) {
+                this.#celldlEditor.selectObject(celldlObject, true)
+            }
+            this.#spatialIndex.add(celldlObject)
         }
-        this.#kb.addStatementList(undoAction.knowledge)
+        for (const connection of connections) {
+            componentLibraryPlugin.addConnection(connection)
+            for (const component of connection.connectedObjects) {
+                component.addConnection(connection)
+            }
+        }
+    }
+
+    undoInsert(undoState: UndoState) {
+        for (const storedObject of undoState.storedObjects.values()) {
+            this.#removeObject(storedObject.celldlObject, true)
+        }
     }
 
     removeObject(celldlObject: CellDLObject) {
         if (this.#objects.has(celldlObject.id)) {
-            const undoAction = undoRedo.undoDeleteAction()
-            this.#removeObject(celldlObject, undoAction)
+            this.#removeObject(celldlObject)
             notifyChanges()
         }
     }
 
-    #removeObject(celldlObject: CellDLObject, undoAction: EditorUndoAction) {
-        undoAction.addObjectDetails(celldlObject)
+    #removeObject(celldlObject: CellDLObject, reDoing: boolean = false) {
+        if (!reDoing) {
+            undoRedo.activeUndoState?.storeObject(celldlObject)
+        }
         if (celldlObject.isComponent) {
             editGuides.removeGuide(<CellDLComponent>celldlObject)
         }
         celldlObject.celldlSvgElement?.remove() // Will remove SVG element from DOM
-        const statements = this.#kb.statementsMatching(celldlObject.uri)
-        undoAction.addKnowledge(statements)
-        this.#kb.removeStatements(statements)
+        this.#kb.removeStatementsForSubject(celldlObject.uri)
         this.#objects.delete(celldlObject.id)
         this.#spatialIndex.remove(celldlObject)
         if (celldlObject.isConnectable) {
-            const connector = <CellDLConnectedObject>celldlObject
+            const component = <CellDLConnectedObject>celldlObject
             const connections = (<CellDLConnectedObject>celldlObject).connections
             for (const connection of connections) {
-                this.#removeObject(connection, undoAction)
-                connector.deleteConnection(connection)
+                if (!reDoing) {
+                    this.#removeObject(connection)
+                }
+                component.deleteConnection(connection)
             }
-            componentLibraryPlugin.componentDeleted(celldlObject)
+            componentLibraryPlugin.componentDeleted(component)
         }
         if (celldlObject.isConnection) {
             const connection = <CellDLConnection>celldlObject
-            componentLibraryPlugin.connectionDeleted(connection)
             for (const connector of connection.connectedObjects) {
                 connector.deleteConnection(connection)
             }
+            componentLibraryPlugin.connectionDeleted(connection)
         }
     }
 }

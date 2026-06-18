@@ -25,7 +25,7 @@ import type { ShapeTypes } from 'svg-path-commander'
 
 import type { PointLike } from '@renderer/common/points'
 import { alert } from '@editor/editor/alerts'
-import { undoRedo, type EditorUndoAction, type UndoMovePosition } from '@editor/editor/undoredo'
+import { undoRedo } from '@editor/diagram/undoredo'
 
 import type { CellDLConnection } from '@editor/celldlObjects/index'
 import { ConnectionStyle } from '@editor/connections/index'
@@ -35,7 +35,7 @@ import { ConnectionStyle } from '@editor/connections/index'
 import { ID_PART_SEPARATOR, type PathElement } from './pathelement'
 import { LinearPath } from './linearpath'
 import { RectilinearPath } from './rectilinearpath'
-import { CellDLSVGElement, type ElementMoveOptions } from './index'
+import { CellDLSVGElement, type DomLocation, type ElementMoveOptions } from './index'
 import type { BoundedElement } from './boundedelement'
 
 //==============================================================================
@@ -49,7 +49,6 @@ const svgGroupTag = 'g'
 export class SvgConnection extends CellDLSVGElement {
     #pathElements: PathElement[] = []
     #moveableElement: PathElement | null = null
-    #undoMoveAction: EditorUndoAction | null = null
 
     constructor(connection: CellDLConnection, svgElement: SVGGraphicsElement, style: ConnectionStyle) {
         super(connection, svgElement)
@@ -148,7 +147,6 @@ export class SvgConnection extends CellDLSVGElement {
         if (this.#moveableElement) {
             this.#moveableElement.endMove()
             this.#moveableElement = null
-            this.#undoMoveAction = null
         } else {
             this.#pathElements.forEach((element) => { element.endMove() })
         }
@@ -177,9 +175,8 @@ export class SvgConnection extends CellDLSVGElement {
     move(svgPoint: PointLike, options: ElementMoveOptions={}) {
         if (options.moveEntireConnection) {
             this.#pathElements.forEach((element) => { element.move(svgPoint, options) })
-        } else if (this.#moveableElement && this.#undoMoveAction) {
+        } else if (this.#moveableElement) {
             if (this.#moveableElement.move(svgPoint)) {
-                this.#undoMoveAction.endMove(this.#moveableElement.moveIndex, this.#moveableElement.movePoint!.point)
                 this.#moveableElement.redraw()
             }
         }
@@ -195,20 +192,24 @@ export class SvgConnection extends CellDLSVGElement {
         this.#pathElements.forEach((element) => { element.remove() })
     }
 
+    restore(domLocation: DomLocation) {
+        super.restore(domLocation)
+        this.#pathElements.forEach((element) => { element.restore() })
+    }
+
+    setPathElements(pathElements: PathElement[]) {
+        this.#pathElements = pathElements
+        this.redraw()
+    }
+
     startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
         if (options.moveEntireConnection) {
             this.#pathElements.forEach((element) => { element.startMove(svgPoint, options) })
         } else if (this.#moveableElement?.movePoint) {
-            this.#undoMoveAction = undoRedo.undoMoveAction()
-            this.#undoMoveAction.addObjectDetails(this.celldlObject)
-            this.#undoMoveAction.startMove(this.#moveableElement.moveIndex, this.#moveableElement.movePoint.point)
+            undoRedo.setActiveStateOptions({
+                index: this.#moveableElement.moveIndex
+            })
             this.#moveableElement.startMove(svgPoint)
-        }
-    }
-
-    undoControlMove(undoPosition: UndoMovePosition) {
-        if (this.#moveableElement && undoPosition) {
-            this.#moveableElement.undoControlMove(undoPosition[0], undoPosition[1])
         }
     }
 }

@@ -30,7 +30,7 @@ import type { TemplateEventDetails } from '@editor/components'
 import { ObjectPropertiesPanel } from '@editor/components/properties'
 import type { CellDLDiagram } from '@editor/diagram'
 import { SelectionSet } from '@editor/diagram/selectionset'
-import { undoRedo, UndoAction } from '@editor/diagram/undoredo'
+import { type MoveUndoState, undoRedo, UndoAction } from '@editor/diagram/undoredo'
 import { round } from '@editor/utils'
 
 import { isMacOs } from '@renderer/common/common'
@@ -129,6 +129,7 @@ export class CellDLEditor {
     #celldlDiagram: CellDLDiagram | null = null
     #svgDiagram: SVGSVGElement | null = null
     #editorFrame: EditorFrame | null = null
+    #moveUndoState: MoveUndoState | null = null
 
     #panning: boolean = false
     #panzoom: PanZoom | null = null
@@ -540,7 +541,7 @@ export class CellDLEditor {
         this.#currentObject = null
     }
 
-    // Used by selection box code
+    // Used by selection box and diagram undo/redo code
     selectObject(selectedObject: CellDLObject, select: boolean=true) {
         if (select) {
             this.#setSelectedObject(selectedObject)
@@ -835,15 +836,16 @@ export class CellDLEditor {
             }
         } else if (this.#currentObject?.moveInitialised) {
             if (this.#selectionSet.has(this.#currentObject)) {
-                undoRedo.setActiveUndoState(UndoAction.MOVE, this.#selectionSet, {
+                this.#moveUndoState = undoRedo.setActiveUndoState(UndoAction.MOVE, this.#currentObject, {
                     position: svgPoint,
                     selection: this.#selectionSet
-                })
+                }) as MoveUndoState
                 this.#selectionSet.startMove(svgPoint, this.#currentObject)
             } else {
-                undoRedo.setActiveUndoState(UndoAction.MOVE, this.#currentObject, {
+                this.#moveUndoState = undoRedo.setActiveUndoState(UndoAction.MOVE, this.#currentObject, {
                     position: svgPoint
-                })
+                }) as MoveUndoState
+                // either moving a control point or an active component
                 this.#currentObject.startMove(svgPoint)
             }
             this.#moving = true
@@ -915,6 +917,7 @@ export class CellDLEditor {
             if (this.#currentObject && this.#moving) {
                 this.#moving = false
                 if (this.#moved) {
+                    this.#moveUndoState?.endMove(svgPoint)
                     if (this.#selectionSet.has(this.#currentObject)) {
                         this.#selectionSet.endMove()
                     } else {
