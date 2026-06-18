@@ -41,7 +41,7 @@ import { componentLibraryPlugin } from '@renderer/plugins'
 //==============================================================================
 
 import { EditorFrame } from './editorframe'
-import { editGuides, EDITOR_GRID_CLASS } from './editguides'
+import { DEFAULT_VIEW_STATE, editGuides, EDITOR_GRID_CLASS } from './editguides'
 import PanZoom from './panzoom'
 import { SelectionBox } from './selectionbox'
 
