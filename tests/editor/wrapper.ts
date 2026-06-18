@@ -12,12 +12,11 @@ import { type PointLike, Point } from "@renderer/common/points"
 
 export class TestCellDLEditor extends CellDLEditor {
 
-    addComponent(templateId: string, posn: PointLike, debug: boolean=false): string|undefined {
+    addComponent(templateId: string, posn: PointLike, debug: boolean=false): CellDLObject|undefined {
         if (debug) {
             console.log(`ADD ${templateId} at ${posn}`)
         }
-        let component: CellDLObject|null = null
-//        this.editorState = EDITOR_STATE.AddComponent   // toolbar needs to change active button...
+        let component: CellDLObject|undefined
         const templateElement = document.getElementById(templateId) as HTMLImageElement
         if (templateElement) {
             const templateDetails = getTemplateEventDetails(templateId, templateElement, null)
@@ -26,24 +25,21 @@ export class TestCellDLEditor extends CellDLEditor {
             component = this.selectionSet.objects[0] as CellDLObject
         }
         this.unsetSelectedObjects()
-//        this.editorState = EDITOR_STATE.Selecting      // revert to default state
         // assert have component with centroid === posn
         if (debug) {
             console.log(' -->', component?.id, component?.celldlSvgElement?.centroid)
         }
-        return component?.id
+        return component
     }
 
-    addConnection(sourceId: string, targetId: string, style: string='rectilinear', pathPoints: PointLike[]=[]) {
-        const sourceObject = this.celldlDiagram?.objectById(sourceId)
-        const targetObject = this.celldlDiagram?.objectById(targetId)
-        if (sourceObject && targetObject) {
+    addConnection(source?: CellDLObject, target?: CellDLObject, style: string='rectilinear', pathPoints: PointLike[]=[]) {
+        if (source && target) {
             // Get the boundary points that are the closest to the other object
-            const startNode = PathMaker.validStartObject(sourceObject)
-            const firstPoint = pathPoints.length ? pathPoints.at(0) : targetObject.celldlSvgElement?.centroid
-            const startBoundary = sourceObject.celldlSvgElement?.boundaryIntersections(firstPoint as PointLike)[0]
-            const lastPoint = pathPoints.length ? pathPoints.at(-1) : sourceObject.celldlSvgElement?.centroid
-            const targetBoundary = targetObject.celldlSvgElement?.boundaryIntersections(lastPoint as PointLike)[0]
+            const startNode = PathMaker.validStartObject(source)
+            const firstPoint = pathPoints.length ? pathPoints.at(0) : target.celldlSvgElement?.centroid
+            const startBoundary = source.celldlSvgElement?.boundaryIntersections(firstPoint as PointLike)[0]
+            const lastPoint = pathPoints.length ? pathPoints.at(-1) : source.celldlSvgElement?.centroid
+            const targetBoundary = target.celldlSvgElement?.boundaryIntersections(lastPoint as PointLike)[0]
             if (startNode && startBoundary && targetBoundary) {
                 const pathMaker = new PathMaker(this.editorFrame as EditorFrame, startNode, style)
                 pathMaker.addPoint(startBoundary)
@@ -52,7 +48,7 @@ export class TestCellDLEditor extends CellDLEditor {
                     pathMaker.addPoint(point)
                 }
                 pathMaker.drawTo(targetBoundary)
-                const endNode = pathMaker.validPathNode(targetObject)
+                const endNode = pathMaker.validPathNode(target)
                 if (endNode) {
                     pathMaker.finishPath(endNode, this.celldlDiagram as CellDLDiagram)
                 }
@@ -60,53 +56,47 @@ export class TestCellDLEditor extends CellDLEditor {
         }
     }
 
-    moveComponent(id: string, offset: PointLike, debug: boolean=false) {
+    moveComponent(component: CellDLConnectedObject, offset: PointLike, debug: boolean=false) {
         this.editorState = EDITOR_STATE.Selecting      // toolbar needs to change active button...
-        const currentObject = this.celldlDiagram?.objectById(id) as CellDLConnectedObject
-        if (currentObject) {
-            // pointer over
-            const element = currentObject.celldlSvgElement?.svgElement as SVGGraphicsElement
-            currentObject.initialiseMove(element)  // will set moveable
-            this.currentObject = currentObject
-            // mouse down
-            const startPosn = Point.fromPoint(currentObject.celldlSvgElement?.centroid as PointLike)
-            currentObject.startMove(startPosn)
-            const movePosn = startPosn.add(offset)
-            if (debug) {
-                console.log(`MOVE ${id} from`, startPosn, 'to', movePosn)
-            }
-            this.moving = true
-            this.moved = false
-            // pointer move
-            this.pointerMoved = true
-            currentObject.move(movePosn)
-            this.moved = true
-            // mouse up
-            currentObject.endMove()
-            currentObject.finaliseMove()
-            this.moving = false
-            if (debug) {
-                console.log(' -->', currentObject?.id, currentObject?.celldlSvgElement?.centroid)
-            }
+        // pointer over
+        const element = component.celldlSvgElement?.svgElement as SVGGraphicsElement
+        component.initialiseMove(element)  // will set moveable
+        this.currentObject = component
+        // mouse down
+        const startPosn = Point.fromPoint(component.celldlSvgElement?.centroid as PointLike)
+        component.startMove(startPosn)
+        const movePosn = startPosn.add(offset)
+        if (debug) {
+            console.log(`MOVE ${id} from`, startPosn, 'to', movePosn)
+        }
+        this.moving = true
+        this.moved = false
+        // pointer move
+        this.pointerMoved = true
+        component.move(movePosn)
+        this.moved = true
+        // mouse up
+        component.endMove()
+        component.finaliseMove()
+        this.moving = false
+        if (debug) {
+            console.log(' -->', component?.id, component?.celldlSvgElement?.centroid)
         }
         // assert component's centroid === posn
     }
 
-    moveComponents(ids: string[], offset: PointLike) {
+    moveComponents(components: CellDLConnectedObject[], offset: PointLike) {
         this.editorState = EDITOR_STATE.Selecting      // toolbar needs to change active button...
         this.unsetSelectedObjects()
-        if (ids.length) {
-            const currentObject = this.celldlDiagram?.objectById(ids[0] as string) as CellDLConnectedObject
+        if (components.length) {
+            const currentObject = components[0]
             if (currentObject) {
                 this.currentObject = currentObject
                 const startPosn = Point.fromPoint(currentObject.celldlSvgElement?.centroid as PointLike)
                 const movePosn = startPosn.add(offset)
                 this.setSelectedObject(currentObject)
-                for (const id of ids.slice(1)) {
-                    const object = this.celldlDiagram?.objectById(id) as CellDLConnectedObject
-                    if (object) {
-                        this.setSelectedObject(object)
-                    }
+                for (const component of components.slice(1)) {
+                    this.setSelectedObject(component)
                 }
                 this.selectionSet.startMove(startPosn, currentObject)
                 this.moving = true
