@@ -958,10 +958,12 @@ export class CellDLEditor {
                 // Prevent the default browser action (navigating back)
                 event.preventDefault()
             }
-        } else if (isMacOs() && event.metaKey || !isMacOs() && event.ctrlKey) {
-            if (event.key === 'z') {
+        } else if (this.#editorState === EDITOR_STATE.Selecting
+            && (isMacOs() && event.metaKey
+            || !isMacOs() && event.ctrlKey)) {
+            if (event.key === 'z' && !event.shiftKey) {
                 undoRedo.undo(this.#celldlDiagram!)
-            } else if (event.key === 'Z') {
+            } else if (event.key === 'Z' || event.key === 'z' && event.shiftKey) {
                 undoRedo.redo(this.#celldlDiagram!)
             }
         }
