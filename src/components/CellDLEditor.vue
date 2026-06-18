@@ -69,6 +69,8 @@ import { componentLibraryPlugin } from '@renderer/plugins'
 import { BondgraphPlugin } from '@renderer/plugins/bondgraph'
 // WIP import { ElectricalPlugin } from '@renderer/plugins/electrical'
 
+import { TestCellDLEditor, testEditor } from '../../tests/editor'
+
 import EditorContextMenu from './widgets/EditorContextMenu.vue'
 import type { ContextMenuProps } from './widgets/EditorContextMenu.vue'
 
@@ -173,7 +175,7 @@ function connectionStylePrompt(name: string): string {
 
 // Plugins need to be initialised before creating the editor
 
-const celldlEditor: CellDLEditor = new CellDLEditor()
+const celldlEditor: TestCellDLEditor = new TestCellDLEditor()
 
 // Pass 'context-menu' events from the editor to the context menu's component
 
@@ -388,6 +390,8 @@ vue.onMounted(async () => {
             // Create a new diagram in the editor's window
             celldlDiagram = new CellDLDiagram('', '', celldlEditor)
             await celldlDiagram.edit()
+
+            testEditor(celldlEditor)
         })
     }
 })
