@@ -1001,20 +1001,20 @@ export class CellDLDiagram {
 
     undoInsert(undoState: UndoState) {
         for (const storedObject of undoState.storedObjects.values()) {
-            this.#removeObject(storedObject.celldlObject, true)
+            this.#removeObject(storedObject.celldlObject)
         }
     }
 
-    removeObject(celldlObject: CellDLObject) {
+    removeObject(celldlObject: CellDLObject, undoState: UndoState|null=null) {
         if (this.#objects.has(celldlObject.id)) {
-            this.#removeObject(celldlObject)
+            this.#removeObject(celldlObject, undoState)
             notifyChanges()
         }
     }
 
-    #removeObject(celldlObject: CellDLObject, reDoing: boolean = false) {
-        if (!reDoing) {
-            undoRedo.activeUndoState?.storeObject(celldlObject)
+    #removeObject(celldlObject: CellDLObject, undoState: UndoState|null=null) {
+        if (undoState) {
+            undoState.storeObject(celldlObject)
         }
         if (celldlObject.isComponent) {
             editGuides.removeGuide(<CellDLComponent>celldlObject)
@@ -1027,9 +1027,7 @@ export class CellDLDiagram {
             const component = <CellDLConnectedObject>celldlObject
             const connections = (<CellDLConnectedObject>celldlObject).connections
             for (const connection of connections) {
-                if (!reDoing) {
-                    this.#removeObject(connection)
-                }
+                this.#removeObject(connection, undoState)
                 component.deleteConnection(connection)
             }
             componentLibraryPlugin.componentDeleted(component)

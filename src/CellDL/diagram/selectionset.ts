@@ -123,10 +123,10 @@ export class SelectionSet {
     //==========================================================================
 
     deleteObjects() {
-        undoRedo.setActiveUndoState(UndoAction.DELETE, this)
+        const undoDelete = undoRedo.setActiveUndoState(UndoAction.DELETE, this)
         for (const object of this.#selectedObjects.values()) {
             // Delete the object
-            object.celldlDiagram.removeObject(object)
+            object.celldlDiagram.removeObject(object, undoDelete)
             object.select(false)
         }
         this.clear()
