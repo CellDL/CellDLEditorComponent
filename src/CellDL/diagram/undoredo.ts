@@ -202,6 +202,13 @@ class UndoRedo {
         // notify CLEAN
     }
 
+    resetActiveUndoState() {
+        if (this.#activeUndoState) {
+            this.#activeUndoState = null
+            this.#popUndoStack()
+        }
+    }
+
     setDeleteUndoState(undoObject: UndoObject): UndoState {
         return this.#setActiveUndoState(new UndoState(UndoAction.DELETE, undoObject))
     }

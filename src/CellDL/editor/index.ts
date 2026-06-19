@@ -921,6 +921,8 @@ export class CellDLEditor {
                         this.currentObject.endMove()
                         this.currentObject.finaliseMove()
                     }
+                } else {
+                    undoRedo.resetActiveUndoState()
                 }
             } else if (this.editorState === EDITOR_STATE.Selecting) {
                 if (this.#selectionBox && !this.#selectionBox.pointerEvent(event, svgPoint)) {
