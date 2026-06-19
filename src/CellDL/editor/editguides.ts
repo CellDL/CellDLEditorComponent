@@ -405,7 +405,7 @@ class EditGuides {
         EditGuides.#instance = this
     }
 
-    static get instance() {
+    static get instance(): EditGuides {
         if (!EditGuides.#instance) {
             EditGuides.#instance = new EditGuides()
         }

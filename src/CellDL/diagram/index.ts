@@ -1025,8 +1025,7 @@ export class CellDLDiagram {
         this.#spatialIndex.remove(celldlObject)
         if (celldlObject.isConnectable) {
             const component = <CellDLConnectedObject>celldlObject
-            const connections = (<CellDLConnectedObject>celldlObject).connections
-            for (const connection of connections) {
+            for (const connection of component.connections) {
                 this.#removeObject(connection, undoState)
                 component.deleteConnection(connection)
             }
