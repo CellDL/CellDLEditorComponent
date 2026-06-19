@@ -837,17 +837,18 @@ export class CellDLEditor {
                 }
             }
         } else if (this.currentObject?.moveInitialised) {
+            // EDITOR_STATE.Selecting or EDITOR_STATE.AddComponent
             if (this.selectionSet.has(this.currentObject)) {
+                // Moving a set of selected components
                 this.#moveUndoState = undoRedo.setMoveUndoState(this.currentObject, svgPoint, this.selectionSet)
                 this.selectionSet.startMove(svgPoint, this.currentObject)
             } else {
+                // Either moving a control point or an active component
                 this.#moveUndoState = undoRedo.setMoveUndoState(this.currentObject, svgPoint)
-                // either moving a control point or an active component
                 this.currentObject.startMove(svgPoint)
             }
             this.moving = true
             this.moved = false
-            // EDITOR_STATE.Selecting or EDITOR_STATE.AddComponent
         } else if (this.editorState === EDITOR_STATE.Selecting) {
             if (this.#selectionBox) {
                 this.#selectionBox.pointerEvent(event, svgPoint)
