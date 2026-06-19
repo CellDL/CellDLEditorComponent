@@ -4,6 +4,7 @@ import type { CellDLConnectedObject, CellDLObject } from "@editor/celldlObjects"
 import { getTemplateEventDetails } from "@editor/components"
 import { PathMaker } from "@editor/connections/pathmaker"
 import type { CellDLDiagram } from "@editor/diagram"
+import { undoRedo } from "@editor/diagram/undoredo"
 import { CellDLEditor, EDITOR_STATE } from "@editor/editor"
 import type { EditorFrame } from "@editor/editor/editorframe"
 import { type PointLike, Point } from "@renderer/common/points"
@@ -56,36 +57,41 @@ export class TestCellDLEditor extends CellDLEditor {
         }
     }
 
-    moveComponent(component: CellDLConnectedObject, offset: PointLike, debug: boolean=false) {
-        this.editorState = EDITOR_STATE.Selecting      // toolbar needs to change active button...
-        // pointer over
-        const element = component.celldlSvgElement?.svgElement as SVGGraphicsElement
-        component.initialiseMove(element)  // will set moveable
-        this.currentObject = component
-        // mouse down
-        const startPosn = Point.fromPoint(component.celldlSvgElement?.centroid as PointLike)
-        component.startMove(startPosn)
-        const movePosn = startPosn.add(offset)
-        if (debug) {
-            console.log(`MOVE ${id} from`, startPosn, 'to', movePosn)
+    moveComponent(component: CellDLObject|undefined, offset: PointLike, debug: boolean=false) {
+        if (component) {
+            this.editorState = EDITOR_STATE.Selecting      // toolbar needs to change active button...
+            // pointer over
+            const element = component.celldlSvgElement?.svgElement as SVGGraphicsElement
+            component.initialiseMove(element)  // will set moveable
+            this.currentObject = component
+            // mouse down
+            const startPosn = Point.fromPoint(component.celldlSvgElement?.centroid as PointLike)
+
+            const moveUndoState = undoRedo.setMoveUndoState(component, startPosn)
+            component.startMove(startPosn)
+            const movePosn = startPosn.add(offset)
+            if (debug) {
+                console.log(`MOVE ${component.id} from`, startPosn, 'to', movePosn)
+            }
+            this.moving = true
+            this.moved = false
+            // pointer move
+            this.pointerMoved = true
+            component.move(movePosn)
+            this.moved = true
+            // mouse up
+            moveUndoState.endMove(movePosn)
+            component.endMove()
+            component.finaliseMove()
+            this.moving = false
+            if (debug) {
+                console.log(' -->', component?.id, component?.celldlSvgElement?.centroid)
+            }
+            // assert component's centroid === posn
         }
-        this.moving = true
-        this.moved = false
-        // pointer move
-        this.pointerMoved = true
-        component.move(movePosn)
-        this.moved = true
-        // mouse up
-        component.endMove()
-        component.finaliseMove()
-        this.moving = false
-        if (debug) {
-            console.log(' -->', component?.id, component?.celldlSvgElement?.centroid)
-        }
-        // assert component's centroid === posn
     }
 
-    moveComponents(components: CellDLConnectedObject[], offset: PointLike) {
+    moveComponents(components: Array<CellDLObject|undefined>, offset: PointLike) {
         this.editorState = EDITOR_STATE.Selecting      // toolbar needs to change active button...
         this.unsetSelectedObjects()
         if (components.length) {
@@ -96,7 +102,9 @@ export class TestCellDLEditor extends CellDLEditor {
                 const movePosn = startPosn.add(offset)
                 this.setSelectedObject(currentObject)
                 for (const component of components.slice(1)) {
-                    this.setSelectedObject(component)
+                    if (component) {
+                        this.setSelectedObject(component)
+                    }
                 }
                 this.selectionSet.startMove(startPosn, currentObject)
                 this.moving = true
@@ -114,6 +122,20 @@ export class TestCellDLEditor extends CellDLEditor {
                 }
             this.unsetSelectedObjects()
             this.moving = false
+            }
+        }
+    }
+
+    selectObject(object: CellDLObject|undefined) {
+        if (object) {
+            super.selectObject(object, true)
+        }
+    }
+
+    selectObjects(objects: Array<CellDLObject|undefined>) {
+        for (const object of objects) {
+            if (object) {
+                super.selectObject(object, true)
             }
         }
     }
