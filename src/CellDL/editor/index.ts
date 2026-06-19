@@ -30,7 +30,7 @@ import type { TemplateEventDetails } from '@editor/components'
 import { ObjectPropertiesPanel } from '@editor/components/properties'
 import type { CellDLDiagram } from '@editor/diagram'
 import { SelectionSet } from '@editor/diagram/selectionset'
-import { type MoveUndoState, undoRedo, UndoAction } from '@editor/diagram/undoredo'
+import { type MoveUndoState, undoRedo } from '@editor/diagram/undoredo'
 import { round } from '@editor/utils'
 
 import { isMacOs } from '@renderer/common/common'
@@ -838,15 +838,10 @@ export class CellDLEditor {
             }
         } else if (this.currentObject?.moveInitialised) {
             if (this.selectionSet.has(this.currentObject)) {
-                this.#moveUndoState = undoRedo.setActiveUndoState(UndoAction.MOVE, this.currentObject, {
-                    position: svgPoint,
-                    selection: this.selectionSet
-                }) as MoveUndoState
+                this.#moveUndoState = undoRedo.setMoveUndoState(this.currentObject, svgPoint, this.selectionSet)
                 this.selectionSet.startMove(svgPoint, this.currentObject)
             } else {
-                this.#moveUndoState = undoRedo.setActiveUndoState(UndoAction.MOVE, this.currentObject, {
-                    position: svgPoint
-                }) as MoveUndoState
+                this.#moveUndoState = undoRedo.setMoveUndoState(this.currentObject, svgPoint)
                 // either moving a control point or an active component
                 this.currentObject.startMove(svgPoint)
             }

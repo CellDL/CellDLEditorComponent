@@ -20,7 +20,7 @@ limitations under the License.
 
 import type { CellDLConnection, CellDLObject } from "@editor/celldlObjects"
 import { notifyChanges } from "@editor/editor"
-import { undoRedo, UndoAction } from '@editor/diagram/undoredo'
+import { undoRedo } from '@editor/diagram/undoredo'
 import { Point, type PointLike } from "@renderer/common/points"
 
 //==============================================================================
@@ -123,7 +123,7 @@ export class SelectionSet {
     //==========================================================================
 
     deleteObjects() {
-        const undoDelete = undoRedo.setActiveUndoState(UndoAction.DELETE, this)
+        const undoDelete = undoRedo.setDeleteUndoState(this)
         for (const object of this.#selectedObjects.values()) {
             // Delete the object
             object.celldlDiagram.removeObject(object, undoDelete)

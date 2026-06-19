@@ -206,9 +206,6 @@ export class SvgConnection extends CellDLSVGElement {
         if (options.moveEntireConnection) {
             this.#pathElements.forEach((element) => { element.startMove(svgPoint, options) })
         } else if (this.#moveableElement?.movePoint) {
-            undoRedo.setActiveStateOptions({
-                index: this.#moveableElement.moveIndex
-            })
             this.#moveableElement.startMove(svgPoint)
         }
     }

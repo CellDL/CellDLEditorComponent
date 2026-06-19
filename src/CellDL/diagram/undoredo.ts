@@ -20,7 +20,7 @@ limitations under the License.
 
 import type { NormalArray } from 'svg-path-commander'
 
-import { type CellDLConnection, CellDLObject } from '@editor/celldlObjects'
+import { type CellDLConnectedObject, type CellDLConnection, CellDLObject } from '@editor/celldlObjects'
 import type { CellDLDiagram } from '@editor/diagram'
 import type { SvgConnection } from '@editor/SVGElements/svgconnection'
 
@@ -31,19 +31,13 @@ import { StoredObject } from './storedobject'
 
 //==============================================================================
 
-export enum UndoAction {
+enum UndoAction {
     DELETE = 1,
     INSERT = 2,
     MOVE = 3
 }
 
-export type UndoActionOptions = {
-    index?: number
-    position?: PointLike
-    selection?: SelectionSet
-}
-
-export type UndoObject = CellDLObject | SelectionSet
+type UndoObject = CellDLObject | SelectionSet
 
 //==============================================================================
 
@@ -54,14 +48,10 @@ export class UndoState {
     constructor(
         readonly action: UndoAction,
         readonly undoObject: UndoObject,
-        options: UndoActionOptions={}
     ) {
         const saveKnowledge = action !== UndoAction.MOVE
         if (undoObject instanceof CellDLObject) {
             this.#storedObjects.set(undoObject.id, new StoredObject(undoObject, saveKnowledge))
-        }
-        if (options.selection) {
-            this.#selectionSet = options.selection
         } else if (undoObject instanceof SelectionSet) {
             this.#selectionSet = undoObject
         }
@@ -76,23 +66,20 @@ export class UndoState {
         return this.#selectionSet
     }
 
+    protected set selectionSet(selectionSet: SelectionSet|null) {
+        this.#selectionSet = selectionSet
+    }
+
     get storedObjects() {
         return this.#storedObjects
     }
 
-    setOptions(_options: UndoActionOptions) {
-    }
-
     storeObject(celldlObject: CellDLObject) {
-        this.#storedObjects.set(celldlObject.id,
-            new StoredObject(celldlObject, this.action !== UndoAction.MOVE))
+        if (!this.#storedObjects.has(celldlObject.id)) {
+            this.#storedObjects.set(celldlObject.id,
+                new StoredObject(celldlObject, this.action !== UndoAction.MOVE))
+        }
     }
-
-    // also for a selectionSet of components and connections
-// or is this simple done by iterating through the set? But not
-// auto connections??
-
-
 }
 
 //==============================================================================
@@ -101,56 +88,82 @@ type Direction = 'backwards' | 'forwards'
 
 //==============================================================================
 
+type ConnectionPathArrayMap = Map<string, NormalArray[]>
+
+function setConnectionPathArray(connection: CellDLConnection, connectionPathArrays: ConnectionPathArrayMap) {
+    const pathArrays = connectionPathArrays.get(connection.id)
+    if (pathArrays) {
+        const pathElements = (connection.celldlSvgElement as SvgConnection)?.pathElements
+        pathElements.forEach((pathElement, index) => {
+            // biome-ignore lint/style/noNonNullAssertion: index is in range
+            pathElement.setPathPoints(pathArrays[index]!)
+            pathElement.redraw()
+        })
+    }
+}
+
+//==============================================================================
+
 export class MoveUndoState extends UndoState {
+    #nextPathArrays: ConnectionPathArrayMap = new Map()
     #nextPosition: Point | null = null
-    #pathElementPathArrays: NormalArray[] = []
+    #prevPathArrays: ConnectionPathArrayMap = new Map()
     #prevPosition: Point | null = null
 
     constructor(
-        readonly undoObject: UndoObject,
-        options: UndoActionOptions={}
+        readonly undoObject: CellDLObject,
+        position: PointLike,
+        selectionSet: SelectionSet|undefined
     ) {
-        super(UndoAction.MOVE, undoObject, options)
-        const movedObject = this.undoObject as CellDLObject
-        if (movedObject.isConnection) {
-            const pathElements = ((movedObject as CellDLConnection).celldlSvgElement as SvgConnection)?.pathElements
-            this.#pathElementPathArrays = pathElements.map(pathElement => pathElement.pathArray)
-        }
-        this.#startMove(options.position, options)
+        super(UndoAction.MOVE, undoObject)
+        this.selectionSet = selectionSet || null
+        this.#prevPathArrays = this.#connectionPathArrays()
+        this.#prevPosition = Point.fromPoint(position)
     }
 
-    #startMove(position: PointLike|undefined, _options: UndoActionOptions) {
-        if (position !== undefined) {
-            this.#prevPosition = Point.fromPoint(position)
+    #connectionPathArrays(): ConnectionPathArrayMap {
+        const connectionPathArrays: ConnectionPathArrayMap = new Map()
+        if (this.undoObject.isConnectable) {
+            const component = <CellDLConnectedObject>this.undoObject
+            for (const connection of component.connections) {
+                const pathElements = (connection.celldlSvgElement as SvgConnection)?.pathElements
+                const pathArrays = pathElements.map(pathElement => pathElement.pathArray)
+                connectionPathArrays.set(connection.id, pathArrays)
+            }
+        } else if (this.undoObject.isConnection) {
+            const connection = <CellDLConnection>this.undoObject
+            const pathElements = (connection.celldlSvgElement as SvgConnection)?.pathElements
+            const pathArrays = pathElements.map(pathElement => pathElement.pathArray)
+            connectionPathArrays.set(connection.id, pathArrays)
         }
+        return connectionPathArrays
     }
 
     endMove(position: PointLike|undefined) {
         if (position !== undefined) {
+            this.#nextPathArrays = this.#connectionPathArrays()
             this.#nextPosition = Point.fromPoint(position)
         }
     }
 
     reposition(direction: Direction) {
-        const movedObject = this.undoObject as CellDLObject
-        if (movedObject.isConnection) {
-            const pathElements = ((movedObject as CellDLConnection).celldlSvgElement as SvgConnection)?.pathElements
-            pathElements.forEach((pathElement, index) => {
-                // biome-ignore lint/style/noNonNullAssertion: index is in range
-                pathElement.setPathPoints(this.#pathElementPathArrays[index]!)
-            })
-            movedObject.redraw()
-        } else {
-            const position = (direction === 'backwards') ? this.#prevPosition : this.#nextPosition
-            const startPosition = (direction === 'backwards') ? this.#nextPosition : this.#prevPosition
-            if (position && startPosition && !PointMath.equals(startPosition, position)) {
-                const movedObject = this.undoObject as CellDLObject
-                if (this.selectionSet) {
-                    this.selectionSet.reposition(movedObject, startPosition, position)
-
-                } else {
-                    movedObject.reposition(startPosition, position)
+        const connectionPathArrays = (direction === 'backwards') ? this.#prevPathArrays : this.#nextPathArrays
+        const position = (direction === 'backwards') ? this.#prevPosition : this.#nextPosition
+        const startPosition = (direction === 'backwards') ? this.#nextPosition : this.#prevPosition
+        if (position && startPosition && !PointMath.equals(startPosition, position)) {
+            const movedObject = this.undoObject as CellDLObject
+            if (this.selectionSet) {
+                this.selectionSet.reposition(movedObject, startPosition, position)
+            } else {
+                movedObject.reposition(startPosition, position)
+            }
+            if (this.undoObject.isConnectable) {
+                const component = <CellDLConnectedObject>this.undoObject
+                for (const connection of component.connections) {
+                    setConnectionPathArray(connection, connectionPathArrays)
                 }
+            } else if (this.undoObject.isConnection) {
+                setConnectionPathArray(<CellDLConnection>this.undoObject, connectionPathArrays)
             }
         }
     }
@@ -189,15 +202,16 @@ class UndoRedo {
         // notify CLEAN
     }
 
-    setActiveUndoState(action: UndoAction, undoObject: UndoObject, options: UndoActionOptions={}): UndoState {
-        this.#activeUndoState = this.#newUndoState(action, undoObject, options)
-        return this.#activeUndoState
+    setDeleteUndoState(undoObject: UndoObject): UndoState {
+        return this.#setActiveUndoState(new UndoState(UndoAction.DELETE, undoObject))
     }
 
-    setActiveStateOptions(options: UndoActionOptions) {
-        if (this.#activeUndoState) {
-            this.#activeUndoState.setOptions(options)
-        }
+    setInsertUndoState(undoObject: UndoObject): UndoState {
+        return this.#setActiveUndoState(new UndoState(UndoAction.INSERT, undoObject))
+    }
+
+    setMoveUndoState(undoObject: UndoObject, position: PointLike, selectionSet: SelectionSet|undefined=undefined): MoveUndoState {
+        return this.#setActiveUndoState(new MoveUndoState(undoObject as CellDLObject, position, selectionSet)) as MoveUndoState
     }
 
     #clearRedoStack() {
@@ -244,9 +258,8 @@ class UndoRedo {
         return undoState
     }
 
-    #newUndoState(action: UndoAction, undoObject: UndoObject, options: UndoActionOptions): UndoState {
-        const undoState = (action === UndoAction.MOVE) ? new MoveUndoState(undoObject, options)
-                                                       : new UndoState(action, undoObject, options)
+    #setActiveUndoState(undoState: UndoState): UndoState {
+        this.#activeUndoState = undoState
         this.#pushUndoStack(undoState, false)
         return undoState
     }

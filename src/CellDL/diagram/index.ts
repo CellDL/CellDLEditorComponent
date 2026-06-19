@@ -66,7 +66,7 @@ import type { SvgConnection } from '@editor/SVGElements/svgconnection'
 
 import { type CellDLEditor, notifyChanges } from '@editor/editor/index'
 import { editGuides } from '@editor/editor/editguides'
-import { undoRedo, UndoAction, type UndoState } from '@editor/diagram/undoredo'
+import { undoRedo, type UndoState } from '@editor/diagram/undoredo'
 
 import type { ObjectTemplate } from '@editor/components/index'
 
@@ -891,7 +891,7 @@ export class CellDLDiagram {
             this.#addConnection(<CellDLConnection>celldlObject)
         }
         celldlObject.assignSvgElement(svgElement, true)
-        undoRedo.setActiveUndoState(UndoAction.INSERT, celldlObject)
+        undoRedo.setInsertUndoState(celldlObject)
         return celldlObject
     }
 
