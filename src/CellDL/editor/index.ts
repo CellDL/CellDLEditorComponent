@@ -136,6 +136,7 @@ export class CellDLEditor {
     protected pointerMoved: boolean = false
     protected moving: boolean = false
     protected moved: boolean = false
+    #moveSelection: boolean = false
 
     protected editorState: EDITOR_STATE = DEFAULT_EDITOR_STATE
     #dirty: boolean = false
@@ -838,7 +839,8 @@ export class CellDLEditor {
             }
         } else if (this.currentObject?.moveInitialised) {
             // EDITOR_STATE.Selecting or EDITOR_STATE.AddComponent
-            if (this.selectionSet.has(this.currentObject)) {
+            this.#moveSelection = !this.currentObject?.isConnection && this.selectionSet.has(this.currentObject)
+            if (this.#moveSelection) {
                 // Moving a set of selected components
                 this.#moveUndoState = undoRedo.setMoveUndoState(this.currentObject, svgPoint, this.selectionSet)
                 this.selectionSet.startMove(svgPoint, this.currentObject)
@@ -885,7 +887,7 @@ export class CellDLEditor {
             }
         } else if (this.currentObject && this.moving) {
             // EDITOR_STATE.Selecting or EDITOR_STATE.AddComponent
-            if (this.selectionSet.has(this.currentObject)) {
+            if (this.#moveSelection) {
                 this.selectionSet.move(svgPoint)
             } else {
                 this.currentObject.move(svgPoint)
@@ -927,7 +929,7 @@ export class CellDLEditor {
                 this.moving = false
                 if (this.moved) {
                     this.#moveUndoState?.endMove(svgPoint)
-                    if (this.selectionSet.has(this.currentObject)) {
+                    if (this.#moveSelection) {
                         this.selectionSet.endMove()
                     } else {
                         this.currentObject.endMove()
