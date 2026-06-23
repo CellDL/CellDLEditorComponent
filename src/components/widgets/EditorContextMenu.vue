@@ -75,6 +75,7 @@ const items = vue.computed(() => {
     { separator: true },
     {
         command: () => contextMenuEvent(CONTEXT_MENU.INFO),
+        disabled: true,
         label: 'Info'
     }
   ]}
