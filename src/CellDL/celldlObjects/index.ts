@@ -444,14 +444,6 @@ export class CellDLConnectedObject extends CellDLMoveableObject {
         })
     }
 
-    endMove() {
-        super.endMove()
-        // Add control handles to selected connections
-        this.#connections.forEach(connection => {
-            connection.drawSelectedHandles()
-        })
-    }
-
     redraw() {
         super.redraw()
         // Redraw connections that depend on our position
@@ -597,12 +589,6 @@ export class CellDLConnection extends CellDLObject {
     clearSelectedHandles() {
         if (this.#svgConnection) {
             this.#svgConnection.clearSelectedHandles()
-        }
-    }
-
-    drawSelectedHandles() {
-        if (this.#svgConnection) {
-            this.#svgConnection.drawSelectedHandles()
         }
     }
 }

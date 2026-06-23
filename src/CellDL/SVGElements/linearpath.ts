@@ -51,7 +51,7 @@ export class LinearPath extends PathElement {
                     newPoints.push(newPoint)
                     newPoints.push(...this.pathPoints.slice(index+1))
                     this.pathPoints = newPoints
-                    this.drawControlHandles(this.selected)
+                    this.drawControlHandles()
                     this.redraw(true)
                     return newPoint
                 }
