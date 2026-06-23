@@ -176,7 +176,8 @@ function connectionStylePrompt(name: string): string {
 
 // Plugins need to be initialised before creating the editor
 
-const celldlEditor: TestCellDLEditor = new TestCellDLEditor()
+const celldlEditor: CellDLEditor = new CellDLEditor()
+//const celldlEditor: TestCellDLEditor = new TestCellDLEditor()
 
 // Pass 'context-menu' events from the editor to the context menu's component
 
@@ -392,7 +393,7 @@ vue.onMounted(async () => {
             celldlDiagram = new CellDLDiagram('', '', celldlEditor)
             await celldlDiagram.edit()
 
-            testEditor(celldlEditor)
+//            testEditor(celldlEditor)
         })
     }
 })
