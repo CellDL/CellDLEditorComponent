@@ -49,15 +49,14 @@ export class UndoState {
         readonly action: UndoAction,
         readonly undoObject: UndoObject,
     ) {
-        const saveKnowledge = action !== UndoAction.MOVE
         if (undoObject instanceof CellDLObject) {
-            this.#storedObjects.set(undoObject.id, new StoredObject(undoObject, saveKnowledge))
+            this.storeObject(undoObject)
         } else if (undoObject instanceof SelectionSet) {
             this.#selectionSet = undoObject
         }
         if (this.#selectionSet) {
             for (const object of this.#selectionSet.objects) {
-                this.#storedObjects.set(object.id, new StoredObject(object, saveKnowledge))
+                this.storeObject(object)
             }
         }
     }
