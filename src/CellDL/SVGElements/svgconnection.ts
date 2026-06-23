@@ -123,6 +123,15 @@ export class SvgConnection extends CellDLSVGElement {
         this.#pathElements.forEach((element) => { element.select(selected) })
     }
 
+    addControlHandle(svgPoint: PointLike): SVGGraphicsElement|undefined {
+        for (const pathElement of this.#pathElements) {
+            const controlHandle = pathElement.addControlHandle(svgPoint)
+            if (controlHandle) {
+                return controlHandle.svgElement || undefined
+            }
+        }
+    }
+
     clearControlHandles() {
         this.#pathElements.forEach((element) => { element.clearControlHandles() })
     }

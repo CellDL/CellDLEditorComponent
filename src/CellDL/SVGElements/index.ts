@@ -609,6 +609,10 @@ export class CellDLSVGElement {
         return bounds[0].x <= deltaX && deltaX <= bounds[1].x && bounds[0].y <= deltaY && deltaY <= bounds[1].y
     }
 
+    addControlHandle(_svgPoint: PointLike): SVGGraphicsElement|undefined {
+        return undefined
+    }
+
     clearControlHandles() {}
 
     drawControlHandles() {}

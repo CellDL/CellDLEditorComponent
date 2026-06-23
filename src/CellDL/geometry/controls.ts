@@ -72,6 +72,10 @@ export class ControlPoint extends RestrictedPoint {
         return this.celldlObject?.isConduit
     }
 
+    get svgElement() {
+        return this.#svgElement
+    }
+
     static fromPoint(point: PointLike): ControlPoint {
         return new ControlPoint(new RestrictedValue(point.x), new RestrictedValue(point.y))
     }

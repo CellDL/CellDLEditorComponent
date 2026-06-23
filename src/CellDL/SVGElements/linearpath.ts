@@ -28,10 +28,38 @@ import { FixedValue, RestrictedValue } from '@editor/geometry'
 
 import type { BoundedElement } from './boundedelement'
 import { FixedPathPoint, PathElement, PathPoint } from './pathelement'
+import { getSvgPathStyle } from '@renderer/common/svgUtils'
 
 //==============================================================================
 
 export class LinearPath extends PathElement {
+
+    addControlHandle(svgPoint: PointLike): PathPoint|undefined {
+        const halfWidth: number = getSvgPathStyle(this.svgElement).width/2
+        const nPoints = this.pathPoints.length
+        const newPoints: PathPoint[] = []
+        let index = 0
+        while (index < nPoints - 1) {
+            const pathPoint = this.pathPoints[index]!
+            const nextPoint = this.pathPoints[index + 1]!
+            newPoints.push(pathPoint)
+            if (PointMath.distanceFromLine(svgPoint, [pathPoint, nextPoint]) < halfWidth) {
+                const intersection = PointMath.normalIntersectionPoint(svgPoint, [pathPoint, nextPoint])
+                if (intersection) {
+                    const newPoint = new PathPoint(new RestrictedValue(intersection.x),
+                                                   new RestrictedValue(intersection.y))
+                    newPoints.push(newPoint)
+                    newPoints.push(...this.pathPoints.slice(index+1))
+                    this.pathPoints = newPoints
+                    this.drawControlHandles(this.selected)
+                    this.redraw(true)
+                    return newPoint
+                }
+            }
+            index += 1
+        }
+    }
+
     setPathPoints(pathArray: NormalArray) {
         if (this.validPath) {
             // set by constructor when path starts with 'M' command

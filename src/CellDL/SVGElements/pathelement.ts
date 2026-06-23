@@ -93,6 +93,7 @@ export class PathElement {
     #moveIndex: number = 0
     #movePoint: PathPoint | null = null
     #pathArray: NormalArray
+    #selected: boolean = false
     #selectionClasses: Set<string> = new Set()
     #svgElement: SVGPathElement
     #svgShadow: SVGPathElement
@@ -165,6 +166,13 @@ export class PathElement {
     protected get pathPoints() {
         return this.#pathPoints
     }
+    protected set pathPoints(pathPoints: PathPoint[]) {
+        this.#pathPoints = pathPoints
+    }
+
+    protected get selected() {
+        return this.#selected
+    }
 
     protected get validPath() {
         return this.#validPath
@@ -197,6 +205,10 @@ export class PathElement {
         this.#setSelectionClass('selected', selected)
     }
 
+    addControlHandle(_svgPoint: PointLike): PathPoint|undefined {
+        return undefined
+    }
+
     clearControlHandles() {
         this.pathPoints.forEach((pathPoint, _) => {
             pathPoint.removeSvgElement()
@@ -204,6 +216,7 @@ export class PathElement {
     }
 
     drawControlHandles(selected: boolean) {
+        this.#selected = selected
         for (let index = 1; index < this.#pathPoints.length - 1; ++index) {
             // biome-ignore lint/style/noNonNullAssertion: index is in range
             const pathPoint = this.#pathPoints[index]!

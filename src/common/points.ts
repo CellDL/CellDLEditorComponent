@@ -139,12 +139,60 @@ export namespace PointMath {
         return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2)
     }
 
+    export function distanceFromLine(pt: PointLike, line: [PointLike, PointLike]): number {
+        // See https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
+        const d = distance(line[0], line[1])
+        if (d > 0) {
+            return Math.abs(
+                (line[1].y - line[0].y)*pt.x
+              - (line[1].x - line[0].x)*pt.y
+              + line[1].x*line[0].y
+              - line[1].y*line[0].x
+            ) / d
+        }
+        return 0
+    }
+
     export function equals(p1: PointLike, p2: PointLike): boolean {
         return (p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2 <= POINT_EPSILON_SQUARED
     }
 
     export function isZero(pt: PointLike): boolean {
         return pt.x ** 2 + pt.y ** 2 <= POINT_EPSILON_SQUARED
+    }
+
+    export function normalIntersectionPoint(pt: PointLike, line: [PointLike, PointLike], exact: boolean=true): Point | undefined {
+        // `line` is `y = a*x + b`
+        // Normal of `pt` to line is `y = u*x + v`
+        // Slopes of normal and line are orthogonal: `a*u = -1`
+        // We return the intersection of normal and line.'
+        const deltaX = line[1].x - line[0].x
+        const deltaY = line[1].y - line[0].y
+        if (deltaY === 0) {
+            if (exact
+             && (Math.abs(line[0].x - pt.x) + Math.abs(pt.x - line[1].x)) > Math.abs(deltaX)) {
+                return undefined
+            }
+            return new Point(pt.x, line[0].y)
+        } else if (deltaX === 0) {
+            if (exact
+             && (Math.abs(line[0].y - pt.y) + Math.abs(pt.y - line[1].y)) > Math.abs(deltaY)) {
+                return undefined
+            }
+            return new Point(line[0].x, pt.y)
+        } else {
+            const a = deltaY/deltaX
+            const b = line[1].y - a*line[1].x
+            const u = -1/a
+            const x = (pt.y - u*pt.x - b)/(a - u)
+            // Check intersection is on line segment
+            if (exact
+             && (Math.abs(line[0].x - x) + Math.abs(x - line[1].x)) > Math.abs(deltaX)) {
+                return undefined
+            }
+            const y = a*x + b
+            return new Point(x, y)
+        }
     }
 
     export function scalarScale(p1: PointLike, scale: number): Point {

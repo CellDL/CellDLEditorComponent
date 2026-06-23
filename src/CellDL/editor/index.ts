@@ -856,6 +856,17 @@ export class CellDLEditor {
                 this.unsetSelectedObjects()
                 this.#selectionBox = new SelectionBox(this, svgPoint)
                 this.#newSelectionBox = true
+            } else if (this.currentObject?.isConnection) {
+                // Check if a linear path and if so, insert a control point and initialise moving it
+                const controlElement = this.currentObject.addControlHandle(svgPoint)
+                if (controlElement) {
+                    this.currentObject.initialiseMove(controlElement)
+                    // this.#activateObject(this.currentObject, true) // should already be active, incl. new handle
+                    this.#moveUndoState = undoRedo.setMoveUndoState(this.currentObject, svgPoint)
+                    this.currentObject.startMove(svgPoint)
+                    this.moving = true
+                    this.moved = false
+                }
             }
         }
     }

@@ -285,6 +285,10 @@ export class CellDLObject {
         this.endMove()
     }
 
+    addControlHandle(svgPoint: PointLike): SVGGraphicsElement|undefined {
+        return this.#celldlSvgElement?.addControlHandle(svgPoint)
+    }
+
     clearControlHandles() {
         this.#celldlSvgElement?.clearControlHandles()
     }
