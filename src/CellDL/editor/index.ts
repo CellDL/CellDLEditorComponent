@@ -652,12 +652,12 @@ export class CellDLEditor {
             this.#celldlDiagram === null ||
             !this.#svgDiagram?.contains(element) ||
             // clickTolerance = 1px ? to set pointerMoved?
-            (this.#pointerMoved && Date.now() - this.#pointerDownTime > MAX_POINTER_CLICK_TIME)
+            (this.pointerMoved && Date.now() - this.#pointerDownTime > MAX_POINTER_CLICK_TIME)
         ) {
             return
         }
         const clickedObject = this.#celldlDiagram.objectById(getElementId(element))
-        if (this.#editorState === EDITOR_STATE.AddComponent && clickedObject === null) {
+        if (this.editorState === EDITOR_STATE.AddComponent && clickedObject === null) {
             if (this.#currentTemplateDetails) {
                 this.addComponentTemplate(event, this.#currentTemplateDetails)
             }
