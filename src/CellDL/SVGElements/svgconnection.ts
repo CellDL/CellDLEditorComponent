@@ -50,7 +50,7 @@ export class SvgConnection extends CellDLSVGElement {
     #pathElements: PathElement[] = []
     #moveableElement: PathElement | null = null
 
-    constructor(connection: CellDLConnection, svgElement: SVGGraphicsElement, style: ConnectionStyle) {
+    constructor(connection: CellDLConnection, svgElement: SVGGraphicsElement) {
         super(connection, svgElement)
 
         const svgPaths: SVGPathElement[] = []
@@ -82,7 +82,7 @@ export class SvgConnection extends CellDLSVGElement {
                 const svgPath = svgPaths[n]
                 this.#pathElements[n] =
                     // @ts-expect-error: `n < svgPaths.length` and so `svgPath` is defined
-                    style === ConnectionStyle.Rectilinear || svgPath.classList.contains('rectilinear')
+                    svgPath.classList.contains('rectilinear')
                         ? new RectilinearPath(
                               connection,
                               pathId,

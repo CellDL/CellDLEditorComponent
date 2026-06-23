@@ -886,7 +886,7 @@ export class CellDLDiagram {
             this.#currentLayer.appendChild(svgElement)
         }
         // This is where we create an instanced object of its objectTemplate's class
-        const celldlObject = new CellDLClass(this.makeUri(svgElement.id), objectTemplate, {}, this)
+        const celldlObject = new CellDLClass(this.makeUri(svgElement.id), objectTemplate, this)
         if (celldlObject.isConnection) {
             this.#addConnection(<CellDLConnection>celldlObject)
         }
@@ -905,10 +905,10 @@ export class CellDLDiagram {
         return false
     }
 
-    #celldlObjectFromRdf<T extends CellDLObject>(CellDLClass: Constructor<T>, subject: $rdf.SubjectType, options = {}): T {
+    #celldlObjectFromRdf<T extends CellDLObject>(CellDLClass: Constructor<T>, subject: $rdf.SubjectType): T {
         const metadata = this.#kb.metadataPropertiesForSubject(subject)
         const objectTemplate = componentLibraryPlugin.getObjectTemplate(subject, metadata, this.#kb)
-        return new CellDLClass(subject, objectTemplate, options, this, false)
+        return new CellDLClass(subject, objectTemplate, this, false)
     }
 
     #subjectsOfType(parentType: NamedNode): [$rdf.SubjectType, NamedNode][] {
