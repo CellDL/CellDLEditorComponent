@@ -131,8 +131,7 @@ export class PathElement {
         const simplifiedPath = this.simplifyPathPoints()
         if (simplifiedPath) {
             this.#pathPoints = simplifiedPath
-            this.#dirty = true
-            this.redraw()
+            this.redraw(true)
         }
     }
     get connection(): CellDLConnection {
@@ -236,7 +235,7 @@ export class PathElement {
         const newPoints = this.simplifyPathPoints()
         if (newPoints) {
             this.#pathPoints = newPoints
-            this.redraw()
+            this.redraw(true)
         }
         this.#movePoint = null
     }
@@ -282,8 +281,8 @@ export class PathElement {
         return normalArray as NormalArray
     }
 
-    redraw() {
-        if (this.#dirty) {
+    redraw(force: boolean=false) {
+        if (force || this.#dirty) {
             this.#pathArray = this.pathArrayFromPathPoints()
             this.#svgElement.setAttribute('d', SVGPathCommander.pathToString(this.#pathArray))
             this.#svgShadow.setAttribute('d', SVGPathCommander.pathToString(this.#pathArray))
