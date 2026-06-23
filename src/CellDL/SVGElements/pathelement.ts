@@ -283,6 +283,7 @@ export class PathElement {
 
     remove() {
         this.#svgShadow.remove()
+        this.#svgElement.remove()
         this.pathPoints.forEach((pathPoint, _) => {
             if (pathPoint.component) {
                 (pathPoint.component?.celldlSvgElement as BoundedElement).removePathElement(this)
