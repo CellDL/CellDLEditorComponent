@@ -105,7 +105,7 @@ const props = defineProps<CellDLEditorProps>()
 const crtInstance = vue.getCurrentInstance();
 
 if (crtInstance) {
-    const app = crtInstance.appContext.app;
+    const app = crtInstance.appContext.app
 
     if (!app.config.globalProperties.$primevue) {
         app.use(primeVueConfig as unknown as vue.Plugin, {
@@ -142,6 +142,7 @@ vue.watch(
 
 // Set the default component from the component library
 
+// biome-ignore lint/style/noNonNullAssertion: some plugin has a selected template
 const defaultComponent = componentLibraryPlugin.getSelectedTemplate()!
 
 //==============================================================================
