@@ -25,10 +25,8 @@ import type { ShapeTypes } from 'svg-path-commander'
 
 import type { PointLike } from '@renderer/common/points'
 import { alert } from '@editor/editor/alerts'
-import { undoRedo } from '@editor/diagram/undoredo'
 
 import type { CellDLConnection } from '@editor/celldlObjects/index'
-import { ConnectionStyle } from '@editor/connections/index'
 
 //==============================================================================
 

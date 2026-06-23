@@ -19,14 +19,13 @@ limitations under the License.
 ******************************************************************************/
 
 import { Point, type PointLike } from '@renderer/common/points'
-import type { Constructor, PropertiesType } from '@renderer/common/types'
+import type { Constructor } from '@renderer/common/types'
 
 import { alert } from '@editor/editor/alerts'
 import { editGuides } from '@editor/editor/editguides'
 
 import { BoundedElement } from '@editor/SVGElements/boundedelement'
 import type { ObjectTemplate } from '@editor/components/index'
-import type { ConnectionStyle } from '@editor/connections/index'
 import type { CellDLDiagram } from '@editor/diagram/index'
 import { SvgConnection } from '@editor/SVGElements/svgconnection'
 import type { CellDLSVGElement, ElementMoveOptions } from '@editor/SVGElements/index'
