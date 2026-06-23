@@ -92,6 +92,7 @@ type ConnectionPathArrayMap = Map<string, NormalArray[]>
 function setConnectionPathArray(connection: CellDLConnection, connectionPathArrays: ConnectionPathArrayMap) {
     const pathArrays = connectionPathArrays.get(connection.id)
     if (pathArrays) {
+        connection.clearControlHandles()
         const pathElements = (connection.celldlSvgElement as SvgConnection)?.pathElements
         pathElements.forEach((pathElement, index) => {
             // biome-ignore lint/style/noNonNullAssertion: index is in range
@@ -104,10 +105,10 @@ function setConnectionPathArray(connection: CellDLConnection, connectionPathArra
 //==============================================================================
 
 export class MoveUndoState extends UndoState {
-    #nextPathArrays: ConnectionPathArrayMap = new Map()
+    #nextPathArrays: ConnectionPathArrayMap | null = null
     #nextPosition: Point | null = null
     #prevPathArrays: ConnectionPathArrayMap = new Map()
-    #prevPosition: Point | null = null
+    #prevPosition: Point
 
     constructor(
         readonly undoObject: CellDLObject,
@@ -146,24 +147,34 @@ export class MoveUndoState extends UndoState {
     }
 
     reposition(direction: Direction) {
-        const connectionPathArrays = (direction === 'backwards') ? this.#prevPathArrays : this.#nextPathArrays
-        const position = (direction === 'backwards') ? this.#prevPosition : this.#nextPosition
-        const startPosition = (direction === 'backwards') ? this.#nextPosition : this.#prevPosition
-        if (position && startPosition && !PointMath.equals(startPosition, position)) {
-            const movedObject = this.undoObject as CellDLObject
-            if (this.selectionSet) {
-                this.selectionSet.reposition(movedObject, startPosition, position)
-            } else {
-                movedObject.reposition(startPosition, position)
-            }
-            if (this.undoObject.isConnectable) {
-                const component = <CellDLConnectedObject>this.undoObject
-                for (const connection of component.connections) {
-                    setConnectionPathArray(connection, connectionPathArrays)
+        if (direction === 'backwards' && this.#nextPosition === null) {
+            // restoring to original position without having moved
+            this.#restoreConnectionPaths(this.#prevPathArrays)
+        } else {
+            const connectionPathArrays = (direction === 'backwards') ? this.#prevPathArrays : this.#nextPathArrays
+            const position = (direction === 'backwards') ? this.#prevPosition : this.#nextPosition
+            const startPosition = (direction === 'backwards') ? this.#nextPosition : this.#prevPosition
+            if (position && startPosition && connectionPathArrays
+             && !PointMath.equals(startPosition, position)) {
+                const movedObject = this.undoObject as CellDLObject
+                if (this.selectionSet) {
+                    this.selectionSet.reposition(movedObject, startPosition, position)
+                } else {
+                    movedObject.reposition(startPosition, position)
                 }
-            } else if (this.undoObject.isConnection) {
-                setConnectionPathArray(<CellDLConnection>this.undoObject, connectionPathArrays)
+                this.#restoreConnectionPaths(connectionPathArrays)
             }
+        }
+    }
+
+    #restoreConnectionPaths(pathArrays: ConnectionPathArrayMap) {
+        if (this.undoObject.isConnectable) {
+            const component = <CellDLConnectedObject>this.undoObject
+            for (const connection of component.connections) {
+                setConnectionPathArray(connection, pathArrays)
+            }
+        } else if (this.undoObject.isConnection) {
+            setConnectionPathArray(<CellDLConnection>this.undoObject, pathArrays)
         }
     }
 }

@@ -860,11 +860,11 @@ export class CellDLEditor {
                 this.#newSelectionBox = true
             } else if (this.currentObject?.isConnection) {
                 // Check if a linear path and if so, insert a control point and initialise moving it
+                this.#moveUndoState = undoRedo.setMoveUndoState(this.currentObject, svgPoint)
                 const controlElement = this.currentObject.addControlHandle(svgPoint)
                 if (controlElement) {
                     this.currentObject.initialiseMove(controlElement)
                     // this.#activateObject(this.currentObject, true) // should already be active, incl. new handle
-                    this.#moveUndoState = undoRedo.setMoveUndoState(this.currentObject, svgPoint)
                     this.currentObject.startMove(svgPoint)
                     this.moving = true
                     this.moved = false
@@ -935,8 +935,10 @@ export class CellDLEditor {
                         this.currentObject.endMove()
                         this.currentObject.finaliseMove()
                     }
-                } else {
+                } else if (this.#moveUndoState) {
                     undoRedo.resetActiveUndoState()
+                    this.#moveUndoState.reposition('backwards')
+                    this.#moveUndoState = null
                 }
             } else if (this.editorState === EDITOR_STATE.Selecting) {
                 if (this.#selectionBox && !this.#selectionBox.pointerEvent(event, svgPoint)) {
