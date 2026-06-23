@@ -203,8 +203,10 @@ class UndoRedo {
 
     resetActiveUndoState() {
         if (this.#activeUndoState) {
+            if (this.#undoStack.at(-1) === this.#activeUndoState) {
+                this.#popUndoStack()
+            }
             this.#activeUndoState = null
-            this.#popUndoStack()
         }
     }
 
