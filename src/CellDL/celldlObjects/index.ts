@@ -31,9 +31,8 @@ import type { CellDLDiagram } from '@editor/diagram/index'
 import { SvgConnection } from '@editor/SVGElements/svgconnection'
 import type { CellDLSVGElement, ElementMoveOptions } from '@editor/SVGElements/index'
 
-import * as $rdf from '@renderer/metadata/index'
-import { CELLDL, RDF, RDFS } from '@renderer/metadata/index'
 import type { Literal, MetadataPropertiesMap, NamedNode, RdfStore } from '@renderer/metadata'
+import { CELLDL, isLiteral, RDF, RDFS } from '@renderer/metadata'
 import { componentLibraryPlugin } from '@renderer/plugins/index'
 
 //==============================================================================
@@ -329,8 +328,8 @@ export class CellDLObject {
         metadataProperties.setProperty(RDF.uri('type'), CELLDL.uri(this.#celldlTypeName), true)
         this.#metadataProperties = metadataProperties
         const label = properties.get(RDFS.uri('label').value)
-        if (label && $rdf.isLiteral(label)) {
-            this.#label = (label as $rdf.Literal).value
+        if (label && isLiteral(label)) {
+            this.#label = (label as Literal).value
         }
     }
 }
