@@ -308,11 +308,6 @@ export class CellDLObject {
 
     select(selected: boolean=true) {
         this.#celldlSvgElement?.select(selected)
-        if (selected) {
-            this.drawControlHandles()
-        } else {
-            this.clearControlHandles()
-        }
     }
 
     setName(name: string) {
