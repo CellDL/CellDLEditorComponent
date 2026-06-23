@@ -18,8 +18,7 @@ limitations under the License.
 
 ******************************************************************************/
 
-import { editGuides } from '@editor/editor/editguides'
-import type { GridAlignOptions } from '@editor/editor/editguides'
+import { editGuides, type GridAlignOptions } from '@editor/editor/editguides'
 import type { Transform } from '@editor/geometry/transforms'
 import { round } from '@editor/utils'
 
@@ -72,7 +71,7 @@ export class Bounds {
         return new Bounds(pt0.x, pt0.y, pt1.x, pt1.y)
     }
 
-    static fromSvg(svgElement: SVGGraphicsElement, globalTransform: Transform | null = null): Bounds {
+    static fromSvg(svgElement: SVGGraphicsElement, _globalTransform: Transform | null = null): Bounds {
         const bbox = svgElement.getBBox()
         const topLeft = new Point(bbox.x, bbox.y)
         const bottomRight = new Point(bbox.x + bbox.width, bbox.y + bbox.height)
@@ -418,6 +417,7 @@ export class RestrictedPoint {
 //==============================================================================
 
 export class FixedPoint extends RestrictedPoint {
+    // biome-ignore lint/complexity/noUselessConstructor: parameter types are different
     constructor(xValue: FixedValue, yValue: FixedValue) {
         super(xValue, yValue)
     }

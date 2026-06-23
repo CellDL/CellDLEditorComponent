@@ -44,16 +44,19 @@ export class PointFinder {
             // @ts-expect-error: p.slice(1) will be two numbers
             .map((p) => Point.fromArray(p.slice(1)))
         for (let segment = 0; segment < pathPoints.length - 1; segment += 1) {
-            this.#transforms.push(new NormalTransform(pathPoints[segment], pathPoints[segment + 1]))
+            // biome-ignore lint/style/noNonNullAssertion: indices are in range
+            this.#transforms.push(new NormalTransform(pathPoints[segment]!, pathPoints[segment + 1]!))
         }
     }
 
     findPoint(point: PointLike): FoundPoint {
         for (let segment = 0; segment < this.#transforms.length; segment += 1) {
-            const p = this.#transforms[segment].normalise(point)
+            // biome-ignore lint/style/noNonNullAssertion: index is in range
+            const p = this.#transforms[segment]!.normalise(point)
             if (p.x >= 0 && p.x <= 1.0 && p.y * p.y < POINT_EPSILON_SQUARED) {
                 return {
-                    point: this.#transforms[segment].invert({ x: p.x, y: 0 }),
+                    // biome-ignore lint/style/noNonNullAssertion: index is in range
+                    point: this.#transforms[segment]!.invert({ x: p.x, y: 0 }),
                     offset: segment + p.x,
                     segment
                 }
