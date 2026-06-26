@@ -469,7 +469,7 @@ export class CellDLEditor {
             if (currentObject) {
                 let pluginText = componentLibraryPlugin.statusText(currentObject)
                 if (pluginText !== '') {
-                    pluginText = ` (xx${pluginText})`
+                    pluginText = ` (${pluginText})`
                 }
                 this.status = (currentObject.name ?? '') + pluginText
                 if (this.#statusPos) {
