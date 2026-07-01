@@ -491,13 +491,16 @@ export class CellDLDiagram {
                     yMax: -Infinity
                 }
             )
-        const round10 = (x: number) => 10 * Math.round(x / 10)
+        const roundUp10 = (x: number) => 10 * Math.ceil(x / 10)
+        const roundDn10 = (x: number) => 10 * Math.floor(x / 10)
         if (bounds.xMin < bounds.xMax && bounds.yMin < bounds.yMax) {
+            const xLeft = roundDn10(bounds.xMin - DIAGRAM_MARGIN)
+            const xRight = roundUp10(bounds.xMax + DIAGRAM_MARGIN)
+            const yTop = roundDn10(bounds.yMin - DIAGRAM_MARGIN)
+            const yBottom = roundUp10(bounds.yMax + DIAGRAM_MARGIN)
             return [
-                round10(bounds.xMin - DIAGRAM_MARGIN),
-                round10(bounds.yMin - DIAGRAM_MARGIN),
-                round10(bounds.xMax - bounds.xMin + 2 * DIAGRAM_MARGIN),
-                round10(bounds.yMax - bounds.yMin + 2 * DIAGRAM_MARGIN)
+                xLeft, yTop,
+                xRight - xLeft, yBottom - yTop
             ]
         }
         return null
