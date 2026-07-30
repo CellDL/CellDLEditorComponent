@@ -34,7 +34,7 @@ jobs:
         run: npm install -g npm@latest
 
       - name: Install bun
-        run: npm install -g bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Build the CellDL Editor as a Vue component
         run: |
