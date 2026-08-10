@@ -123,7 +123,7 @@ function colourChange(e: Event) {
     emitChange()
 }
 
-function swapColours(e: Event) {
+function swapColours(_e: Event) {
     const stopColour = colours.value.stop
     colours.value.stop = colours.value.start
     colours.value.start = stopColour

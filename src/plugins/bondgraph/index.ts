@@ -19,7 +19,7 @@ limitations under the License.
 ******************************************************************************/
 /** biome-ignore-all lint/style/noNonNullAssertion: <keys exist in Map> */
 
-import { ucum } from '@atomic-ehr/ucum'
+// WIP: import { ucum } from '@atomic-ehr/ucum'
 
 //==============================================================================
 
@@ -748,6 +748,7 @@ export class BondgraphPlugin implements PluginInterface {
     //==========================================================================
     //==========================================================================
 
+/** DEBUG ONLY
     #printObjectProperties(celldlObject: CellDLObject) {
         const objectUri = celldlObject.uri.toString()
 
@@ -760,6 +761,7 @@ export class BondgraphPlugin implements PluginInterface {
             console.log(celldlObject.id, r.get('p')!.value, r.get('o')!.value)
         })
     }
+DEBUG ONLY **/
 
     //==========================================================================
     //==========================================================================

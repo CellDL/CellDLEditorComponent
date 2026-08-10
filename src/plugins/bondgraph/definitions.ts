@@ -88,7 +88,7 @@ const SCALE_STYLE: BGElementStyle = {
     background: '#C1C1FA'
 }
 
-const UNITS_STYLE: BGElementStyle = {
+const _UNITS_STYLE: BGElementStyle = {
     text: '#444',
     background: '#DDD'
 }

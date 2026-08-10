@@ -53,7 +53,7 @@ function buttonEvent(toolId: string, active: boolean, panel: vue.Raw<vue.Compone
     emit('button-event', toolId, active, props.type === 'panel' ? panel : null)
 }
 
-function popoverEvent(id: string, data: any) {
+function popoverEvent(id: string, data: unknown) {
     emit('popover-event', id, data)
 }
 

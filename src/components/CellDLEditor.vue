@@ -268,18 +268,18 @@ function buttonEvent(toolId: string, active: boolean, newComponent: vue.Raw<vue.
 
 //==============================================================================
 
-function popoverEvent(toolId: string, data: any) {
+function popoverEvent(toolId: string, data: unknown) {
     if (toolId === EDITOR_TOOL_IDS.DrawConnectionTool) {
-        toolButtons.value[1]!.prompt = connectionStylePrompt(data.name)
-        toolButtons.value[1]!.icon = data.icon
+        toolButtons.value[1].prompt = connectionStylePrompt(data.name)
+        toolButtons.value[1].icon = data.icon
 
         // Tell the editor that the connection style has changed
 
         despatchToolbarEvent('value', toolId, data.id)
 
     } else if (toolId === EDITOR_TOOL_IDS.AddComponentTool) {
-        toolButtons.value[2]!.prompt = data.name
-        toolButtons.value[2]!.image = data.imageData
+        toolButtons.value[2].prompt = data.name
+        toolButtons.value[2].image = data.imageData
 
         // Tell the editor that the component template has changed
 

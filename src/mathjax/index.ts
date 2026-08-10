@@ -49,7 +49,7 @@ RegisterHTMLHandler(adaptor)
 
 const tex = new TeX({
     packages: ['base', 'ams', 'color', 'mhchem'],
-    formatError(_: any, error: TexError) {
+    formatError(_: unknown, error: TexError) {
         throw Error(`LaTeX: ${error.message}`)
     }
 })
@@ -64,8 +64,8 @@ const html = mathjax.document('', {
         removeLatex: [  // remove LaTeX specific attributes
             (STATE.CONVERT as number) + 1,
             () => {},
-            (math: any, _doc: any) => {
-                math.root.walkTree((node: any) => {
+            (math: unknown, _doc: unknown) => {
+                math.root.walkTree((node: unknown) => {
                     const attributes = node.attributes
                     attributes.unset('data-latex')
                     attributes.unset('data-latex-item')

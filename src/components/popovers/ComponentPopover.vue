@@ -43,7 +43,7 @@ function fullId(library: ComponentLibrary, template: LibraryComponentTemplate): 
 }
 
 vue.onMounted(async () => {
-    libraries!.value.forEach((library: ComponentLibrary) => {
+    libraries?.value.forEach((library: ComponentLibrary) => {
         library.templates.forEach((template: LibraryComponentTemplate) => {
             const id = fullId(library, template)
             idToComponent.set(id, template)
@@ -73,7 +73,7 @@ function selected(e: MouseEvent) {
     const component = idToComponent.get(target.id)
     if (target.id && component) {
         if (selectedId) {
-            idToComponent.get(selectedId)!.selected = false
+            idToComponent.get(selectedId).selected = false
         }
         component.selected = true
         selectedId = target.id
@@ -90,7 +90,7 @@ function selected(e: MouseEvent) {
 
 function dragstart(e: DragEvent) {
     const target = e.target as HTMLImageElement
-    e.dataTransfer!.items.add(JSON.stringify(getTemplateEventDetails(target.id, target, e)), 'text/plain')
+    e.dataTransfer?.items.add(JSON.stringify(getTemplateEventDetails(target.id, target, e)), 'text/plain')
     document.dispatchEvent(
         new CustomEvent('component-drag', {
             detail: {
