@@ -23,7 +23,7 @@ import RBush from 'rbush'
 
 //==============================================================================
 
-import type { CellDLObject } from '@editor/celldlObjects/index'
+import type { CellDLObject } from '#editor/celldlObjects/index'
 
 import type { Bounds } from './index'
 

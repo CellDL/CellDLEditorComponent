@@ -37,7 +37,7 @@ import '@mathjax/src/js/input/tex/mhchem/MhchemConfiguration'
 
 //==============================================================================
 
-import { EM_SIZE, EX_SIZE } from '@editor/geometry/units'
+import { EM_SIZE, EX_SIZE } from '#editor/geometry/units'
 
 //==============================================================================
 

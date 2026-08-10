@@ -23,12 +23,12 @@ import type { NormalArray } from 'svg-path-commander'
 
 //==============================================================================
 
-import { CONNECTION_SPLAY_PADDING } from '@renderer/common/styling'
-import { Point, type PointLike, PointMath } from '@renderer/common/points'
-import { editGuides } from '@editor/editor/editguides'
+import { CONNECTION_SPLAY_PADDING } from '#root/common/styling'
+import { Point, type PointLike, PointMath } from '#root/common/points'
+import { editGuides } from '#editor/editor/editguides'
 
-import { FixedValue, RestrictedValue } from '@editor/geometry/index'
-import { roundEqual } from '@editor/utils'
+import { FixedValue, RestrictedValue } from '#editor/geometry/index'
+import { roundEqual } from '#editor/utils'
 
 import type { BoundedElement } from './boundedelement'
 import { FixedPathPoint, PathElement, PathPoint } from './pathelement'

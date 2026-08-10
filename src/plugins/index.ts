@@ -26,26 +26,26 @@ import * as vue from 'vue'
 import type {
     CellDLConnection,
     CellDLObject
-} from '@editor/celldlObjects/index'
-import { CELLDL_CLASS_MAP } from '@editor/celldlObjects/index'
-import type { Constructor } from '@renderer/common/types'
+} from '#editor/celldlObjects/index'
+import { CELLDL_CLASS_MAP } from '#editor/celldlObjects/index'
+import type { Constructor } from '#root/common/types'
 import type {
     ComponentLibrary,
     LibraryComponentTemplate,
     ObjectTemplate,
-} from '@editor/components/index'
+} from '#editor/components/index'
 import type {
     PropertyGroup,
     StyleObject,
     ValueChange
-} from '@editor/components/properties'
-import { STYLING_GROUP } from '@editor/components/properties'
+} from '#editor/components/properties'
+import { STYLING_GROUP } from '#editor/components/properties'
 import type {
     MetadataPropertiesMap,
     RdfStore,
     SubjectType
-} from '@renderer/metadata/index'
-import { CELLDL_URI, fragment, SPARQL_PREFIXES } from '@renderer/metadata/index'
+} from '#root/metadata/index'
+import { CELLDL_URI, fragment, SPARQL_PREFIXES } from '#root/metadata/index'
 
 //==============================================================================
 

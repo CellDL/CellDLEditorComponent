@@ -13,8 +13,8 @@
         "noEmit": true,
         "outDir": "./dist",
         "paths": {
-            "@editor/*": ["./src/CellDL/*"],
-            "@renderer/*": ["./src/*"]
+            "#editor/*": ["./src/CellDL/*"],
+            "#root/*": ["./src/*"]
         },
         "resolveJsonModule": true,
         "strictNullChecks": true,

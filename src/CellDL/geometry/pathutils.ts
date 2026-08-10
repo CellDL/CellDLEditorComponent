@@ -22,7 +22,7 @@ import type { NormalArray } from 'svg-path-commander'
 
 //==============================================================================
 
-import { POINT_EPSILON_SQUARED, Point, type PointLike } from '@renderer/common/points'
+import { POINT_EPSILON_SQUARED, Point, type PointLike } from '#root/common/points'
 import { NormalTransform } from './transforms'
 
 //==============================================================================

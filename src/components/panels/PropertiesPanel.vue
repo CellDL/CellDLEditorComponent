@@ -51,14 +51,14 @@
 
 <script setup lang="ts">
 import * as vue from 'vue'
-import { useThemeCssVariables } from '@renderer/common/themeCssVariables'
+import { useThemeCssVariables } from '#root/common/themeCssVariables'
 
 useThemeCssVariables('accordion')
 useThemeCssVariables('accordioncontent')
 useThemeCssVariables('accordioncontent')
 useThemeCssVariables('accordionpanel')
 
-import type { PropertyGroup, StylingGroup } from '@editor/components/properties'
+import type { PropertyGroup, StylingGroup } from '#editor/components/properties'
 
 import ToolPanel from '../toolbar/ToolPanel.vue'
 import InputWidget from '../widgets/InputWidget.vue'
@@ -70,7 +70,7 @@ import PathStyle from './PathStyle.vue'
 import type {
     INodeStyle,
     IPathStyle
-} from '@renderer/common/svgUtils'
+} from '#root/common/svgUtils'
 
 const props = defineProps<{
     toolId: string

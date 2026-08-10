@@ -20,15 +20,15 @@ limitations under the License.
 
 import * as vue from 'vue'
 
-import { CONNECTION_SPLAY_PADDING, MAX_CONNECTION_SPLAY_PADDING } from '@renderer/common/styling'
-import { CONNECTION_WIDTH, SELECTION_STROKE_WIDTH } from '@renderer/common/styling'
-import { Point, type PointLike, PointMath } from '@renderer/common/points'
-import { svgCircle } from '@renderer/common/svgUtils'
+import { CONNECTION_SPLAY_PADDING, MAX_CONNECTION_SPLAY_PADDING } from '#root/common/styling'
+import { CONNECTION_WIDTH, SELECTION_STROKE_WIDTH } from '#root/common/styling'
+import { Point, type PointLike, PointMath } from '#root/common/points'
+import { svgCircle } from '#root/common/svgUtils'
 
-import { CELLDL_STYLE_CLASS, type CellDLObject } from '@editor/celldlObjects/index'
-import { Bounds, type PointMoveOptions, type RestrictedValue } from '@editor/geometry/index'
-import { FixedControlRect } from '@editor/geometry/controls'
-import { Transform } from '@editor/geometry/transforms'
+import { CELLDL_STYLE_CLASS, type CellDLObject } from '#editor/celldlObjects/index'
+import { Bounds, type PointMoveOptions, type RestrictedValue } from '#editor/geometry/index'
+import { FixedControlRect } from '#editor/geometry/controls'
+import { Transform } from '#editor/geometry/transforms'
 
 //==============================================================================
 

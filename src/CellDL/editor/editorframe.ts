@@ -18,10 +18,10 @@ limitations under the License.
 
 ******************************************************************************/
 
-import type { ObjectTemplate } from '@editor/components'
-import type { CellDLDiagram } from '@editor/diagram'
-import { type PointLike, PointMath } from '@renderer/common/points'
-import { SVG_URI } from '@renderer/common/svgUtils'
+import type { ObjectTemplate } from '#editor/components'
+import type { CellDLDiagram } from '#editor/diagram'
+import { type PointLike, PointMath } from '#root/common/points'
+import { SVG_URI } from '#root/common/svgUtils'
 
 //==============================================================================
 

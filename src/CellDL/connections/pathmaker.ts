@@ -18,19 +18,19 @@ limitations under the License.
 
 ******************************************************************************/
 
-import { Point, type PointLike, PointMath } from '@renderer/common/points'
-import { CONNECTION_COLOUR, CONNECTION_WIDTH } from '@renderer/common/styling'
-import { svgPath, svgPathDescription, SVG_URI } from '@renderer/common/svgUtils'
-import { CELLDL, RDF } from '@renderer/metadata/index'
-import { MetadataPropertiesMap } from '@renderer/metadata/index'
-import { componentLibraryPlugin } from '@renderer/plugins/index'
+import { Point, type PointLike, PointMath } from '#root/common/points'
+import { CONNECTION_COLOUR, CONNECTION_WIDTH } from '#root/common/styling'
+import { svgPath, svgPathDescription, SVG_URI } from '#root/common/svgUtils'
+import { CELLDL, RDF } from '#root/metadata/index'
+import { MetadataPropertiesMap } from '#root/metadata/index'
+import { componentLibraryPlugin } from '#root/plugins/index'
 
-import { type CellDLConnectedObject, CellDLConnection, type CellDLObject } from '@editor/celldlObjects/index'
-import { alert } from '@editor/editor/alerts'
-import type { CellDLDiagram } from '@editor/diagram/index'
-import type { EditorFrame } from '@editor/editor/editorframe'
-import type { CellDLSVGElement } from '@editor/SVGElements/index'
-import { round } from '@editor/utils'
+import { type CellDLConnectedObject, CellDLConnection, type CellDLObject } from '#editor/celldlObjects/index'
+import { alert } from '#editor/editor/alerts'
+import type { CellDLDiagram } from '#editor/diagram/index'
+import type { EditorFrame } from '#editor/editor/editorframe'
+import type { CellDLSVGElement } from '#editor/SVGElements/index'
+import { round } from '#editor/utils'
 
 import { ConnectionStyle } from './index'
 

@@ -22,21 +22,21 @@ limitations under the License.
 import * as vue from 'vue'
 import { useTippy } from "vue-tippy"
 
-import '@renderer/assets/svgContent.css'
+import '#root/assets/svgContent.css'
 
-import type { CellDLObject } from '@editor/celldlObjects'
-import { PathMaker, type PathNode } from '@editor/connections/pathmaker'
-import type { TemplateEventDetails } from '@editor/components'
-import { ObjectPropertiesPanel } from '@editor/components/properties'
-import type { CellDLDiagram } from '@editor/diagram'
-import { SelectionSet } from '@editor/diagram/selectionset'
-import { type MoveUndoState, undoRedo } from '@editor/diagram/undoredo'
-import { round } from '@editor/utils'
+import type { CellDLObject } from '#editor/celldlObjects'
+import { PathMaker, type PathNode } from '#editor/connections/pathmaker'
+import type { TemplateEventDetails } from '#editor/components'
+import { ObjectPropertiesPanel } from '#editor/components/properties'
+import type { CellDLDiagram } from '#editor/diagram'
+import { SelectionSet } from '#editor/diagram/selectionset'
+import { type MoveUndoState, undoRedo } from '#editor/diagram/undoredo'
+import { round } from '#editor/utils'
 
-import { isMacOs } from '@renderer/common/common'
-import { type Point, type PointLike, PointMath } from '@renderer/common/points'
-import type { StringProperties } from '@renderer/common/types'
-import { componentLibraryPlugin } from '@renderer/plugins'
+import { isMacOs } from '#root/common/common'
+import { type Point, type PointLike, PointMath } from '#root/common/points'
+import type { StringProperties } from '#root/common/types'
+import { componentLibraryPlugin } from '#root/plugins'
 
 //==============================================================================
 

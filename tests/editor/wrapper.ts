@@ -1,13 +1,13 @@
 //==========================================================================
 
-import type { CellDLConnectedObject, CellDLObject } from "@editor/celldlObjects"
-import { getTemplateEventDetails } from "@editor/components"
-import { PathMaker } from "@editor/connections/pathmaker"
-import type { CellDLDiagram } from "@editor/diagram"
-import { undoRedo } from "@editor/diagram/undoredo"
-import { CellDLEditor, EDITOR_STATE } from "@editor/editor"
-import type { EditorFrame } from "@editor/editor/editorframe"
-import { type PointLike, Point } from "@renderer/common/points"
+import type { CellDLConnectedObject, CellDLObject } from "#editor/celldlObjects"
+import { getTemplateEventDetails } from "#editor/components"
+import { PathMaker } from "#editor/connections/pathmaker"
+import type { CellDLDiagram } from "#editor/diagram"
+import { undoRedo } from "#editor/diagram/undoredo"
+import { CellDLEditor, EDITOR_STATE } from "#editor/editor"
+import type { EditorFrame } from "#editor/editor/editorframe"
+import { type PointLike, Point } from "#root/common/points"
 
 //==========================================================================
 

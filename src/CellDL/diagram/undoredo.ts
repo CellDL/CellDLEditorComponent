@@ -20,11 +20,11 @@ limitations under the License.
 
 import type { NormalArray } from 'svg-path-commander'
 
-import { type CellDLConnectedObject, type CellDLConnection, CellDLObject } from '@editor/celldlObjects'
-import type { CellDLDiagram } from '@editor/diagram'
-import type { SvgConnection } from '@editor/SVGElements/svgconnection'
+import { type CellDLConnectedObject, type CellDLConnection, CellDLObject } from '#editor/celldlObjects'
+import type { CellDLDiagram } from '#editor/diagram'
+import type { SvgConnection } from '#editor/SVGElements/svgconnection'
 
-import { Point, PointMath, type PointLike } from '@renderer/common/points'
+import { Point, PointMath, type PointLike } from '#root/common/points'
 
 import { SelectionSet } from './selectionset'
 import { StoredObject } from './storedobject'

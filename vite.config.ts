@@ -44,8 +44,8 @@ export default vite.defineConfig({
     resolve: {
         alias: {
             'node-fetch': 'isomorphic-fetch',
-            '@editor': path.resolve(_dirname, 'src/CellDL'),
-            '@renderer': path.resolve(_dirname, 'src')
+            '#editor': path.resolve(_dirname, 'src/CellDL'),
+            '#root': path.resolve(_dirname, 'src')
         }
     },
     server: {

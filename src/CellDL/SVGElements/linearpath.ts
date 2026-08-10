@@ -23,12 +23,12 @@ import type { NormalArray } from 'svg-path-commander'
 
 //==============================================================================
 
-import { type Point, type PointLike, PointMath } from '@renderer/common/points'
-import { FixedValue, RestrictedValue } from '@editor/geometry'
+import { type Point, type PointLike, PointMath } from '#root/common/points'
+import { FixedValue, RestrictedValue } from '#editor/geometry'
 
 import type { BoundedElement } from './boundedelement'
 import { FixedPathPoint, PathElement, PathPoint } from './pathelement'
-import { getSvgPathStyle } from '@renderer/common/svgUtils'
+import { getSvgPathStyle } from '#root/common/svgUtils'
 
 //==============================================================================
 

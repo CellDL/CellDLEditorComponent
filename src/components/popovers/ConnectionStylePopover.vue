@@ -22,7 +22,7 @@
 <script setup lang="ts">
 import * as vue from 'vue'
 import type { SelectChangeEvent } from 'primevue/select'
-import { useThemeCssVariables } from '@renderer/common/themeCssVariables'
+import { useThemeCssVariables } from '#root/common/themeCssVariables'
 
 useThemeCssVariables('select')
 
@@ -32,7 +32,7 @@ import {
     type ConnectionStyleDefinition,
     CONNECTION_STYLE_DEFINITIONS,
     DEFAULT_CONNECTION_STYLE
-} from '@editor/connections/index'
+} from '#editor/connections/index'
 
 //==============================================================================
 

@@ -23,13 +23,13 @@ import type { NormalArray } from 'svg-path-commander'
 
 //==============================================================================
 
-import type { CellDLConnection, CellDLObject } from '@editor/celldlObjects/index'
-import type { EditorFrame } from '@editor/editor/editorframe'
-import type { Point, PointLike } from '@renderer/common/points'
-import { svgPathElement } from '@renderer/common/svgUtils'
-import type { FixedValue, RestrictedValue } from '@editor/geometry/index'
-import { ControlPoint } from '@editor/geometry/controls'
-import type { FoundPoint } from '@editor/geometry/pathutils'
+import type { CellDLConnection, CellDLObject } from '#editor/celldlObjects/index'
+import type { EditorFrame } from '#editor/editor/editorframe'
+import type { Point, PointLike } from '#root/common/points'
+import { svgPathElement } from '#root/common/svgUtils'
+import type { FixedValue, RestrictedValue } from '#editor/geometry/index'
+import { ControlPoint } from '#editor/geometry/controls'
+import type { FoundPoint } from '#editor/geometry/pathutils'
 
 import type { BoundedElement } from './boundedelement'
 import type { ElementMoveOptions } from '.'

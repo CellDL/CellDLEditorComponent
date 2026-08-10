@@ -7,13 +7,13 @@
 
 <script setup lang="ts">
 import * as vue from 'vue'
-import { useThemeCssVariables } from '@renderer/common/themeCssVariables'
+import { useThemeCssVariables } from '#root/common/themeCssVariables'
 
 useThemeCssVariables('contextmenu')
 
 //==============================================================================
 
-import { CONTEXT_MENU } from '@editor/editor'
+import { CONTEXT_MENU } from '#editor/editor'
 
 export type ContextMenuProps = {
     state: Set<CONTEXT_MENU>,

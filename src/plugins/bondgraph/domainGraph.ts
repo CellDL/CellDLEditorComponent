@@ -23,8 +23,8 @@ import Graph from 'graphology'
 
 //==============================================================================
 
-import * as $rdf from '@renderer/metadata'
-import { BGF, SPARQL_PREFIXES } from '@renderer/metadata'
+import * as $rdf from '#root/metadata'
+import { BGF, SPARQL_PREFIXES } from '#root/metadata'
 
 //==============================================================================
 

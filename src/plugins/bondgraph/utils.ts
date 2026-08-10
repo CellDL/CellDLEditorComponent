@@ -22,7 +22,7 @@ limitations under the License.
 import type {
     ComponentLibrary,
     LibraryComponentTemplate
-} from '@editor/components/index'
+} from '#editor/components/index'
 
 import type { BGBaseComponent } from './index'
 

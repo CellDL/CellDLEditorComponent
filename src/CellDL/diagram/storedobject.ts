@@ -18,9 +18,9 @@ limitations under the License.
 
 ******************************************************************************/
 
-import type { CellDLObject } from '@editor/celldlObjects'
-import type { DomLocation } from '@editor/SVGElements'
-import type { Statement } from '@renderer/metadata/index'
+import type { CellDLObject } from '#editor/celldlObjects'
+import type { DomLocation } from '#editor/SVGElements'
+import type { Statement } from '#root/metadata/index'
 
 //==============================================================================
 

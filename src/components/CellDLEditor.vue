@@ -43,31 +43,31 @@ import 'tippy.js/dist/tippy.css'
 
 //==============================================================================
 
-import '@renderer/assets/style.css'
-import '@renderer/assets/icons.css'
+import '#root/assets/style.css'
+import '#root/assets/icons.css'
 
-import * as vueCommon from '@renderer/common/vueCommon'
+import * as vueCommon from '#root/common/vueCommon'
 
-import type { StyleObject } from '@editor/components/properties'
-import { DEFAULT_CONNECTION_STYLE_DEFINITION } from '@editor/connections'
-import { CellDLDiagram } from '@editor/diagram'
+import type { StyleObject } from '#editor/components/properties'
+import { DEFAULT_CONNECTION_STYLE_DEFINITION } from '#editor/connections'
+import { CellDLDiagram } from '#editor/diagram'
 
-import { CellDLEditor } from '@editor/editor'
-import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS, PANEL_IDS } from '@editor/editor'
-import { editGuides } from '@editor/editor/editguides'
-import { undoRedo } from '@editor/diagram/undoredo'
+import { CellDLEditor } from '#editor/editor'
+import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS, PANEL_IDS } from '#editor/editor'
+import { editGuides } from '#editor/editor/editguides'
+import { undoRedo } from '#editor/diagram/undoredo'
 
-import type { EditorToolButton } from '@renderer/common/EditorState'
-import EditorToolbar from '@renderer/components/toolbar/EditorToolbar.vue'
+import type { EditorToolButton } from '#root/common/EditorState'
+import EditorToolbar from '#root/components/toolbar/EditorToolbar.vue'
 
-import ComponentPopover from '@renderer/components/popovers/ComponentPopover.vue'
-import ConnectionStylePopover from '@renderer/components/popovers/ConnectionStylePopover.vue'
+import ComponentPopover from '#root/components/popovers/ComponentPopover.vue'
+import ConnectionStylePopover from '#root/components/popovers/ConnectionStylePopover.vue'
 
-import PropertiesPanel from '@renderer/components/panels/PropertiesPanel.vue'
+import PropertiesPanel from '#root/components/panels/PropertiesPanel.vue'
 
-import { componentLibraryPlugin } from '@renderer/plugins'
-import { BondgraphPlugin } from '@renderer/plugins/bondgraph'
-// WIP import { ElectricalPlugin } from '@renderer/plugins/electrical'
+import { componentLibraryPlugin } from '#root/plugins'
+import { BondgraphPlugin } from '#root/plugins/bondgraph'
+// WIP import { ElectricalPlugin } from '#root/plugins/electrical'
 
 import { TestCellDLEditor, testEditor } from '../../tests/editor'
 

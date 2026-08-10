@@ -18,14 +18,14 @@ limitations under the License.
 
 ******************************************************************************/
 
-import type { CellDLConnection, CellDLObject } from '@editor/celldlObjects/index'
-import type { EditorFrame } from '@editor/editor/editorframe'
-import { editGuides } from '@editor/editor/editguides'
+import type { CellDLConnection, CellDLObject } from '#editor/celldlObjects/index'
+import type { EditorFrame } from '#editor/editor/editorframe'
+import { editGuides } from '#editor/editor/editguides'
 
-import { svgCircle, svgRect } from '@renderer/common/svgUtils'
+import { svgCircle, svgRect } from '#root/common/svgUtils'
 
-import { Point, type PointLike, PointMath } from '@renderer/common/points'
-import type { StringProperties } from '@renderer/common/types'
+import { Point, type PointLike, PointMath } from '#root/common/points'
+import type { StringProperties } from '#root/common/types'
 
 //==============================================================================
 

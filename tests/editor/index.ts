@@ -1,6 +1,6 @@
 //==========================================================================
 
-import { undoRedo } from "@editor/diagram/undoredo"
+import { undoRedo } from "#editor/diagram/undoredo"
 import type { TestCellDLEditor } from "./wrapper"
 
 export { TestCellDLEditor } from "./wrapper"

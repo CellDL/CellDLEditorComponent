@@ -27,30 +27,30 @@ import { bgRdfStatements } from '@celldl/editor-rdf'
 
 //==============================================================================
 
-import { arrowMarkerDefinition } from '@renderer/common/styling'
+import { arrowMarkerDefinition } from '#root/common/styling'
 import type {
     IUiJsonDiscreteInput,
     IUiJsonDiscreteInputPossibleValue
-} from '@renderer/libopencor/locUIJsonApi'
+} from '#root/libopencor/locUIJsonApi'
 
 import {
     getSvgFillStyle,
     getSvgPathStyle,
     setSvgPathStyle,
     type IPathStyle
-} from '@renderer/common/svgUtils'
+} from '#root/common/svgUtils'
 
-import { alert } from '@editor/editor/alerts'
+import { alert } from '#editor/editor/alerts'
 import {
     CellDLComponent,
     type CellDLConnection,
     type CellDLObject
-} from '@editor/celldlObjects'
+} from '#editor/celldlObjects'
 import type {
     ComponentLibrary,
     ElementTypeName,
     ObjectTemplate
-} from '@editor/components'
+} from '#editor/components'
 import {
     getItemProperty,
     type ItemDetails,
@@ -59,13 +59,13 @@ import {
     STYLING_GROUP_ID,
     updateItemProperty,
     type ValueChange
-} from '@editor/components/properties'
+} from '#editor/components/properties'
 
-import * as $rdf from '@renderer/metadata'
-import { BGF, BGF_URI, RDF, SPARQL_PREFIXES } from '@renderer/metadata'
-import { type MetadataProperty, MetadataPropertiesMap } from '@renderer/metadata'
+import * as $rdf from '#root/metadata'
+import { BGF, BGF_URI, RDF, SPARQL_PREFIXES } from '#root/metadata'
+import { type MetadataProperty, MetadataPropertiesMap } from '#root/metadata'
 
-import type { ConnectionStatus, PluginInterface } from '@renderer/plugins'
+import type { ConnectionStatus, PluginInterface } from '#root/plugins'
 
 //==============================================================================
 

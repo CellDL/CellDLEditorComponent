@@ -18,7 +18,7 @@ limitations under the License.
 
 ******************************************************************************/
 
-import { CellDLEditor } from '@editor/editor'
+import { CellDLEditor } from '#editor/editor'
 
 //==============================================================================
 

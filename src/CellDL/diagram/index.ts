@@ -18,17 +18,17 @@ limitations under the License.
 
 ******************************************************************************/
 
-import type { PointLike } from '@renderer/common/points'
+import type { PointLike } from '#root/common/points'
 import {
     CELLDL_BACKGROUND_CLASS,
     CellDLStylesheet,
     CONNECTION_COLOUR,
     OLD_CONNECTION_COLOUR
-} from '@renderer/common/styling'
-import { svgCircleElement, SVG_URI, svgRectElement } from '@renderer/common/svgUtils'
-import type { Constructor, StringProperties } from '@renderer/common/types'
+} from '#root/common/styling'
+import { svgCircleElement, SVG_URI, svgRectElement } from '#root/common/svgUtils'
+import type { Constructor, StringProperties } from '#root/common/types'
 
-import * as $rdf from '@renderer/metadata/index'
+import * as $rdf from '#root/metadata/index'
 import {
     CELLDL,
     CELLDL_DECLARATIONS,
@@ -38,14 +38,14 @@ import {
     type MetadataPropertyValue,
     OWL,
     RDF
-} from '@renderer/metadata/index'
+} from '#root/metadata/index'
 
-import type { Bounds, Extent } from '@editor/geometry/index'
-import { ShapeIntersections } from '@editor/geometry/intersections'
-import { CellDLSpatialIndex } from '@editor/geometry/spatialindex'
-import type { ContainedObject } from '@editor/geometry/spatialindex'
-import { lengthToPixels } from '@editor/geometry/units'
-import { type FoundPoint, PointFinder } from '@editor/geometry/pathutils'
+import type { Bounds, Extent } from '#editor/geometry/index'
+import { ShapeIntersections } from '#editor/geometry/intersections'
+import { CellDLSpatialIndex } from '#editor/geometry/spatialindex'
+import type { ContainedObject } from '#editor/geometry/spatialindex'
+import { lengthToPixels } from '#editor/geometry/units'
+import { type FoundPoint, PointFinder } from '#editor/geometry/pathutils'
 
 import {
     CellDLAnnotation,
@@ -58,19 +58,19 @@ import {
     type CellDLObject,
     CELLDL_STYLE_CLASS,
     CellDLUnconnectedPort
-} from '@editor/celldlObjects/index.ts'
+} from '#editor/celldlObjects/index.ts'
 
-import { setInternalIds } from '@editor/SVGElements/index'
-import type { BoundedElement } from '@editor/SVGElements/boundedelement'
-import type { SvgConnection } from '@editor/SVGElements/svgconnection'
+import { setInternalIds } from '#editor/SVGElements/index'
+import type { BoundedElement } from '#editor/SVGElements/boundedelement'
+import type { SvgConnection } from '#editor/SVGElements/svgconnection'
 
-import { type CellDLEditor, notifyChanges } from '@editor/editor/index'
-import { editGuides } from '@editor/editor/editguides'
-import { undoRedo, type UndoState } from '@editor/diagram/undoredo'
+import { type CellDLEditor, notifyChanges } from '#editor/editor/index'
+import { editGuides } from '#editor/editor/editguides'
+import { undoRedo, type UndoState } from '#editor/diagram/undoredo'
 
-import type { ObjectTemplate } from '@editor/components/index'
+import type { ObjectTemplate } from '#editor/components/index'
 
-import { componentLibraryPlugin } from '@renderer/plugins/index'
+import { componentLibraryPlugin } from '#root/plugins/index'
 
 //==============================================================================
 

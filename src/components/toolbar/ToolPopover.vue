@@ -12,7 +12,7 @@
 
 <script setup lang="ts">
 import * as vue from 'vue'
-import { useThemeCssVariables } from '@renderer/common/themeCssVariables'
+import { useThemeCssVariables } from '#root/common/themeCssVariables'
 
 useThemeCssVariables('card')
 

@@ -18,21 +18,21 @@ limitations under the License.
 
 ******************************************************************************/
 
-import { Point, type PointLike } from '@renderer/common/points'
-import type { Constructor } from '@renderer/common/types'
+import { Point, type PointLike } from '#root/common/points'
+import type { Constructor } from '#root/common/types'
 
-import { alert } from '@editor/editor/alerts'
-import { editGuides } from '@editor/editor/editguides'
+import { alert } from '#editor/editor/alerts'
+import { editGuides } from '#editor/editor/editguides'
 
-import { BoundedElement } from '@editor/SVGElements/boundedelement'
-import type { ObjectTemplate } from '@editor/components/index'
-import type { CellDLDiagram } from '@editor/diagram/index'
-import { SvgConnection } from '@editor/SVGElements/svgconnection'
-import type { CellDLSVGElement, ElementMoveOptions } from '@editor/SVGElements/index'
+import { BoundedElement } from '#editor/SVGElements/boundedelement'
+import type { ObjectTemplate } from '#editor/components/index'
+import type { CellDLDiagram } from '#editor/diagram/index'
+import { SvgConnection } from '#editor/SVGElements/svgconnection'
+import type { CellDLSVGElement, ElementMoveOptions } from '#editor/SVGElements/index'
 
-import type { Literal, MetadataPropertiesMap, NamedNode, RdfStore } from '@renderer/metadata'
-import { CELLDL, isLiteral, RDF, RDFS } from '@renderer/metadata'
-import { componentLibraryPlugin } from '@renderer/plugins/index'
+import type { Literal, MetadataPropertiesMap, NamedNode, RdfStore } from '#root/metadata'
+import { CELLDL, isLiteral, RDF, RDFS } from '#root/metadata'
+import { componentLibraryPlugin } from '#root/plugins/index'
 
 //==============================================================================
 

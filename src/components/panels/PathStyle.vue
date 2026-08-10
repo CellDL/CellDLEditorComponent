@@ -32,14 +32,14 @@
 import * as vue from 'vue'
 import Slider from 'primevue/slider'
 import { TinyColor } from '@ctrl/tinycolor'
-import { useThemeCssVariables } from '@renderer/common/themeCssVariables'
+import { useThemeCssVariables } from '#root/common/themeCssVariables'
 
 useThemeCssVariables('checkbox')
 useThemeCssVariables('floatlabel')
 useThemeCssVariables('inputtext')
 useThemeCssVariables('slider')
 
-import type { IPathStyle } from '@renderer/common/svgUtils'
+import type { IPathStyle } from '#root/common/svgUtils'
 
 const props = defineProps<{
     pathStyle: IPathStyle
