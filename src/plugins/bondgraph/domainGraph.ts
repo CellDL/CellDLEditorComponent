@@ -55,6 +55,13 @@ const JUNCTION_STRUCTURE_QUERY = `
     }
 `
 
+const UNCONNECTED_PORT_QUERY = `
+    SELECT ?port
+    WHERE {
+        ?port a celldl:UnconnectedPort .
+    }
+`
+
 const POWER_BOND_QUERY = `
     SELECT ?bond ?source ?target
     WHERE {
@@ -116,6 +123,14 @@ export class DomainGraph {
                         }
                     }
                 }
+            }
+        )
+        // Add any unconnected ports
+        rdfStore
+            .query(`${SPARQL_PREFIXES}${UNCONNECTED_PORT_QUERY}`)
+            .forEach((r) => {
+                const port = r.get('port')!.value
+                this.#graph.addNode(port)
             }
         )
         // Add all bonds
