@@ -20,19 +20,20 @@ limitations under the License.
 
 import { CELLDL, RDF } from '#root/metadata/index'
 import { MetadataPropertiesMap } from '#root/metadata/index'
-import { componentLibraryPlugin } from '#root/plugins/index'
 
-import { type CellDLConnectedObject, CellDLConnection, type CellDLObject } from '#editor/celldlObjects/index'
 import { Point, type PointLike, PointMath } from '#root/utils/points'
 import { CONNECTION_COLOUR, CONNECTION_WIDTH } from '#root/utils/styling'
 import { svgPath, svgPathDescription, SVG_URI } from '#root/utils/svgUtils'
+import { componentLibraryPlugin } from '#root/plugins'
+
+import { type CellDLConnectedObject, CellDLConnection, type CellDLObject } from '#editor/celldlObjects'
 import { alert } from '#editor/editor/alerts'
-import type { CellDLDiagram } from '#editor/diagram/index'
+import type { CellDLDiagram } from '#editor/diagram'
 import type { EditorFrame } from '#editor/editor/editorframe'
-import type { CellDLSVGElement } from '#editor/SVGElements/index'
+import type { CellDLSVGElement } from '#editor/SVGElements'
 import { round } from '#editor/utils'
 
-import { ConnectionStyle } from './index'
+import { ConnectionStyle } from '.'
 
 //==============================================================================
 

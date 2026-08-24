@@ -23,7 +23,7 @@ import type { NormalArray } from 'svg-path-commander'
 
 //==============================================================================
 
-import type { CellDLConnection, CellDLObject } from '#editor/celldlObjects/index'
+import type { CellDLConnection, CellDLObject } from '#editor/celldlObjects'
 import type { EditorFrame } from '#editor/editor/editorframe'
 import type { Point, PointLike } from '#root/utils/points'
 import { svgPathElement } from '#root/utils/svgUtils'

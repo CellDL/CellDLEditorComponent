@@ -32,7 +32,7 @@ import {
     type ConnectionStyleDefinition,
     CONNECTION_STYLE_DEFINITIONS,
     DEFAULT_CONNECTION_STYLE
-} from '#editor/connections/index'
+} from '#editor/connections'
 
 //==============================================================================
 

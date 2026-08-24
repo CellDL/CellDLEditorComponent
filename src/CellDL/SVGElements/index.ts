@@ -25,8 +25,8 @@ import { CONNECTION_WIDTH, SELECTION_STROKE_WIDTH } from '#root/utils/styling'
 import { Point, type PointLike, PointMath } from '#root/utils/points'
 import { svgCircle } from '#root/utils/svgUtils'
 
-import { CELLDL_STYLE_CLASS, type CellDLObject } from '#editor/celldlObjects/index'
-import { Bounds, type PointMoveOptions, type RestrictedValue } from '#editor/geometry/index'
+import { CELLDL_STYLE_CLASS, type CellDLObject } from '#editor/celldlObjects'
+import { Bounds, type PointMoveOptions, type RestrictedValue } from '#editor/geometry'
 import { FixedControlRect } from '#editor/geometry/controls'
 import { Transform } from '#editor/geometry/transforms'
 

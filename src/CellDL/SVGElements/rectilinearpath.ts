@@ -27,7 +27,7 @@ import { CONNECTION_SPLAY_PADDING } from '#root/utils/styling'
 import { Point, type PointLike, PointMath } from '#root/utils/points'
 import { editGuides } from '#editor/editor/editguides'
 
-import { FixedValue, RestrictedValue } from '#editor/geometry/index'
+import { FixedValue, RestrictedValue } from '#editor/geometry'
 import { roundEqual } from '#editor/utils'
 
 import type { BoundedElement } from './boundedelement'

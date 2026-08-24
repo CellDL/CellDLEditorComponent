@@ -26,14 +26,14 @@ import type { ShapeTypes } from 'svg-path-commander'
 import type { PointLike } from '#root/utils/points'
 import { alert } from '#editor/editor/alerts'
 
-import type { CellDLConnection } from '#editor/celldlObjects/index'
+import type { CellDLConnection } from '#editor/celldlObjects'
 
 //==============================================================================
 
 import { ID_PART_SEPARATOR, type PathElement } from './pathelement'
 import { LinearPath } from './linearpath'
 import { RectilinearPath } from './rectilinearpath'
-import { CellDLSVGElement, type DomLocation, type ElementMoveOptions } from './index'
+import { CellDLSVGElement, type DomLocation, type ElementMoveOptions } from '.'
 import type { BoundedElement } from './boundedelement'
 
 //==============================================================================

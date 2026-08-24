@@ -18,7 +18,7 @@ limitations under the License.
 
 ******************************************************************************/
 
-import type { CellDLConnection, CellDLObject } from '#editor/celldlObjects/index'
+import type { CellDLConnection, CellDLObject } from '#editor/celldlObjects'
 import type { EditorFrame } from '#editor/editor/editorframe'
 import { editGuides } from '#editor/editor/editguides'
 
@@ -29,7 +29,7 @@ import type { StringProperties } from '#root/utils/types'
 
 //==============================================================================
 
-import { FixedPoint, FixedValue, RestrictedPoint, RestrictedValue } from './index.ts'
+import { FixedPoint, FixedValue, RestrictedPoint, RestrictedValue } from '.'
 
 //==============================================================================
 

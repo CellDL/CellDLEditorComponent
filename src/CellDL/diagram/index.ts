@@ -31,7 +31,6 @@ import {
     RDF
 } from '#root/metadata/index'
 
-import type { Bounds, Extent } from '#editor/geometry/index'
 import type { PointLike } from '#root/utils/points'
 import {
     CELLDL_BACKGROUND_CLASS,
@@ -41,6 +40,7 @@ import {
 } from '#root/utils/styling'
 import { svgCircleElement, SVG_URI, svgRectElement } from '#root/utils/svgUtils'
 import type { Constructor, StringProperties } from '#root/utils/types'
+import type { Bounds, Extent } from '#editor/geometry'
 import { ShapeIntersections } from '#editor/geometry/intersections'
 import { CellDLSpatialIndex } from '#editor/geometry/spatialindex'
 import type { ContainedObject } from '#editor/geometry/spatialindex'
@@ -58,19 +58,19 @@ import {
     type CellDLObject,
     CELLDL_STYLE_CLASS,
     CellDLUnconnectedPort
-} from '#editor/celldlObjects/index.ts'
+} from '#editor/celldlObjects'
 
-import { setInternalIds } from '#editor/SVGElements/index'
+import { setInternalIds } from '#editor/SVGElements'
 import type { BoundedElement } from '#editor/SVGElements/boundedelement'
 import type { SvgConnection } from '#editor/SVGElements/svgconnection'
 
-import { type CellDLEditor, notifyChanges } from '#editor/editor/index'
+import { type CellDLEditor, notifyChanges } from '#editor/editor'
 import { editGuides } from '#editor/editor/editguides'
 import { undoRedo, type UndoState } from '#editor/diagram/undoredo'
 
-import type { ObjectTemplate } from '#editor/components/index'
+import type { ObjectTemplate } from '#editor/components'
 
-import { componentLibraryPlugin } from '#root/plugins/index'
+import { componentLibraryPlugin } from '#root/plugins'
 
 //==============================================================================
 

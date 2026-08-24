@@ -26,14 +26,14 @@ import * as vue from 'vue'
 import type {
     CellDLConnection,
     CellDLObject
-} from '#editor/celldlObjects/index'
-import { CELLDL_CLASS_MAP } from '#editor/celldlObjects/index'
+} from '#editor/celldlObjects'
+import { CELLDL_CLASS_MAP } from '#editor/celldlObjects'
 import type { Constructor } from '#root/utils/types'
 import type {
     ComponentLibrary,
     LibraryComponentTemplate,
     ObjectTemplate,
-} from '#editor/components/index'
+} from '#editor/components'
 import type {
     PropertyGroup,
     StyleObject,

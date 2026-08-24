@@ -25,7 +25,7 @@ import {
     type ComponentLibrary,
     type LibraryComponentTemplate,
     getTemplateEventDetails
-} from '#editor/components/index'
+} from '#editor/components'
 
 import ToolPopover from '../toolbar/ToolPopover.vue'
 

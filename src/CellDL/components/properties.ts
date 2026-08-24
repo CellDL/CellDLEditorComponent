@@ -22,12 +22,12 @@ import * as vue from 'vue'
 
 import type * as locApi from '#root/libopencor/locUIJsonApi'
 
-import type { CellDLObject } from '#editor/celldlObjects/index'
-import type { NamedProperty } from '#editor/components/index'
+import type { CellDLObject } from '#editor/celldlObjects'
+import type { NamedProperty } from '#editor/components'
 
 import { DCT, RDFS, SPARQL_PREFIXES } from '#root/metadata/index'
-import { componentLibraryPlugin } from '#root/plugins/index'
 import type { IPathStyle } from '#root/utils/svgUtils'
+import { componentLibraryPlugin } from '#root/plugins'
 
 //==============================================================================
 
