@@ -82,7 +82,6 @@ export class DomainGraph {
         if (!rdfStore) {
             return
         }
-        let modelUri: string|undefined
         // Add all elements without their domains
         rdfStore
             .query(`${SPARQL_PREFIXES}${BOND_ELEMENT_QUERY}`, true)
