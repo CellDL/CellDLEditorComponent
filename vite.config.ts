@@ -2,6 +2,7 @@ import * as primeVueAutoImportResolver from '@primevue/auto-import-resolver'
 import tailwindcssPlugin from '@tailwindcss/vite'
 import vuePlugin from '@vitejs/plugin-vue'
 
+import fs from 'node:fs'
 import path from 'node:path'
 import url from 'node:url'
 import vitePlugin from 'unplugin-vue-components/vite'
@@ -24,9 +25,6 @@ export default vite.defineConfig({
         target: 'esnext'
     },
     optimizeDeps: {
-        esbuildOptions: {
-            target: 'esnext'
-        },
         exclude: [
             '*.wasm',
             '*.whl'
@@ -36,7 +34,15 @@ export default vite.defineConfig({
         // Note: this must be in sync with electron.vite.config.ts.
 
         tailwindcssPlugin(),
-        vuePlugin(),
+        vuePlugin({
+            script: {
+                fs: {
+                    fileExists: (file: string) => fs.existsSync(file),
+                    readFile: (file: string) => fs.readFileSync(file, 'utf-8'),
+                    realpath: (file: string) => fs.realpathSync(file)
+                }
+            }
+        }),
         vitePlugin({
             resolvers: [primeVueAutoImportResolver.PrimeVueResolver()]
         })

@@ -1,21 +1,15 @@
 import * as primeVueAutoImportResolver from '@primevue/auto-import-resolver'
-import typescript from "@rollup/plugin-typescript"
 import tailwindcssPlugin from '@tailwindcss/vite'
-import vuePlugin from '@vitejs/plugin-vue'
-
+import fs from 'node:fs'
 import path from 'node:path'
 import url from 'node:url'
+import vuePlugin from '@vitejs/plugin-vue'
 import vitePlugin from 'unplugin-vue-components/vite'
 import * as vite from 'vite'
 
 const _dirname = path.dirname(url.fileURLToPath(import.meta.url))
 
-export default vite.defineConfig(({ mode }) => {
-  return {
-    esbuild: {
-      // Drops console.log calls only in production mode
-      pure: mode === 'production' ? ['console.log'] : [],
-    },
+export default vite.defineConfig({
     build: {
         lib: {
             entry: './src/index.ts',
@@ -37,24 +31,12 @@ export default vite.defineConfig(({ mode }) => {
                     }
                     return assetInfo.names[0] ?? 'default-name'
                 }
-            },
-            plugins: [
-                typescript({
-                    include: [
-                        './index.ts',
-                        'src/**'
-                    ]
-                }),
-            ]
-
+            }
         },
         sourcemap: true,
         target: 'esnext'
     },
     optimizeDeps: {
-        esbuildOptions: {
-            target: 'esnext'
-        },
         exclude: [
             '*.wasm',
             '*.whl'
@@ -68,13 +50,18 @@ export default vite.defineConfig(({ mode }) => {
         }
     },
     plugins: [
-        // Note: this must be in sync with vite.config.ts.
-
         tailwindcssPlugin(),
-        vuePlugin(),
+        vuePlugin({
+            script: {
+                fs: {
+                    fileExists: (file: string) => fs.existsSync(file),
+                    readFile: (file: string) => fs.readFileSync(file, 'utf-8'),
+                    realpath: (file: string) => fs.realpathSync(file)
+                }
+            }
+        }),
         vitePlugin({
             resolvers: [primeVueAutoImportResolver.PrimeVueResolver()]
         })
     ]
-  }
 })
