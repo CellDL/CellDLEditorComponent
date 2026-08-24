@@ -33,6 +33,8 @@
 </template>
 
 <script setup lang="ts">
+/** biome-ignore-all lint/correctness/noUnusedVariables: Vue components and properties arte in fact used */
+
 import * as vue from 'vue'
 
 import primeVueAuraTheme from '@primeuix/themes/aura'
@@ -46,8 +48,9 @@ import 'tippy.js/dist/tippy.css'
 import '#root/assets/style.css'
 import '#root/assets/icons.css'
 
-import * as vueCommon from '#root/common/vueCommon'
+import * as vueCommon from '#root/utils/vueCommon'
 
+import { type LibraryComponentTemplate } from '#editor/components'
 import type { StyleObject } from '#editor/components/properties'
 import { DEFAULT_CONNECTION_STYLE_DEFINITION } from '#editor/connections'
 import { CellDLDiagram } from '#editor/diagram'
@@ -57,9 +60,10 @@ import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS, PANEL_IDS } from '#editor/edit
 import { editGuides } from '#editor/editor/editguides'
 import { undoRedo } from '#editor/diagram/undoredo'
 
-import type { EditorToolButton } from '#root/common/EditorState'
+import type { EditorToolButton } from '#root/utils/EditorState'
 import EditorToolbar from '#root/components/toolbar/EditorToolbar.vue'
 
+import type { PopoverEventData } from '#root/components/popovers/types'
 import ComponentPopover from '#root/components/popovers/ComponentPopover.vue'
 import ConnectionStylePopover from '#root/components/popovers/ConnectionStylePopover.vue'
 
@@ -77,27 +81,15 @@ import type { ContextMenuProps } from './widgets/EditorContextMenu.vue'
 //==============================================================================
 
 import type {
-    CellDLEditorProps,
     EditorData,
-    EditorStatus,
+    CellDLEditorProps,
     EditorEditCommand,
     EditorFileCommand,
     EditorSetStateCommand,
     EditorViewCommand
-} from '../../index'
+} from './EditorComponent.vue'
 
 //==============================================================================
-
-import * as $rdf from '@celldl/editor-rdf'
-
-if (!$rdf.initialised()) {
-    window.alert('The RDF module must be initialised before using the CellDL Editor component')
-}
-
-//==============================================================================
-
-const props = defineProps<CellDLEditorProps>()
-
 //==============================================================================
 
 // Setup PrimeVue's theme, vue-tippy, and our plugins
@@ -127,9 +119,33 @@ if (crtInstance) {
 // WIP    componentLibraryPlugin.registerPlugin(new ElectricalPlugin())
 }
 
-vueCommon.useTheme().setTheme(props.theme)
+//==============================================================================
+//==============================================================================
+
+const svgContainer = vue.ref(null)
+
+let celldlDiagram: CellDLDiagram|undefined
+
+// Plugins need to be initialised before creating the editor
+
+const celldlEditor: CellDLEditor = new CellDLEditor()
+//const celldlEditor: TestCellDLEditor = new TestCellDLEditor()
+
 
 //==============================================================================
+
+const props = defineProps<CellDLEditorProps>()
+
+const emit = defineEmits<{
+    'editor-data': [data: EditorData],
+    'editor-state': [state: {
+        error: string
+    }]
+}>()
+
+//==============================================================================
+
+vueCommon.useTheme().setTheme(props.theme)
 
 vue.watch(
     () => props.theme,
@@ -144,13 +160,6 @@ vue.watch(
 
 // biome-ignore lint/style/noNonNullAssertion: some plugin has a selected template
 const defaultComponent = componentLibraryPlugin.getSelectedTemplate()!
-
-//==============================================================================
-//==============================================================================
-
-const svgContainer = vue.ref(null)
-
-let celldlDiagram: CellDLDiagram|undefined
 
 //==============================================================================
 
@@ -173,11 +182,6 @@ function connectionStylePrompt(name: string): string {
 }
 
 //==============================================================================
-
-// Plugins need to be initialised before creating the editor
-
-const celldlEditor: CellDLEditor = new CellDLEditor()
-//const celldlEditor: TestCellDLEditor = new TestCellDLEditor()
 
 // Pass 'context-menu' events from the editor to the context menu's component
 
@@ -268,18 +272,18 @@ function buttonEvent(toolId: string, active: boolean, newComponent: vue.Raw<vue.
 
 //==============================================================================
 
-function popoverEvent(toolId: string, data: unknown) {
+function popoverEvent(toolId: string, data: PopoverEventData) {
     if (toolId === EDITOR_TOOL_IDS.DrawConnectionTool) {
-        toolButtons.value[1].prompt = connectionStylePrompt(data.name)
-        toolButtons.value[1].icon = data.icon
+        toolButtons.value[1]!.prompt = connectionStylePrompt(data.name)
+        toolButtons.value[1]!.icon = data.icon
 
         // Tell the editor that the connection style has changed
 
         despatchToolbarEvent('value', toolId, data.id)
 
     } else if (toolId === EDITOR_TOOL_IDS.AddComponentTool) {
-        toolButtons.value[2].prompt = data.name
-        toolButtons.value[2].image = data.imageData
+        toolButtons.value[2]!.prompt = data.name
+        toolButtons.value[2]!.image = data.imageData
 
         // Tell the editor that the component template has changed
 
@@ -318,13 +322,6 @@ function styleEvent(toolId: string, object: string, styling: StyleObject) {
 
 //==============================================================================
 //==============================================================================
-
-const emit = defineEmits<{
-    'editor-data': [data: EditorData],
-    'editor-state': [state: {
-        error: string
-    }]
-}>()
 
 vue.watch(
     () => props.editorCommand,

@@ -18,7 +18,7 @@ export default vite.defineConfig(({ mode }) => {
     },
     build: {
         lib: {
-            entry: './index.ts',
+            entry: './src/index.ts',
             fileName: (format: string) => `CellDLEditor.${format}.js`,
             formats: ['es'],
             name: 'CellDLEditor'

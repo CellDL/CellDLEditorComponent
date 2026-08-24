@@ -1,43 +1,29 @@
-/******************************************************************************
+<template>
+    <WrappedEditor
+        :editorCommand="editorCommand"
+        :theme="theme"
+        @editor-data="onEditorData"
+        @editor-state="onEditorState"
+    />
+</template>
 
-CellDL Editor
+<script setup lang="ts">
+/** biome-ignore-all lint/correctness/noUnusedVariables: Vue components and properties arte in fact used */
 
-Copyright (c) 2022 - 2026 David Brooks
+import { initialise as rdfInitialise } from '@celldl/rdf'
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+import * as vue from 'vue'
 
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-******************************************************************************/
-
-
+import type { ViewState } from '#root/utils/EditorState'
 
 //==============================================================================
 
-import CellDLEditor from '#root/components/CellDLEditor.vue'
-import type { ViewState } from '#root/common/EditorState'
+// Initialise the RDF store backend before the editor is imported
 
-//==============================================================================
-
-export { DEFAULT_VIEW_STATE } from '#editor/editor/editguides'
-export { type EditorState, EditorStatus, type FileStatus, type ViewState } from '#root/common/EditorState'
-
-export { version } from './package.json'
-
-//==============================================================================
-
-export type EditorData = {
-    data: string
-    kind?: string
-}
+const WrappedEditor = vue.defineAsyncComponent(async () => {
+    await rdfInitialise()
+    return import('./WrappedEditor.vue')
+})
 
 //==============================================================================
 
@@ -60,8 +46,9 @@ export type EditorFileCommand = {
     options: {
         action: string
         data?: string
-        kind?: string
+        kind?: string   // export,
         name?: string
+        type?: string   // For export: `cellml`, `omex`
     }
 }
 
@@ -89,13 +76,31 @@ export type Theme = 'light' | 'dark' | 'system';
 
 //==============================================================================
 
-export { CellDLEditor }
-export default CellDLEditor
-
 export interface CellDLEditorProps {
     editorCommand?: CellDLEditorCommand
     theme?: Theme
 }
+export type EditorData = {
+    data: string
+    kind?: string
+}
 
 //==============================================================================
+
+const props = defineProps<CellDLEditorProps>()
+
+const emit = defineEmits<{
+    'editor-data': [data: EditorData],
+    'editor-state': [state: { error: string }]
+}>()
+
+function onEditorData(data: EditorData) {
+    emit('editor-data', data)
+}
+
+function onEditorState(state: { error: string }) {
+    emit('editor-state', state)
+}
 //==============================================================================
+//==============================================================================
+</script>

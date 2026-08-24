@@ -116,15 +116,16 @@ import '../assets/app.css'
 
 import AboutDialog from './dialogs/AboutDialog.vue'
 
-import type { CellDLEditorCommand, EditorData, Theme } from '../../../index'
-import { EditorStatus, type FileStatus, type ViewState } from '../../../index'
-import { DEFAULT_VIEW_STATE } from '../../../index'
 import { SHORT_DELAY } from '../utils/constants'
 import { isCompatibleBrowser } from '../utils/common'
 import * as version from '../utils/version'
 import * as vueCommon from '../utils/vueCommon'
 
-import * as $rdf from '@celldl/editor-rdf'
+import CellDLEditor from '../../../src'
+
+import type { CellDLEditorCommand, EditorData, FileStatus, Theme, ViewState } from '../../../src'
+import { editorInitialised, EditorStatus } from '../../../src'
+import { DEFAULT_VIEW_STATE } from '../../../src'
 
 //==============================================================================
 
