@@ -6,6 +6,7 @@ import url from 'node:url'
 import vuePlugin from '@vitejs/plugin-vue'
 import vitePlugin from 'unplugin-vue-components/vite'
 import * as vite from 'vite'
+import dts from 'vite-plugin-dts'
 
 const _dirname = path.dirname(url.fileURLToPath(import.meta.url))
 
@@ -50,6 +51,10 @@ export default vite.defineConfig({
         }
     },
     plugins: [
+        dts({
+            exclude: ['./app/**'],
+            insertTypesEntry: true
+        }),
         tailwindcssPlugin(),
         vuePlugin({
             script: {
