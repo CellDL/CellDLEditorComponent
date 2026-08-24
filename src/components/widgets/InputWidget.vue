@@ -23,7 +23,7 @@
     .bottom-margin(v-else-if="scalarType")
         FloatLabel(variant="on")
             InputText(
-                v-model="scalarValue"
+                :modelValue="scalarValue"
                 v-keyfilter.num
                 v-on:focusout="inputTextFocusOut"
                 v-on:keypress="inputTextKeyPress"
@@ -34,7 +34,7 @@
     .bottom-margin(v-else)
         FloatLabel(variant="on")
             InputText(
-                v-model="value"
+                :modelValue="value"
                 @value-change="inputTextChange"
                 class="w-full"
                 size="small"
@@ -57,7 +57,7 @@ import type * as locApi from '../../libopencor/locUIJsonApi'
 
 type ValueType = number|string|locApi.IUiJsonDiscreteInputPossibleValue
 
-const value = defineModel<ValueType>({ required: true })
+const inputValue = defineModel<ValueType>({ required: true })
 
 const emits = defineEmits(['change'])
 
@@ -77,25 +77,27 @@ const nameUnits = vue.computed(() => props.units ? `${props.name} (${props.units
 
 const scalarType = !!props.numeric
 
-let oldValue = (props.possibleValues === undefined) ? value.value : value.value.value
+let oldValue = (props.possibleValues === undefined)
+             ? inputValue.value
+             : (inputValue.value as locApi.IUiJsonDiscreteInputPossibleValue).value
 
 const discreteValue = vue.computed<locApi.IUiJsonDiscreteInputPossibleValue>({
     get() {
-        return value.value
+        return (inputValue.value as locApi.IUiJsonDiscreteInputPossibleValue)
     },
-    set(_: number | string) {
+    set(_: ValueType) {
     }
 })
 
-const scalarValue = vue.ref<number>(value.value)
-const stringValue = vue.ref<string>(String(value.value))
+const scalarValue = vue.ref<number>(Number(inputValue.value))
+const stringValue = vue.ref<string>(String(inputValue.value))
 
 vue.watch(
     () => props.value,
     () => {
         if (scalarType) {
-            scalarValue.value = props.value
-            stringValue.value = String(value.value)
+            scalarValue.value = Number(props.value)
+            stringValue.value = String(inputValue.value)
         }
     }
 )
@@ -105,7 +107,7 @@ vue.watch(
 function emitChange(newValue: number | string) {
     void vue.nextTick().then(() => {
         if (scalarType && props.possibleValues === undefined) {
-            value.value = newValue
+            inputValue.value = newValue
             scalarValue.value = <number>newValue
             stringValue.value = String(newValue) // This will properly format the input text.
         }

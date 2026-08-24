@@ -26,6 +26,7 @@ import { useThemeCssVariables } from '#root/utils/themeCssVariables'
 
 useThemeCssVariables('select')
 
+import type { PopoverEventData } from './types'
 import ToolPopover from '../toolbar/ToolPopover.vue'
 
 import {
@@ -54,7 +55,12 @@ const props = defineProps<{
     toolId: string
 }>()
 
-const emit = defineEmits(['popover-event'])
+const emit = defineEmits<{
+    'popover-event': [
+        toolId: string,
+        data: PopoverEventData
+    ]
+}>()
 
 function changed(e: SelectChangeEvent) {
     emit('popover-event', props.toolId, e.value)

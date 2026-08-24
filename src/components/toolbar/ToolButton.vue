@@ -82,7 +82,13 @@ vue.watch(
     }
 )
 
-const emit = defineEmits(['button-event'])
+const emit = defineEmits<{
+    'button-event': [
+        toolId: string,
+        active: boolean,
+        panel: vue.Raw<vue.Component> | null
+    ]
+}>()
 
 async function toolButtonClick(e: MouseEvent) {
     const target: HTMLElement | null = e.target as HTMLElement

@@ -30,6 +30,7 @@ useThemeCssVariables('toolbar')
 //==============================================================================
 
 import type { EditorToolButton } from '#root/utils/EditorState'
+import type { PopoverEventData } from '#root/components/popovers/types'
 
 import ToolButton from './ToolButton.vue'
 
@@ -40,7 +41,17 @@ const props = defineProps<{
     buttons: EditorToolButton[]
 }>()
 
-const emit = defineEmits(['button-event', 'popover-event'])
+const emit = defineEmits<{
+    'button-event': [
+        toolId: string,
+        active: boolean,
+        panel: vue.Raw<vue.Component> | null
+    ],
+    'popover-event': [
+        toolId: string,
+        data: PopoverEventData
+    ]
+}>()
 
 function buttonEvent(toolId: string, active: boolean, panel: vue.Raw<vue.Component> | null) {
     for (const button of props.buttons) {
@@ -53,7 +64,7 @@ function buttonEvent(toolId: string, active: boolean, panel: vue.Raw<vue.Compone
     emit('button-event', toolId, active, props.type === 'panel' ? panel : null)
 }
 
-function popoverEvent(id: string, data: unknown) {
+function popoverEvent(id: string, data: PopoverEventData) {
     emit('popover-event', id, data)
 }
 

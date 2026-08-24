@@ -83,29 +83,35 @@ const groups = vue.inject<vue.Ref<PropertyGroup[]>>('componentProperties')
 const openPanel = vue.ref<string>('')
 
 const disabled = vue.computed<boolean>(() => {
-    for (const group of groups.value) {
-        if (group.items.length
-         || (group.styling
-          && 'fillColours' in group.styling
-          && group.styling.fillColours
-          && Array.isArray(group.styling.fillColours)
-          && group.styling.fillColours.length)) {
-            return false
+    if (groups) {
+        for (const group of groups.value) {
+            if (group.items.length
+             || (group.styling
+              && 'fillColours' in group.styling
+              && group.styling.fillColours
+              && Array.isArray(group.styling.fillColours)
+              && group.styling.fillColours.length)) {
+                return false
+            }
         }
     }
     return true
 })
 
 const hasContent = vue.computed<boolean[]>(() => {
-    return groups?.value.map((group: PropertyGroup) => {
-        return (group.items.length > 0
-             || (group.styling !== undefined && 'fillColours' in group.styling
-                                             && group.styling.fillColours !== undefined
-                                             && Array.isArray(group.styling.fillColours)
-                                             && group.styling.fillColours.length > 0)
-             || (group.styling !== undefined && 'pathStyle' in group.styling)
-        )
-    })
+    if (groups) {
+        return groups?.value.map((group: PropertyGroup) => {
+            return (group.items.length > 0
+                 || (group.styling !== undefined && 'fillColours' in group.styling
+                                                 && group.styling.fillColours !== undefined
+                                                 && Array.isArray(group.styling.fillColours)
+                                                 && group.styling.fillColours.length > 0)
+                 || (group.styling !== undefined && 'pathStyle' in group.styling)
+            )
+        })
+    } else {
+        return []
+    }
 })
 
 const objectStyle = vue.computed<INodeStyle|IPathStyle|undefined>(() => {
@@ -114,11 +120,14 @@ const objectStyle = vue.computed<INodeStyle|IPathStyle|undefined>(() => {
         const fillColours: string[] = [...(stylingGroup.styling.fillColours || [])]
         let direction = 'H'
         const colours: string[] = []
-        if (fillColours.length && ['H', 'V'].includes(fillColours[0])) {
+        // biome-ignore lint/style/noNonNullAssertion: fillColours is at least 1 long
+        if (fillColours.length && ['H', 'V'].includes(fillColours[0]!)) {
+            // @ts-expect-error
             direction = fillColours.shift()
         }
         if (fillColours.length === 1) {
-            colours.push(fillColours[0].trim())
+            // biome-ignore lint/style/noNonNullAssertion: fillColours is 1 long
+            colours.push(fillColours[0]!.trim())
         } else if (fillColours.length) {
             fillColours.forEach(colour => {
                 colours.push(colour.trim())

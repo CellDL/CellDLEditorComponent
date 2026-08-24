@@ -28,6 +28,7 @@ import {
 } from '#editor/components'
 
 import ToolPopover from '../toolbar/ToolPopover.vue'
+import type { PopoverEventData } from './types'
 
 const libraries = vue.inject<vue.Ref<ComponentLibrary[]>>('componentLibraries')
 
@@ -66,26 +67,32 @@ vue.onMounted(async () => {
     }
 })
 
-const emit = defineEmits(['popover-event'])
+const emit = defineEmits<{
+    'popover-event': [
+        toolId: string,
+        data: PopoverEventData
+    ]
+}>()
 
 function selected(e: MouseEvent) {
     const target = e.target as HTMLImageElement
     const component = idToComponent.get(target.id)
     if (target.id && component) {
-        if (selectedId) {
-            idToComponent.get(selectedId).selected = false
+        if (selectedId && idToComponent.has(selectedId)) {
+            // biome-ignore lint/style/noNonNullAssertion: idToComponent.has(selectedId)
+            idToComponent.get(selectedId)!.selected = false
         }
         component.selected = true
         selectedId = target.id
+        // Tell the editor what template has been selected
+        document.dispatchEvent(
+            new CustomEvent('component-selected', {
+                detail: getTemplateEventDetails(target.id, target, e)
+            })
+        )
+        // Tell the toolbar what component template has been selected
+        emit('popover-event', props.toolId, component)
     }
-    // Tell the editor what template has been selected
-    document.dispatchEvent(
-        new CustomEvent('component-selected', {
-            detail: getTemplateEventDetails(target.id, target, e)
-        })
-    )
-    // Tell the toolbar what component template has been selected
-    emit('popover-event', props.toolId, component)
 }
 
 function dragstart(e: DragEvent) {

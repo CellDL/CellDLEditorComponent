@@ -23,17 +23,19 @@
 
 //  Load the packages needed for MathJax
 import { mathjax } from '@mathjax/src/js/mathjax.js'
-import { TeX, type TexError } from '@mathjax/src/js/input/tex.js'
+import { TeX } from '@mathjax/src/js/input/tex.js'
+import type TexError from '@mathjax/src/js/input/tex/TexError.js'
 import { SVG } from '@mathjax/src/js/output/svg.js'
 import { liteAdaptor } from '@mathjax/src/js/adaptors/liteAdaptor.js'
+import type { MmlNode } from '@mathjax/src/js/core/MmlTree/MmlNode.js'
 import { RegisterHTMLHandler } from '@mathjax/src/js/handlers/html.js'
 import { STATE } from '@mathjax/src/js/core/MathItem.js'
 import '@mathjax/src/js/util/asyncLoad/esm.js'
 
 import '@mathjax/src/js/input/tex/base/BaseConfiguration.js'
 import '@mathjax/src/js/input/tex/ams/AmsConfiguration.js'
-import '@mathjax/src/js/input/tex/color/ColorConfiguration'
-import '@mathjax/src/js/input/tex/mhchem/MhchemConfiguration'
+import '@mathjax/src/js/input/tex/color/ColorConfiguration.js'
+import '@mathjax/src/js/input/tex/mhchem/MhchemConfiguration.js'
 
 //==============================================================================
 
@@ -64,8 +66,9 @@ const html = mathjax.document('', {
         removeLatex: [  // remove LaTeX specific attributes
             (STATE.CONVERT as number) + 1,
             () => {},
-            (math: unknown, _doc: unknown) => {
-                math.root.walkTree((node: unknown) => {
+            // @ts-expect-error:
+            (math, _doc) => {
+                math.root.walkTree((node: MmlNode) => {
                     const attributes = node.attributes
                     attributes.unset('data-latex')
                     attributes.unset('data-latex-item')

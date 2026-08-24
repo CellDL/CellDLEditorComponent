@@ -97,8 +97,10 @@ const colours = vue.computed<{
     stop: string
 }>(() => {
     return {
-        start: props.fillStyle.colours[0],
-        stop: props.fillStyle.colours[1] ?? props.fillStyle.colours[0]
+        // biome-ignore lint/style/noNonNullAssertion: fillColours is at least 1 long
+        start: props.fillStyle.colours[0]!,
+        // biome-ignore lint/style/noNonNullAssertion: fillColours is at least 1 long
+        stop: props.fillStyle.colours[1]! ?? props.fillStyle.colours[0]!
     }
 })
 
