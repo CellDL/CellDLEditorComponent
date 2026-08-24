@@ -138,11 +138,23 @@ const props = defineProps<IEditorAppProps>()
 
 //==============================================================================
 
+// Wait for the editor component to become ready
 
+const loadingMessage = vue.ref<string>('Loading CellDL editor');
 
-// We are now fully loaded, so start checking for a newer version of the editor
+(function checkInitialised() {
+  setTimeout(() => {
+    if (editorInitialised()) {
+        loadingMessage.value = ''
+        console.log('Editor ready...')
 
-version.startCheck()
+        // Now start checking for a newer version of the editor
+        version.startCheck()
+    } else {
+        checkInitialised()
+    }
+  }, 50)
+})()
 
 //==============================================================================
 //==============================================================================
