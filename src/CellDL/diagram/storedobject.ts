@@ -18,9 +18,10 @@ limitations under the License.
 
 ******************************************************************************/
 
+import type { Statement } from '@celldl/rdf'
+
 import type { CellDLObject } from '#editor/celldlObjects'
 import type { DomLocation } from '#editor/SVGElements'
-import type { Statement } from '#root/metadata/index'
 
 //==============================================================================
 

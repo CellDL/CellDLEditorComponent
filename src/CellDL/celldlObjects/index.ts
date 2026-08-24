@@ -18,6 +18,11 @@ limitations under the License.
 
 ******************************************************************************/
 
+import { CELLDL, type MetadataPropertiesMap, type MetadataStore } from '@celldl/metadata'
+import { isLiteral, type Literal, type NamedNode, RDF, RDFS } from '@celldl/rdf'
+
+//==============================================================================
+
 import { Point, type PointLike } from '#root/utils/points'
 import type { Constructor } from '#root/utils/types'
 
@@ -30,8 +35,6 @@ import type { CellDLDiagram } from '#editor/diagram'
 import { SvgConnection } from '#editor/SVGElements/svgconnection'
 import type { CellDLSVGElement, ElementMoveOptions } from '#editor/SVGElements'
 
-import type { Literal, MetadataPropertiesMap, NamedNode, RdfStore } from '#root/metadata'
-import { CELLDL, isLiteral, RDF, RDFS } from '#root/metadata'
 import { componentLibraryPlugin } from '#root/plugins'
 
 //==============================================================================
@@ -224,7 +227,7 @@ export class CellDLObject {
         return [...this.#pluginData.keys()]
     }
 
-    get rdfStore(): RdfStore {
+    get rdfStore(): MetadataStore {
         return this.#celldlDiagram.rdfStore
     }
 

@@ -23,6 +23,18 @@ import * as vue from 'vue'
 
 //==============================================================================
 
+import {
+    CELLDL_URI,
+    fragment,
+    type MetadataPropertiesMap,
+    type MetadataStore,
+    SPARQL_PREFIXES
+} from '@celldl/metadata'
+
+import type { SubjectType } from '@celldl/rdf'
+
+//==============================================================================
+
 import type {
     CellDLConnection,
     CellDLObject
@@ -40,12 +52,6 @@ import type {
     ValueChange
 } from '#editor/components/properties'
 import { STYLING_GROUP } from '#editor/components/properties'
-import type {
-    MetadataPropertiesMap,
-    RdfStore,
-    SubjectType
-} from '#root/metadata/index'
-import { CELLDL_URI, fragment, SPARQL_PREFIXES } from '#root/metadata/index'
 
 //==============================================================================
 
@@ -87,14 +93,14 @@ export interface PluginInterface {
      * @param uri The diagram's URI.
      * @param rdfStore The RDF store with metadata about the diagram.
      */
-    openDiagram: (uri: string, rdfStore: RdfStore) => void
+    openDiagram: (uri: string, rdfStore: MetadataStore) => void
 
     /**
      * Add statements about the diagram's plugin components to its RDF store.
      *
      * @param rdfStore The RDF store with metadata about the diagram.
      */
-    addPluginMetadataToStore: (rdfStore: RdfStore) => void
+    addPluginMetadataToStore: (rdfStore: MetadataStore) => void
 
     /**
      * Get plugin specific data to store with a CellDL object.
@@ -255,14 +261,14 @@ export class ComponentLibraryPlugin {
 
     //==========================================================================
 
-    openDiagram(uri: string, rdfStore: RdfStore) {
+    openDiagram(uri: string, rdfStore: MetadataStore) {
         this.#currentDocumentUri = uri
         for (const plugin of this.#registeredPlugins.values()) {
             plugin.openDiagram(uri, rdfStore)
         }
     }
 
-    addPluginMetadataToStore(rdfStore: RdfStore) {
+    addPluginMetadataToStore(rdfStore: MetadataStore) {
         for (const plugin of this.#registeredPlugins.values()) {
             plugin.addPluginMetadataToStore(rdfStore)
         }
@@ -338,7 +344,7 @@ export class ComponentLibraryPlugin {
         return [...this.#registeredPlugins.values().map(plugin => plugin.statusText(celldlObject))].filter(t => t !== '').join(' ')
     }
 
-    getObjectTemplate(uri: SubjectType, metadata: MetadataPropertiesMap, rdfStore: RdfStore): ObjectTemplate|undefined {
+    getObjectTemplate(uri: SubjectType, metadata: MetadataPropertiesMap, rdfStore: MetadataStore): ObjectTemplate|undefined {
         let CellDLClass: Constructor<CellDLObject>|undefined
         const rdfTypes: string[] = []
         const rows = rdfStore.query(`${SPARQL_PREFIXES}

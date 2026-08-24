@@ -137,18 +137,7 @@ const props = defineProps<IEditorAppProps>()
 
 //==============================================================================
 
-const loadingMessage = vue.ref<string>('Loading CellDL editor')
 
-// We need to load the RDF module before using the Cell;DL Editor component
-
-const CellDLEditor = vue.defineAsyncComponent(async () => {
-    await $rdf.initialise()
-
-    loadingMessage.value = ''
-    console.log('Editor ready...')
-
-    return import('../../../index')
-})
 
 // We are now fully loaded, so start checking for a newer version of the editor
 

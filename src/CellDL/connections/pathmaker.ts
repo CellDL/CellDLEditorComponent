@@ -18,8 +18,10 @@ limitations under the License.
 
 ******************************************************************************/
 
-import { CELLDL, RDF } from '#root/metadata/index'
-import { MetadataPropertiesMap } from '#root/metadata/index'
+import { CELLDL, MetadataPropertiesMap } from '@celldl/metadata'
+import { RDF } from '@celldl/rdf'
+
+//==============================================================================
 
 import { Point, type PointLike, PointMath } from '#root/utils/points'
 import { CONNECTION_COLOUR, CONNECTION_WIDTH } from '#root/utils/styling'

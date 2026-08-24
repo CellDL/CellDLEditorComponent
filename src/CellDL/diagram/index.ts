@@ -18,18 +18,21 @@ limitations under the License.
 
 ******************************************************************************/
 
-
-import * as $rdf from '#root/metadata/index'
+import * as $rdf from '@celldl/rdf'
 import {
-    CELLDL,
-    CELLDL_DECLARATIONS,
     DCT,
     type NamedNode,
-    MetadataPropertiesMap,
-    type MetadataPropertyValue,
     OWL,
     RDF
-} from '#root/metadata/index'
+} from '@celldl/rdf'
+import {
+    CELLDL,
+    MetadataPropertiesMap,
+    type MetadataPropertyValue,
+    MetadataStore,
+} from '@celldl/metadata'
+
+//==============================================================================
 
 import type { PointLike } from '#root/utils/points'
 import {
@@ -113,11 +116,11 @@ const ID_PREFIX = 'ID-'
 export class CellDLDiagram {
     #svgDiagram!: SVGSVGElement
 
-    #kb = new $rdf.RdfStore()
+    #kb = new MetadataStore()
     #celldlEditor: CellDLEditor
 
     #documentNode: NamedNode
-    #documentNS: $rdf.Namespace
+    #documentNS: $rdf.NamespacedUri
     #filePath: string
 
     #diagramMetadata: Record<string, NamedNode>
@@ -146,12 +149,12 @@ export class CellDLDiagram {
                 documentUri = `file://${documentUri}`
             }
             this.#documentNode = $rdf.namedNode(documentUri)
-            this.#documentNS = new $rdf.Namespace(`${documentUri}#`)
+            this.#documentNS = new $rdf.NamespacedUri('', `${documentUri}#`)
             this.#loadCellDL(celldlData)
             this.#loadMetadata()
         } else {
             this.#documentNode = $rdf.namedNode(NEW_DIAGRAM_URI)
-            this.#documentNS = new $rdf.Namespace(`${NEW_DIAGRAM_URI}#`)
+            this.#documentNS = new $rdf.NamespacedUri('', `${NEW_DIAGRAM_URI}#`)
             if (importSvg) {
                 this.#importSvg(celldlData)
             } else {
@@ -551,7 +554,7 @@ export class CellDLDiagram {
     async #serialiseMetadata(metadataFormat: $rdf.ContentType): Promise<string> {
         let metadata: string = ''
         try {
-            metadata = await this.#kb.serialise(this.#documentNode.uri, metadataFormat, CELLDL_DECLARATIONS)
+            metadata = await this.#kb.serialise(this.#documentNode.uri, metadataFormat, $rdf.namespaceMap.namespaces)
         } catch (err) {
             console.log(err)
         }

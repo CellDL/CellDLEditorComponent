@@ -18,6 +18,10 @@ limitations under the License.
 
 ******************************************************************************/
 
+import type { MetadataPropertiesMap } from '@celldl/metadata'
+
+//==============================================================================
+
 import type { CellDLObject } from '#editor/celldlObjects'
 import type { PointLike } from '#root/utils/points'
 import type { Constructor, StringProperties } from '#root/utils/types'

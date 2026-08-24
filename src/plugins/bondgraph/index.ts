@@ -23,7 +23,16 @@ limitations under the License.
 
 //==============================================================================
 
-import { bgRdfStatements } from '@celldl/editor-rdf'
+import {
+    BGF,
+    BGF_URI,
+    type MetadataProperty,
+    MetadataPropertiesMap,
+    MetadataStore,
+    SPARQL_PREFIXES
+} from '@celldl/metadata'
+
+import * as $rdf from '@celldl/rdf'
 
 //==============================================================================
 
@@ -61,13 +70,11 @@ import {
     type ValueChange
 } from '#editor/components/properties'
 
-import * as $rdf from '#root/metadata'
-import { BGF, BGF_URI, RDF, SPARQL_PREFIXES } from '#root/metadata'
-import { type MetadataProperty, MetadataPropertiesMap } from '#root/metadata'
-
 import type { ConnectionStatus, PluginInterface } from '#root/plugins'
 
 //==============================================================================
+
+import { bgRdfStatements } from './bgrdf'
 
 import {
     BONDGRAPH_COMPONENT_DEFINITIONS,
@@ -214,7 +221,7 @@ function PROPERTY_GROUPS(): PropertyGroup[] {
             items: [
                 {
                     itemId: BG_INPUT.ElementType,
-                    property: RDF.uri('type').value,
+                    property: $rdf.RDF.uri('type').value,
                     name: 'Bond Element',
                     possibleValues: [],
                     optional: true
@@ -291,7 +298,7 @@ export class BondgraphPlugin implements PluginInterface {
 
     #currentDocumentUri: string = ''
     #physicalDomains: Map<string, PhysicalDomain> = new Map()
-    #rdfStore: $rdf.RdfStore = new $rdf.RdfStore()
+    #rdfStore: MetadataStore = new MetadataStore()
     #transformNodeType = BGF.uri('TransformNode').value
 
     constructor() {
@@ -334,7 +341,7 @@ export class BondgraphPlugin implements PluginInterface {
         const componentTemplate = this.#componentTemplates.get(id)
         if (componentTemplate) {
             const metadataProperties: MetadataProperty[] = [
-                [ RDF.uri('type'), $rdf.namedNode(componentTemplate.type)],
+                [ $rdf.RDF.uri('type'), $rdf.namedNode(componentTemplate.type)],
                 [ BGF.uri('hasSymbol'), $rdf.literal(componentTemplate.symbol)]
             ]
             if (!componentTemplate.noSpeciesLocation) {
@@ -364,9 +371,9 @@ export class BondgraphPlugin implements PluginInterface {
 
     //==========================================================================
 
-    openDiagram(uri: string, rdfStore: $rdf.RdfStore) {
+    openDiagram(uri: string, rdfStore: MetadataStore) {
         // We are creating a BondgraphModel
-        rdfStore.add($rdf.namedNode(uri), RDF.uri('type'), BGF.uri('BondgraphModel'))
+        rdfStore.add($rdf.namedNode(uri), $rdf.RDF.uri('type'), BGF.uri('BondgraphModel'))
 
         this.#currentDocumentUri = uri
 
@@ -376,12 +383,12 @@ export class BondgraphPlugin implements PluginInterface {
         for (const statement of this.#rdfStore.statements()) {
             rdfStore.add(statement.subject, statement.predicate, statement.object, bgfGraph)
         }
-        this.#domainGraph = new DomainGraph(rdfStore)
+        this.#domainGraph = new DomainGraph(rdfStore, uri)
     }
 
     //======================================
 
-    addPluginMetadataToStore(rdfStore: $rdf.RdfStore) {
+    addPluginMetadataToStore(rdfStore: MetadataStore) {
         // First remove existing statements about components in the document
 
         rdfStore.update(`${SPARQL_PREFIXES}
@@ -503,7 +510,7 @@ export class BondgraphPlugin implements PluginInterface {
         } else {
             domain = this.#domainGraph.getDomain(celldlObject.uri.value)
         }
-        return domain ? $rdf.fragment(domain) : ''
+        return domain ? $rdf.getFragment(domain) : ''
     }
 
     //==========================================================================
@@ -556,13 +563,13 @@ export class BondgraphPlugin implements PluginInterface {
             if (!sourceData.junctionType) {
                 return { alert: 'Direct connections between Bond Elements are not allowed' }
             } else {
-                return { alert: `Cannot directly connect two ${$rdf.fragment(sourceData.junctionType)} nodes` }
+                return { alert: `Cannot directly connect two ${$rdf.getFragment(sourceData.junctionType)} nodes` }
             }
         }
         const sourceDomain = this.#domainGraph.getDomain(sourceObject.uri.value)
         const targetDomain = this.#domainGraph.getDomain(targetObject.uri.value)
         if (sourceDomain && targetDomain && sourceDomain !== targetDomain) {
-            return { alert: `Cannot connect ${$rdf.fragment(sourceDomain)} and ${$rdf.fragment(targetDomain)} physical domains` }
+            return { alert: `Cannot connect ${$rdf.getFragment(sourceDomain)} and ${$rdf.getFragment(targetDomain)} physical domains` }
         }
     }
 
@@ -1145,7 +1152,7 @@ DEBUG ONLY **/
                                 componentTemplate.name = label.value
                             }
                             component = new BGBaseComponent(componentTemplate,
-                                            label ? label.value : $rdf.getCurie(element.value),
+                                            label ? label.value : $rdf.namespaceMap.getCurie(element.value),
                                             bgClass.value)
                             this.#baseComponents.set(element.value, component)
                         }
@@ -1189,7 +1196,7 @@ DEBUG ONLY **/
                 const elementTemplate: ElementTemplate = {
                     type: component.type,
                     domain: '',
-                    name: component.name || $rdf.getCurie(component.type),
+                    name: component.name || $rdf.namespaceMap.getCurie(component.type),
                     parameters: new Map(),
                     variables: new Map(),
                     defaultStyle: component.style,
@@ -1226,7 +1233,7 @@ DEBUG ONLY **/
                 const elementTemplate: ElementTemplate = {
                     type: element.value,
                     domain: domainId,
-                    name: label ? label.value : $rdf.getCurie(element.value),
+                    name: label ? label.value : $rdf.namespaceMap.getCurie(element.value),
                     parameters: new Map(),
                     variables: new Map(),
                     defaultStyle: component.style,

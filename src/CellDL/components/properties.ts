@@ -20,12 +20,15 @@ limitations under the License.
 
 import * as vue from 'vue'
 
+import { DCT, RDFS } from '@celldl/rdf'
+
+//==============================================================================
+
 import type * as locApi from '#root/libopencor/locUIJsonApi'
 
 import type { CellDLObject } from '#editor/celldlObjects'
 import type { NamedProperty } from '#editor/components'
 
-import { DCT, RDFS, SPARQL_PREFIXES } from '#root/metadata/index'
 import type { IPathStyle } from '#root/utils/svgUtils'
 import { componentLibraryPlugin } from '#root/plugins'
 
@@ -113,7 +116,7 @@ export function getItemProperty(celldlObject: CellDLObject,
     const objectUri = celldlObject.uri.toString()
     let value: string|undefined
 
-    celldlObject.rdfStore.query(`${SPARQL_PREFIXES}
+    celldlObject.rdfStore.query(`
         PREFIX : <${celldlObject.celldlDiagram.uri}#>
 
         SELECT ?value WHERE {
@@ -154,7 +157,7 @@ export function updateItemProperty(property: string, value: ValueChange,
                                    celldlObject: CellDLObject) {
     const objectUri = celldlObject.uri.toString()
 
-    celldlObject.rdfStore.update(`${SPARQL_PREFIXES}
+    celldlObject.rdfStore.update(`
         PREFIX : <${celldlObject.celldlDiagram.uri}#>
 
         DELETE {
@@ -165,7 +168,7 @@ export function updateItemProperty(property: string, value: ValueChange,
         }`)
     const newValue = String(value.newValue).trim()
     if (newValue) {
-        celldlObject.rdfStore.update(`${SPARQL_PREFIXES}
+        celldlObject.rdfStore.update(`
             PREFIX : <${celldlObject.celldlDiagram.uri}#>
 
             INSERT DATA { ${objectUri} <${property}> """${newValue.replace('\\', '\\\\')}""" }

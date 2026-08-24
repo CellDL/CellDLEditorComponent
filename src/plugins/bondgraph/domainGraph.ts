@@ -23,8 +23,9 @@ import Graph from 'graphology'
 
 //==============================================================================
 
-import * as $rdf from '#root/metadata'
-import { BGF, SPARQL_PREFIXES } from '#root/metadata'
+import { BGF, SPARQL_PREFIXES, type MetadataStore } from '@celldl/metadata'
+
+import * as $rdf from '@celldl/rdf'
 
 //==============================================================================
 
@@ -67,7 +68,7 @@ const POWER_BOND_QUERY = `
 //==============================================================================
 
 function domainMismatch(where: string, node0: string, node1: string) {
-    console.error(`${where}: domains don't match for ${$rdf.fragment(node0)} and ${$rdf.fragment(node1)}`)
+    console.error(`${where}: domains don't match for ${$rdf.getFragment(node0)} and ${$rdf.getFragment(node1)}`)
 }
 
 //==============================================================================
@@ -77,7 +78,7 @@ export class DomainGraph {
     #graph: Graph = new Graph()
     #transformNodes: Set<string> = new Set()
 
-    constructor(rdfStore: $rdf.RdfStore|undefined) {
+    constructor(rdfStore: MetadataStore|undefined, modelUri: string|undefined=undefined) {
         if (!rdfStore) {
             return
         }
