@@ -18,15 +18,6 @@ limitations under the License.
 
 ******************************************************************************/
 
-import type { PointLike } from '#root/common/points'
-import {
-    CELLDL_BACKGROUND_CLASS,
-    CellDLStylesheet,
-    CONNECTION_COLOUR,
-    OLD_CONNECTION_COLOUR
-} from '#root/common/styling'
-import { svgCircleElement, SVG_URI, svgRectElement } from '#root/common/svgUtils'
-import type { Constructor, StringProperties } from '#root/common/types'
 
 import * as $rdf from '#root/metadata/index'
 import {
@@ -41,6 +32,15 @@ import {
 } from '#root/metadata/index'
 
 import type { Bounds, Extent } from '#editor/geometry/index'
+import type { PointLike } from '#root/utils/points'
+import {
+    CELLDL_BACKGROUND_CLASS,
+    CellDLStylesheet,
+    CONNECTION_COLOUR,
+    OLD_CONNECTION_COLOUR
+} from '#root/utils/styling'
+import { svgCircleElement, SVG_URI, svgRectElement } from '#root/utils/svgUtils'
+import type { Constructor, StringProperties } from '#root/utils/types'
 import { ShapeIntersections } from '#editor/geometry/intersections'
 import { CellDLSpatialIndex } from '#editor/geometry/spatialindex'
 import type { ContainedObject } from '#editor/geometry/spatialindex'

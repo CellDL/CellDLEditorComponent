@@ -28,7 +28,7 @@ import type {
     CellDLObject
 } from '#editor/celldlObjects/index'
 import { CELLDL_CLASS_MAP } from '#editor/celldlObjects/index'
-import type { Constructor } from '#root/common/types'
+import type { Constructor } from '#root/utils/types'
 import type {
     ComponentLibrary,
     LibraryComponentTemplate,

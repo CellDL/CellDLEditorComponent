@@ -22,7 +22,7 @@
 <script setup lang="ts">
 import * as vue from 'vue'
 import type { SelectChangeEvent } from 'primevue/select'
-import { useThemeCssVariables } from '#root/common/themeCssVariables'
+import { useThemeCssVariables } from '#root/utils/themeCssVariables'
 
 useThemeCssVariables('select')
 

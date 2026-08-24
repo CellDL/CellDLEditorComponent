@@ -18,7 +18,7 @@ limitations under the License.
 
 ******************************************************************************/
 
-import type { Pair } from '#root/common/types'
+import type { Pair } from '#root/utils/types'
 
 //==============================================================================
 

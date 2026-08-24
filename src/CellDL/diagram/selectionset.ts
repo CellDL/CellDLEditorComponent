@@ -21,7 +21,7 @@ limitations under the License.
 import type { CellDLConnection, CellDLObject } from "#editor/celldlObjects"
 import { notifyChanges } from "#editor/editor"
 import { undoRedo } from '#editor/diagram/undoredo'
-import { Point, type PointLike } from "#root/common/points"
+import { Point, type PointLike } from "#root/utils/points"
 
 //==============================================================================
 

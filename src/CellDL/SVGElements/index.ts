@@ -20,10 +20,10 @@ limitations under the License.
 
 import * as vue from 'vue'
 
-import { CONNECTION_SPLAY_PADDING, MAX_CONNECTION_SPLAY_PADDING } from '#root/common/styling'
-import { CONNECTION_WIDTH, SELECTION_STROKE_WIDTH } from '#root/common/styling'
-import { Point, type PointLike, PointMath } from '#root/common/points'
-import { svgCircle } from '#root/common/svgUtils'
+import { CONNECTION_SPLAY_PADDING, MAX_CONNECTION_SPLAY_PADDING } from '#root/utils/styling'
+import { CONNECTION_WIDTH, SELECTION_STROKE_WIDTH } from '#root/utils/styling'
+import { Point, type PointLike, PointMath } from '#root/utils/points'
+import { svgCircle } from '#root/utils/svgUtils'
 
 import { CELLDL_STYLE_CLASS, type CellDLObject } from '#editor/celldlObjects/index'
 import { Bounds, type PointMoveOptions, type RestrictedValue } from '#editor/geometry/index'

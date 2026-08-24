@@ -18,8 +18,8 @@ limitations under the License.
 
 ******************************************************************************/
 
-import { Point, type PointLike } from '#root/common/points'
-import type { Constructor } from '#root/common/types'
+import { Point, type PointLike } from '#root/utils/points'
+import type { Constructor } from '#root/utils/types'
 
 import { alert } from '#editor/editor/alerts'
 import { editGuides } from '#editor/editor/editguides'

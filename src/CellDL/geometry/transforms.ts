@@ -32,7 +32,7 @@ import {
 
 //==============================================================================
 
-import { Point, type PointLike } from '#root/common/points'
+import { Point, type PointLike } from '#root/utils/points'
 
 //==============================================================================
 

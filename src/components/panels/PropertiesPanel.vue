@@ -51,7 +51,7 @@
 
 <script setup lang="ts">
 import * as vue from 'vue'
-import { useThemeCssVariables } from '#root/common/themeCssVariables'
+import { useThemeCssVariables } from '#root/utils/themeCssVariables'
 
 useThemeCssVariables('accordion')
 useThemeCssVariables('accordioncontent')
@@ -70,7 +70,7 @@ import PathStyle from './PathStyle.vue'
 import type {
     INodeStyle,
     IPathStyle
-} from '#root/common/svgUtils'
+} from '#root/utils/svgUtils'
 
 const props = defineProps<{
     toolId: string

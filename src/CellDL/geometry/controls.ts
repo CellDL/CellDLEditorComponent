@@ -22,10 +22,10 @@ import type { CellDLConnection, CellDLObject } from '#editor/celldlObjects/index
 import type { EditorFrame } from '#editor/editor/editorframe'
 import { editGuides } from '#editor/editor/editguides'
 
-import { svgCircle, svgRect } from '#root/common/svgUtils'
+import { svgCircle, svgRect } from '#root/utils/svgUtils'
 
-import { Point, type PointLike, PointMath } from '#root/common/points'
-import type { StringProperties } from '#root/common/types'
+import { Point, type PointLike, PointMath } from '#root/utils/points'
+import type { StringProperties } from '#root/utils/types'
 
 //==============================================================================
 

@@ -23,13 +23,13 @@
 
 <script setup lang="ts">
 import type * as vue from 'vue'
-import { useThemeCssVariables } from '#root/common/themeCssVariables'
+import { useThemeCssVariables } from '#root/utils/themeCssVariables'
 
 useThemeCssVariables('toolbar')
 
 //==============================================================================
 
-import type { EditorToolButton } from '#root/common/EditorState'
+import type { EditorToolButton } from '#root/utils/EditorState'
 
 import ToolButton from './ToolButton.vue'
 

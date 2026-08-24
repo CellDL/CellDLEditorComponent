@@ -57,14 +57,14 @@
 <script setup lang="ts">
 import * as vue from 'vue'
 import { TinyColor } from '@ctrl/tinycolor'
-import { useThemeCssVariables } from '#root/common/themeCssVariables'
+import { useThemeCssVariables } from '#root/utils/themeCssVariables'
 
 useThemeCssVariables('button')
 useThemeCssVariables('checkbox')
 useThemeCssVariables('divider')
 useThemeCssVariables('radiobutton')
 
-import type { INodeStyle } from '#root/common/svgUtils'
+import type { INodeStyle } from '#root/utils/svgUtils'
 
 const props = defineProps<{
     fillStyle: INodeStyle

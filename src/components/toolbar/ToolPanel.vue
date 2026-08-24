@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import { useThemeCssVariables } from '#root/common/themeCssVariables'
+import { useThemeCssVariables } from '#root/utils/themeCssVariables'
 
 useThemeCssVariables('scrollpanel')
 </script>

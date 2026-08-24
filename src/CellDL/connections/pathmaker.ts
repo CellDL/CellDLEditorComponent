@@ -18,14 +18,14 @@ limitations under the License.
 
 ******************************************************************************/
 
-import { Point, type PointLike, PointMath } from '#root/common/points'
-import { CONNECTION_COLOUR, CONNECTION_WIDTH } from '#root/common/styling'
-import { svgPath, svgPathDescription, SVG_URI } from '#root/common/svgUtils'
 import { CELLDL, RDF } from '#root/metadata/index'
 import { MetadataPropertiesMap } from '#root/metadata/index'
 import { componentLibraryPlugin } from '#root/plugins/index'
 
 import { type CellDLConnectedObject, CellDLConnection, type CellDLObject } from '#editor/celldlObjects/index'
+import { Point, type PointLike, PointMath } from '#root/utils/points'
+import { CONNECTION_COLOUR, CONNECTION_WIDTH } from '#root/utils/styling'
+import { svgPath, svgPathDescription, SVG_URI } from '#root/utils/svgUtils'
 import { alert } from '#editor/editor/alerts'
 import type { CellDLDiagram } from '#editor/diagram/index'
 import type { EditorFrame } from '#editor/editor/editorframe'

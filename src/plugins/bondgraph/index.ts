@@ -27,7 +27,7 @@ import { bgRdfStatements } from '@celldl/editor-rdf'
 
 //==============================================================================
 
-import { arrowMarkerDefinition } from '#root/common/styling'
+import { arrowMarkerDefinition } from '#root/utils/styling'
 import type {
     IUiJsonDiscreteInput,
     IUiJsonDiscreteInputPossibleValue
@@ -38,7 +38,7 @@ import {
     getSvgPathStyle,
     setSvgPathStyle,
     type IPathStyle
-} from '#root/common/svgUtils'
+} from '#root/utils/svgUtils'
 
 import { alert } from '#editor/editor/alerts'
 import {

@@ -18,7 +18,7 @@ limitations under the License.
 
 ******************************************************************************/
 
-import { svgToDataUrl, LatexMathSvg } from '#root/common/svgUtils'
+import { svgToDataUrl, LatexMathSvg } from '#root/utils/svgUtils'
 
 import type {
     BGComponentDefinition,

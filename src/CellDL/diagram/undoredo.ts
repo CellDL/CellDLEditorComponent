@@ -24,7 +24,7 @@ import { type CellDLConnectedObject, type CellDLConnection, CellDLObject } from 
 import type { CellDLDiagram } from '#editor/diagram'
 import type { SvgConnection } from '#editor/SVGElements/svgconnection'
 
-import { Point, PointMath, type PointLike } from '#root/common/points'
+import { Point, PointMath, type PointLike } from '#root/utils/points'
 
 import { SelectionSet } from './selectionset'
 import { StoredObject } from './storedobject'

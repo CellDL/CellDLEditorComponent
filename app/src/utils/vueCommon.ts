@@ -1,4 +1,4 @@
-// From https://github.com/agarny/webapp/blob/main/src/renderer/src/common/vueCommon.ts
+// From https://github.com/agarny/webapp/blob/main/src/renderer/src/utils/vueCommon.ts
 
 import * as vueusecore from '@vueuse/core';
 

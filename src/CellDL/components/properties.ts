@@ -25,9 +25,9 @@ import type * as locApi from '#root/libopencor/locUIJsonApi'
 import type { CellDLObject } from '#editor/celldlObjects/index'
 import type { NamedProperty } from '#editor/components/index'
 
-import type { IPathStyle } from '#root/common/svgUtils'
 import { DCT, RDFS, SPARQL_PREFIXES } from '#root/metadata/index'
 import { componentLibraryPlugin } from '#root/plugins/index'
+import type { IPathStyle } from '#root/utils/svgUtils'
 
 //==============================================================================
 

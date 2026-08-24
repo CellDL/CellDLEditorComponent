@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import { currentVersion } from '../../common/version.ts'
+import { currentVersion } from '../../utils/version.ts'
 
 defineEmits<(event: 'close') => void>()
 </script>

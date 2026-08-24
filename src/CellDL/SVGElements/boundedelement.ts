@@ -20,8 +20,8 @@ limitations under the License.
 
 import { CELLDL_STYLE_CLASS, type CellDLConnectedObject, type CellDLObject } from '#editor/celldlObjects/index'
 import { editGuides } from '#editor/editor/editguides'
-import { Point, type PointLike } from '#root/common/points'
 import { RestrictedPoint, type RestrictedValue } from '#editor/geometry/index'
+import { Point, type PointLike } from '#root/utils/points'
 import { ControlRect } from '#editor/geometry/controls'
 import { Transform } from '#editor/geometry/transforms'
 

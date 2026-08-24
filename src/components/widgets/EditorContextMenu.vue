@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 import * as vue from 'vue'
-import { useThemeCssVariables } from '#root/common/themeCssVariables'
+import { useThemeCssVariables } from '#root/utils/themeCssVariables'
 
 useThemeCssVariables('contextmenu')
 

@@ -7,7 +7,7 @@ import type { CellDLDiagram } from "#editor/diagram"
 import { undoRedo } from "#editor/diagram/undoredo"
 import { CellDLEditor, EDITOR_STATE } from "#editor/editor"
 import type { EditorFrame } from "#editor/editor/editorframe"
-import { type PointLike, Point } from "#root/common/points"
+import { type PointLike, Point } from "#root/utils/points"
 
 //==========================================================================
 

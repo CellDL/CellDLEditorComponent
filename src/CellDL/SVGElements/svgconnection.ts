@@ -23,7 +23,7 @@ import type { ShapeTypes } from 'svg-path-commander'
 
 //==============================================================================
 
-import type { PointLike } from '#root/common/points'
+import type { PointLike } from '#root/utils/points'
 import { alert } from '#editor/editor/alerts'
 
 import type { CellDLConnection } from '#editor/celldlObjects/index'

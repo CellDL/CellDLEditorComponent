@@ -25,9 +25,9 @@ import type { MenuItem, MenuItemCommandEvent } from 'primevue/menuitem'
 
 //==============================================================================
 
-import * as common from '../common/common'
+import * as common from '../utils/common'
 
-import type { EditorStatus, ViewState } from '#root/common/EditorState'
+import type { EditorStatus, ViewState } from '#root/utils/EditorState'
 
 const props = defineProps<{
     editorStatus: EditorStatus

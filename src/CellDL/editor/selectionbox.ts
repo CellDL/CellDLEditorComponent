@@ -19,8 +19,8 @@ limitations under the License.
 ******************************************************************************/
 
 import type { CellDLConnectedObject, CellDLObject } from '#editor/celldlObjects'
-import { svgRect } from '#root/common/svgUtils'
-import { Point } from '#root/common/points'
+import { svgRect } from '#root/utils/svgUtils'
+import { Point } from '#root/utils/points'
 import { Bounds, ComputedValue, RestrictedValue } from '#editor/geometry'
 import { ControlPoint } from '#editor/geometry/controls'
 

@@ -33,9 +33,9 @@ import { SelectionSet } from '#editor/diagram/selectionset'
 import { type MoveUndoState, undoRedo } from '#editor/diagram/undoredo'
 import { round } from '#editor/utils'
 
-import { isMacOs } from '#root/common/common'
-import { type Point, type PointLike, PointMath } from '#root/common/points'
-import type { StringProperties } from '#root/common/types'
+import { isMacOs } from '#root/utils/common'
+import { type Point, type PointLike, PointMath } from '#root/utils/points'
+import type { StringProperties } from '#root/utils/types'
 import { componentLibraryPlugin } from '#root/plugins'
 
 //==============================================================================

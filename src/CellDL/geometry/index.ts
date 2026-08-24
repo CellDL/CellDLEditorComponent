@@ -22,7 +22,7 @@ import { editGuides, type GridAlignOptions } from '#editor/editor/editguides'
 import type { Transform } from '#editor/geometry/transforms'
 import { round } from '#editor/utils'
 
-import { Point, type PointLike, PointMath } from '#root/common/points'
+import { Point, type PointLike, PointMath } from '#root/utils/points'
 
 //==============================================================================
 
