@@ -23,14 +23,14 @@ import toSvgDataUrl from "mini-svg-data-uri"
 
 //==============================================================================
 
-import type { PointLike } from '#root/utils/points'
-import { CONNECTION_COLOUR, CONNECTION_WIDTH, CONNECTION_DASH } from '#root/utils/styling'
-import type { StringProperties } from '#root/utils/types'
-import { latexAsSvgDocument } from '#root/mathjax'
-
 import type { Extent } from '#editor/geometry'
 import { lengthToPixels, pixelsToLength } from '#editor/geometry/units'
 import { round } from '#editor/utils'
+
+import { latexAsSvgDocument } from '#root/mathjax'
+import type { PointLike } from '#root/utils/points'
+import { CONNECTION_COLOUR,  CONNECTION_DASH, CONNECTION_WIDTH } from '#root/utils/styling'
+import type { StringProperties } from '#root/utils/types'
 
 //==============================================================================
 

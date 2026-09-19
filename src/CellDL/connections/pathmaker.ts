@@ -23,17 +23,18 @@ import { RDF } from '@celldl/rdf'
 
 //==============================================================================
 
-import { Point, type PointLike, PointMath } from '#root/utils/points'
-import { CONNECTION_COLOUR, CONNECTION_WIDTH } from '#root/utils/styling'
-import { svgPath, svgPathDescription, SVG_URI } from '#root/utils/svgUtils'
-import { componentLibraryPlugin } from '#root/plugins'
 
 import { type CellDLConnectedObject, CellDLConnection, type CellDLObject } from '#editor/celldlObjects'
-import { alert } from '#editor/editor/alerts'
 import type { CellDLDiagram } from '#editor/diagram'
+import { alert } from '#editor/editor/alerts'
 import type { EditorFrame } from '#editor/editor/editorframe'
 import type { CellDLSVGElement } from '#editor/SVGElements'
 import { round } from '#editor/utils'
+
+import { componentLibraryPlugin } from '#root/plugins'
+import { Point, type PointLike, PointMath } from '#root/utils/points'
+import { CONNECTION_COLOUR, CONNECTION_WIDTH } from '#root/utils/styling'
+import { SVG_URI, svgPath, svgPathDescription } from '#root/utils/svgUtils'
 
 import { ConnectionStyle } from '.'
 
