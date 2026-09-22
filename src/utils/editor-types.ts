@@ -127,6 +127,15 @@ export type EditorToolButton = {
 
 //==============================================================================
 
+export type PopoverEventData = {
+    icon?: string
+    id: string
+    imageData: string
+    name: string
+}
+
+//==============================================================================
+
 export type FileStatus = {
     haveData: boolean
     modified: boolean

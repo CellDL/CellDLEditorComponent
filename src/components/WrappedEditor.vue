@@ -51,7 +51,6 @@ import { undoRedo } from '#editor/diagram/undoredo'
 import { type EditorToolButton, PANEL_ID } from '#root/utils/editor-types'
 import EditorToolbar from '#root/components/toolbar/EditorToolbar.vue'
 
-import type { PopoverEventData } from '#root/components/popovers/types'
 import ComponentPopover from '#root/components/popovers/ComponentPopover.vue'
 import ConnectionStylePopover from '#root/components/popovers/ConnectionStylePopover.vue'
 
@@ -60,7 +59,7 @@ import PropertiesPanel from '#root/components/panels/PropertiesPanel.vue'
 import { componentLibraryPlugin } from '#root/plugins'
 import { BondgraphPlugin } from '#root/plugins/bondgraph'
 // WIP import { ElectricalPlugin } from '#root/plugins/electrical'
-import type { ComponentProperties, ViewState } from '#root/utils/editor-types'
+import type { ComponentProperties, PopoverEventData, ViewState } from '#root/utils/editor-types'
 
 import { TestCellDLEditor, testEditor } from '../../tests/editor'
 
