@@ -69,8 +69,7 @@ const buttonStyle = vue.computed(() => {
     return style.join(' ')
 })
 
-const panelVisible = vue.ref()
-panelVisible.value = false
+const panelVisible = vue.ref(false)
 
 const panelClasses = vue.computed(() => {
     return [props.type==='panel' ? 'panel' : 'popover', { hidden: !panelVisible.value }]
@@ -133,26 +132,25 @@ async function toolButtonClick(e: MouseEvent) {
         } else {
             if (!target.classList.contains('active')) {
                 target.classList.add('active')
-            } else if (panelElement) {
-                if (panelVisible.value) {
-                    panelVisible.value = false
-                } else {
-                    panelVisible.value = true
+                if (panelElement) {
+                    if (!panelVisible.value) {
+                        panelVisible.value = true
 
-                    // Wait for panel to be rendered before getting its height
-                    await vue.nextTick()
+                        // Wait for panel to be rendered before getting its height
+                        await vue.nextTick()
 
-                    const popoverHeight = panelElement?.clientHeight
-                    let top = target.offsetTop + (target.clientWidth - popoverHeight) / 2
-                    pointerPos.value = popoverHeight / 2 - 10 // 10 is half of pointer's height
+                        const popoverHeight = panelElement?.clientHeight
+                        let top = target.offsetTop + (target.clientWidth - popoverHeight) / 2
+                        pointerPos.value = popoverHeight / 2 - 10 // 10 is half of pointer's height
 
-                    if (top < (20 + window.scrollY)) {
-                        // Make sure our top is at least 20px below top containing element
-                        const adjustment = (20 + window.scrollY) - top
-                        top = (20 + window.scrollY)
-                        pointerPos.value -= adjustment
+                        if (top < (20 + window.scrollY)) {
+                            // Make sure our top is at least 20px below top containing element
+                            const adjustment = (20 + window.scrollY) - top
+                            top = (20 + window.scrollY)
+                            pointerPos.value -= adjustment
+                        }
+                        popoverTop.value = `${top}px`
                     }
-                    popoverTop.value = `${top}px`
                 }
             }
         }
