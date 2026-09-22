@@ -79,10 +79,9 @@ const MAX_POINTER_CLICK_TIME = 200 // milliseconds
 // Lookup tables for tracking tool bar state
 
 export enum EDITOR_TOOL_IDS {
-    SelectTool = 'select-tool',
-    DrawConnectionTool = 'draw-connection-tool',
-    AddComponentTool = 'add-component-tool',
-    CompartmentTool = 'add-connection-tool'
+    SelectTool = 'editor-select-tool',
+    BondgraphTool = 'editor-bondgraph-tool',
+    DrawingTool = 'editor-drawing-tool'
 }
 
 export const DEFAULT_EDITOR_TOOL_ID = EDITOR_TOOL_IDS.SelectTool
@@ -201,10 +200,11 @@ export class CellDLEditor {
     constructor() {
         CellDLEditor.instance = this
 
-        // Add a handler for events from toolbar buttons
+        // Add a handler for events from toolbar buttons and popovers
         document.addEventListener('toolbar-event', this.#toolBarEvent.bind(this))
         document.addEventListener('component-selected', this.#componentTemplateSelectedEvent.bind(this))
         document.addEventListener('component-drag', this.#componentTemplateDragEvent.bind(this))
+        document.addEventListener('connection-style', this.#connectionStyleEvent.bind(this))
 
         // Add handler for events from panels
         document.addEventListener('panel-event', this.#panelEvent.bind(this))
@@ -428,7 +428,7 @@ export class CellDLEditor {
         if (detail.type === 'state') {
             if (this.#panels.has(detail.source)) {
                 this.#openPanel = this.#panels.get(detail.source)
-            } else if (detail.value === EDITOR_TOOL_IDS.SelectTool) {
+            } else if (detail.source === EDITOR_TOOL_IDS.SelectTool) {
                 this.#changeMode(EDITOR_MODE.Selecting)
             }
         }
@@ -623,8 +623,18 @@ export class CellDLEditor {
         }
     }
 
-    #componentTemplateSelectedEvent(event: Event) {
-        this.#currentTemplateDetails = (<CustomEvent>event).detail
+    #componentTemplateSelectedEvent(event: CustomEvent) {
+        // A component's template has been selected in a tool
+
+        this.#changeMode(EDITOR_MODE.AddingComponent)
+        this.#currentTemplateDetails = event.detail
+    }
+
+    #connectionStyleEvent(event: CustomEvent) {
+        // A connection style has been selected in a tool
+
+        this.#changeMode(EDITOR_MODE.PathDrawing)
+        this.#drawConnectionSettings.style = event.detail.style
     }
 
     protected addComponentTemplate(eventPosition: PointLike, details: TemplateEventDetails, dragged=false) {

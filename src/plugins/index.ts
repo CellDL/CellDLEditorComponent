@@ -233,6 +233,10 @@ export class ComponentLibraryPlugin {
         return ComponentLibraryPlugin.#instance
     }
 
+    getPlugin(pluginId: string): PluginInterface|undefined {
+        return this.#registeredPlugins.get(pluginId)
+    }
+
     install(app: vue.App, _options: object|undefined=undefined)  {
         if (!this.#app) {
             app.provide<vue.Ref<ComponentLibrary[]>>('componentLibraries', this.#componentLibrariesRef)

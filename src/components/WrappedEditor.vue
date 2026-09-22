@@ -49,20 +49,20 @@ import { editGuides } from '#editor/editor/editguides'
 import { undoRedo } from '#editor/diagram/undoredo'
 
 import { type EditorToolButton, PANEL_ID } from '#root/utils/editor-types'
-import EditorToolbar from '#root/components/toolbar/EditorToolbar.vue'
-
-import ComponentPopover from '#root/components/popovers/ComponentPopover.vue'
-import ConnectionStylePopover from '#root/components/popovers/ConnectionStylePopover.vue'
-
-import PropertiesPanel from '#root/components/panels/PropertiesPanel.vue'
 
 import { componentLibraryPlugin } from '#root/plugins'
+
 import { BondgraphPlugin } from '#root/plugins/bondgraph'
+import BondgraphPopover from '#root/plugins/bondgraph/bondgraph.vue'
+
 // WIP import { ElectricalPlugin } from '#root/plugins/electrical'
-import type { ComponentProperties, PopoverEventData, ViewState } from '#root/utils/editor-types'
+import type { PopoverEventData, ViewState } from '#root/utils/editor-types'
 
 import { TestCellDLEditor, testEditor } from '../../tests/editor'
 
+import PropertiesPanel from './panels/PropertiesPanel.vue'
+
+import EditorToolbar from './toolbar/EditorToolbar.vue'
 import EditorContextMenu from './widgets/EditorContextMenu.vue'
 import type { ContextMenuProps } from './widgets/EditorContextMenu.vue'
 
@@ -214,16 +214,6 @@ function despatchToolbarEvent(type: string, source: string, value: boolean|strin
 
 //==============================================================================
 
-function connectionStylePrompt(name: string): string {
-    return `Draw ${name.toLowerCase()} connection`
-}
-
-function addComponentPrompt(name: string): string {
-    return `Add ${name.toLowerCase()}`
-}
-
-//==============================================================================
-
 // Pass 'context-menu' events from the editor to the context menu's component
 
 const contextMenuProps = vue.ref<ContextMenuProps>({
@@ -245,24 +235,11 @@ const toolButtons = vue.ref<EditorToolButton[]>([
         icon: 'lucide-MousePointer'
     },
     {
-        toolId: EDITOR_TOOL_IDS.DrawConnectionTool,
-        active: (DEFAULT_EDITOR_TOOL_ID as EDITOR_TOOL_IDS) === EDITOR_TOOL_IDS.DrawConnectionTool,
-        prompt: connectionStylePrompt(DEFAULT_CONNECTION_STYLE_DEFINITION.name),
-        icon: DEFAULT_CONNECTION_STYLE_DEFINITION.icon,
-        panel: vue.markRaw(ConnectionStylePopover)
-    },
-    {
-        toolId: EDITOR_TOOL_IDS.AddComponentTool,
-        active: (DEFAULT_EDITOR_TOOL_ID as EDITOR_TOOL_IDS) === EDITOR_TOOL_IDS.AddComponentTool,
-        prompt: addComponentPrompt(defaultComponent.name),
-        image: defaultComponent.imageData,
-        panel: vue.markRaw(ComponentPopover)
-    },
-    {
-        toolId: EDITOR_TOOL_IDS.CompartmentTool,
-        active: (DEFAULT_EDITOR_TOOL_ID as EDITOR_TOOL_IDS) === EDITOR_TOOL_IDS.CompartmentTool,
-        prompt: 'Draw compartment',
-        icon: 'lucide-SquareDashed'
+        toolId: EDITOR_TOOL_IDS.BondgraphTool,
+        active: (DEFAULT_EDITOR_TOOL_ID as EDITOR_TOOL_IDS) === EDITOR_TOOL_IDS.BondgraphTool,
+        prompt: 'Bond graph tools',
+        icon: 'lucide-Network',
+        panel: vue.markRaw(BondgraphPopover)
     }
 ])
 
@@ -314,22 +291,8 @@ function buttonEvent(toolId: PANEL_ID, active: boolean) {
 //==============================================================================
 
 function popoverEvent(toolId: string, data: PopoverEventData) {
-    if (toolId === EDITOR_TOOL_IDS.DrawConnectionTool) {
-        toolButtons.value[1]!.prompt = connectionStylePrompt(data.name)
-        toolButtons.value[1]!.icon = data.icon
-
-        // Tell the editor that the connection style has changed
-
-        despatchToolbarEvent('value', toolId, data.id)
-
-    } else if (toolId === EDITOR_TOOL_IDS.AddComponentTool) {
-        toolButtons.value[2]!.prompt = addComponentPrompt(data.name)
-        toolButtons.value[2]!.image = data.imageData
-
-        // Tell the editor that the component template has changed
-
-        despatchToolbarEvent('value', toolId, data.id)
-    }
+    // Tell the editor about the popover event
+    despatchToolbarEvent('value', toolId, data.id)
 }
 
 //==============================================================================
@@ -386,10 +349,6 @@ vue.watch(
 //==============================================================================
 
 vue.onMounted(async () => {
-    // Tell the editor about the default connection style and component
-    despatchToolbarEvent('value', EDITOR_TOOL_IDS.DrawConnectionTool, DEFAULT_CONNECTION_STYLE_DEFINITION.id)
-    despatchToolbarEvent('value', EDITOR_TOOL_IDS.AddComponentTool, defaultComponent.id)
-
     if (svgContainer.value) {
         const svgContainerElement: HTMLElement = svgContainer.value
         window.setTimeout(async () => {
