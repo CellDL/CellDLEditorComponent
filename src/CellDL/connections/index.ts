@@ -40,12 +40,12 @@ export const DEFAULT_CONNECTION_STYLE_DEFINITION = {
 export const DEFAULT_CONNECTION_STYLE = DEFAULT_CONNECTION_STYLE_DEFINITION.id
 
 export const CONNECTION_STYLE_DEFINITIONS: ConnectionStyleDefinition[] = [
+    DEFAULT_CONNECTION_STYLE_DEFINITION,
     {
         id: ConnectionStyle.Linear,
         name: 'Linear',
         icon: 'ci-linear-connection'
-    },
-    DEFAULT_CONNECTION_STYLE_DEFINITION
+    }
 ]
 
 //==============================================================================
