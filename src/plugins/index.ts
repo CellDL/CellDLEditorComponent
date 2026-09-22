@@ -216,7 +216,6 @@ export class ComponentLibraryPlugin {
     #registeredPlugins: Map<string, PluginInterface> = new Map()
 
     #componentLibraries: ComponentLibrary[] = []
-    #componentLibrariesRef = vue.ref<ComponentLibrary[]>(this.#componentLibraries)
     #currentDocumentUri: string = ''
 
     private constructor() {
@@ -239,7 +238,6 @@ export class ComponentLibraryPlugin {
 
     install(app: vue.App, _options: object|undefined=undefined)  {
         if (!this.#app) {
-            app.provide<vue.Ref<ComponentLibrary[]>>('componentLibraries', this.#componentLibrariesRef)
             this.#app = app
         }
     }
