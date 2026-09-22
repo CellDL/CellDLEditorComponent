@@ -178,6 +178,7 @@ async function toolButtonClick(e: MouseEvent) {
     height: 36px !important;
     scale: 1 !important;
     padding: 0;
+    position: relative;
 }
 
 .tool-button.image {
@@ -186,7 +187,7 @@ async function toolButtonClick(e: MouseEvent) {
 
 .tool-button.modal::before {
     display: inline-block;
-    position: relative;
+    position: absolute;
     transform: scale(0.3);
     width: 10px;
     height: 10px;
