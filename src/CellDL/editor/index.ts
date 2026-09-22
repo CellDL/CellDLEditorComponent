@@ -205,6 +205,7 @@ export class CellDLEditor {
         document.addEventListener('component-selected', this.#componentTemplateSelectedEvent.bind(this))
         document.addEventListener('component-drag', this.#componentTemplateDragEvent.bind(this))
         document.addEventListener('connection-style', this.#connectionStyleEvent.bind(this))
+        document.addEventListener('celldl-drawing', this.#celldlDrawingEvent.bind(this))
 
         // Add handler for events from panels
         document.addEventListener('panel-event', this.#panelEvent.bind(this))
@@ -635,6 +636,16 @@ export class CellDLEditor {
 
         this.#changeMode(EDITOR_MODE.PathDrawing)
         this.#drawConnectionSettings.style = event.detail.style
+    }
+
+    #celldlDrawingEvent(event: Event) {
+        // A drawing tool has been selected
+
+        const tool = (<CustomEvent>event).detail.tool
+        if (tool === 'draw-closed-compartment') { // draw-background-region
+            this.#changeMode(EDITOR_MODE.DrawCompartment)
+        }
+
     }
 
     protected addComponentTemplate(eventPosition: PointLike, details: TemplateEventDetails, dragged=false) {

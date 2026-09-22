@@ -55,6 +55,8 @@ import { componentLibraryPlugin } from '#root/plugins'
 import { BondgraphPlugin } from '#root/plugins/bondgraph'
 import BondgraphPopover from '#root/plugins/bondgraph/bondgraph.vue'
 
+import DrawingPopover from '#root/plugins/celldl/drawing.vue'
+
 // WIP import { ElectricalPlugin } from '#root/plugins/electrical'
 import type { PopoverEventData, ViewState } from '#root/utils/editor-types'
 
@@ -240,6 +242,13 @@ const toolButtons = vue.ref<EditorToolButton[]>([
         prompt: 'Bond graph tools',
         icon: 'lucide-Network',
         panel: vue.markRaw(BondgraphPopover)
+    },
+    {
+        toolId: EDITOR_TOOL_IDS.DrawingTool,
+        active: (DEFAULT_EDITOR_TOOL_ID as EDITOR_TOOL_IDS) === EDITOR_TOOL_IDS.DrawingTool,
+        prompt: 'Drawing tools',
+        icon: 'lucide-SquarePen',
+        panel: vue.markRaw(DrawingPopover)
     }
 ])
 
