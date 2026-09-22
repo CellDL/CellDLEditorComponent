@@ -87,21 +87,14 @@ export enum EDITOR_TOOL_IDS {
 
 export const DEFAULT_EDITOR_TOOL_ID = EDITOR_TOOL_IDS.SelectTool
 
-export enum EDITOR_STATE {
+enum EDITOR_MODE {
     Selecting = 'SELECTING',
-    DrawPath = 'DRAW-PATH',
-    AddComponent = 'ADD-COMPONENT',
+    PathDrawing = 'DRAW-PATH',
+    AddingComponent = 'ADD-COMPONENT',
     DrawCompartment = 'DRAW-COMPARTMENT'
 }
 
-const TOOL_TO_STATE: Map<EDITOR_TOOL_IDS, EDITOR_STATE> = new Map([
-    [EDITOR_TOOL_IDS.SelectTool, EDITOR_STATE.Selecting],
-    [EDITOR_TOOL_IDS.DrawConnectionTool, EDITOR_STATE.DrawPath],
-    [EDITOR_TOOL_IDS.AddComponentTool, EDITOR_STATE.AddComponent],
-    [EDITOR_TOOL_IDS.CompartmentTool, EDITOR_STATE.DrawCompartment]
-])
-
-const DEFAULT_EDITOR_STATE = TOOL_TO_STATE.get(DEFAULT_EDITOR_TOOL_ID)!
+const DEFAULT_EDITOR_MODE = EDITOR_MODE.Selecting
 
 //==============================================================================
 
@@ -153,7 +146,7 @@ export class CellDLEditor {
     protected moved: boolean = false
     #moveSelection: boolean = false
 
-    protected editorState: EDITOR_STATE = DEFAULT_EDITOR_STATE
+    #editorMode: EDITOR_MODE = DEFAULT_EDITOR_MODE
     #dirty: boolean = false
 
     #dragging: boolean = false
@@ -369,8 +362,8 @@ export class CellDLEditor {
         // Enable pan/zoom and toolBars
         this.#panzoom!.enable(this.#svgDiagram!)
 
-        // Set initial state
-        this.editorState = EDITOR_STATE.Selecting
+        // Set initial mode
+        this.#editorMode = DEFAULT_EDITOR_MODE
         this.currentObject = null
         this.pointerMoved = false
         this.#activeObjects.clear()
@@ -397,8 +390,8 @@ export class CellDLEditor {
     }
 
     #setDefaultCursor() {
-        if (this.editorState === EDITOR_STATE.DrawPath
-         || this.editorState === EDITOR_STATE.DrawCompartment) {
+        if (this.#editorMode === EDITOR_MODE.PathDrawing
+         || this.#editorMode === EDITOR_MODE.DrawCompartment) {
             this.#svgDiagram?.style.setProperty('cursor', 'crosshair')
         } else {
             this.#svgDiagram?.style.removeProperty('cursor')
@@ -416,29 +409,27 @@ export class CellDLEditor {
         }
     }
 
+    #changeMode(editorMode: EDITOR_MODE) {
+        this.#editorMode = editorMode
+        this.#setDefaultCursor()
+        this.unsetSelectedObjects()
+        this.#closeBoxMaker()
+        if (this.#editorMode !== EDITOR_MODE.PathDrawing) {
+            // Remove any partial path from editor frame...
+            if (this.#pathMaker) {
+                this.#pathMaker.close()
+                this.#pathMaker = null
+            }
+        }
+    }
+
     #toolBarEvent(event: Event) {
         const detail = (<CustomEvent>event).detail
         if (detail.type === 'state') {
             if (this.#panels.has(detail.source)) {
                 this.#openPanel = this.#panels.get(detail.source)
-            } else if (detail.value && TOOL_TO_STATE.has(detail.source as EDITOR_TOOL_IDS)) {
-                this.editorState = TOOL_TO_STATE.get(detail.source as EDITOR_TOOL_IDS)!
-                this.#setDefaultCursor()
-                this.unsetSelectedObjects()
-                this.#closeBoxMaker()
-                if (this.editorState !== EDITOR_STATE.DrawPath) {
-                    // Remove any partial path from editor frame...
-                    if (this.#pathMaker) {
-                        this.#pathMaker.close()
-                        this.#pathMaker = null
-                    }
-                }
-            }
-        } else if (detail.type === 'value') {
-            if (detail.source === EDITOR_TOOL_IDS.DrawConnectionTool) {
-                this.#drawConnectionSettings = {
-                    style: detail.value
-                }
+            } else if (detail.value === EDITOR_TOOL_IDS.SelectTool) {
+                this.#changeMode(EDITOR_MODE.Selecting)
             }
         }
     }
@@ -676,7 +667,7 @@ export class CellDLEditor {
     }
 
     #objectClickEvent(event: Event) {
-        if (this.editorState === EDITOR_STATE.Selecting) {
+        if (this.#editorMode === EDITOR_MODE.Selecting) {
             const detail = (<CustomEvent>event).detail
             const clickedObject: CellDLObject = detail.clickedObject
             this.#selectionClickEvent(detail.event, clickedObject.svgElement!, clickedObject)
@@ -694,18 +685,18 @@ export class CellDLEditor {
             return
         }
         const clickedObject = this.#celldlDiagram.objectById(getElementId(element))
-        if (this.editorState === EDITOR_STATE.AddComponent && clickedObject === null) {
+        if (this.#editorMode === EDITOR_MODE.AddingComponent && clickedObject === null) {
             if (this.#currentTemplateDetails) {
                 this.addComponentTemplate(event, this.#currentTemplateDetails)
             }
-        } else if (this.editorState === EDITOR_STATE.DrawPath) {
+        } else if (this.#editorMode === EDITOR_MODE.PathDrawing) {
             if (this.#pathMaker) {
                 if (this.currentObject === null) {
                     const svgPoint = this.#domToSvgCoords(event)
                     this.#pathMaker.addPoint(svgPoint, event.shiftKey)
                 }
             }
-        } else if (this.editorState === EDITOR_STATE.Selecting) {
+        } else if (this.#editorMode === EDITOR_MODE.Selecting) {
             this.#selectionClickEvent(event, element, clickedObject)
         }
     }
@@ -750,7 +741,7 @@ export class CellDLEditor {
     }
 
     #pointerDoubleClickEvent(event: MouseEvent) {
-        if (this.editorState === EDITOR_STATE.DrawPath) {
+        if (this.#editorMode === EDITOR_MODE.PathDrawing) {
             if (this.#pathMaker) {
                 if (this.currentObject === null) {
                     this.#pathMaker.finishPartialPath(this.#celldlDiagram!, event.shiftKey)
@@ -794,7 +785,7 @@ export class CellDLEditor {
             return
         }
 
-        if (this.editorState === EDITOR_STATE.DrawPath) {
+        if (this.#editorMode === EDITOR_MODE.PathDrawing) {
             if (
                 this.currentObject &&
                 currentObject !== this.currentObject &&
@@ -813,7 +804,7 @@ export class CellDLEditor {
                     this.#nextPathNode = this.#pathMaker.validPathNode(currentObject)
                 }
             }
-        } else if (this.editorState === EDITOR_STATE.DrawCompartment) {
+        } else if (this.#editorMode === EDITOR_MODE.DrawCompartment) {
             if (currentObject) {
                 element.style.removeProperty('cursor')
             }
@@ -844,7 +835,7 @@ export class CellDLEditor {
                 this.currentObject.finaliseMove()
                 this.#unsetActiveObjects()
             }
-        } else if (this.editorState === EDITOR_STATE.DrawPath) {
+        } else if (this.#editorMode === EDITOR_MODE.PathDrawing) {
             if (this.#pathMaker === null) {
                 this.#unsetActiveObjects()
             }
@@ -857,7 +848,7 @@ export class CellDLEditor {
         const element = event.target as SVGGraphicsElement
         if (event.button === 2
          || (!event.shiftKey
-          && this.editorState !== EDITOR_STATE.DrawCompartment
+          && this.#editorMode !== EDITOR_MODE.DrawCompartment
           && this.#notDiagramElement(element))) {
             this.#svgDiagram?.style.removeProperty('cursor')
             this.#container?.style.setProperty('cursor', 'grab')
@@ -866,7 +857,7 @@ export class CellDLEditor {
             return
         }
         const svgPoint = this.#domToSvgCoords(event)
-        if (this.editorState === EDITOR_STATE.DrawPath) {
+        if (this.#editorMode === EDITOR_MODE.PathDrawing) {
             if (this.currentObject && this.#nextPathNode) {
                 if (this.#pathMaker === null) {
                     const settings = this.#drawConnectionSettings // settings.type is to come from object's domain...
@@ -881,7 +872,7 @@ export class CellDLEditor {
                 }
             }
         } else if (this.currentObject?.moveInitialised) {
-            // EDITOR_STATE.Selecting or EDITOR_STATE.AddComponent
+            // EDITOR_MODE.Selecting or EDITOR_MODE.AddingComponent
             this.#moveSelection = !this.currentObject?.isConnection && this.selectionSet.has(this.currentObject)
             if (this.#moveSelection) {
                 // Moving a set of selected components
@@ -894,7 +885,7 @@ export class CellDLEditor {
             }
             this.moving = true
             this.moved = false
-        } else if (this.editorState === EDITOR_STATE.Selecting) {
+        } else if (this.#editorMode === EDITOR_MODE.Selecting) {
             if (this.#boxMaker) {
                 this.#boxMaker.pointerEvent(event, svgPoint)
             } else if (event.shiftKey) {
@@ -913,7 +904,7 @@ export class CellDLEditor {
                     this.moved = false
                 }
             }
-        } else if (this.editorState === EDITOR_STATE.DrawCompartment) {
+        } else if (this.#editorMode === EDITOR_MODE.DrawCompartment) {
             if (this.#boxMaker) {
                 this.#boxMaker.pointerEvent(event, svgPoint)
             } else {
@@ -932,12 +923,12 @@ export class CellDLEditor {
         this.pointerMoved = true
         const svgPoint = this.#domToSvgCoords(event)
         this.#showStatus(svgPoint)
-        if (this.editorState === EDITOR_STATE.DrawPath) {
+        if (this.#editorMode === EDITOR_MODE.PathDrawing) {
             if (this.#pathMaker) {
                 this.#pathMaker.drawTo(svgPoint, event.shiftKey)
             }
         } else if (this.currentObject && this.moving) {
-            // EDITOR_STATE.Selecting or EDITOR_STATE.AddComponent
+            // EDITOR_MODE.Selecting or EDITOR_MODE.AddingComponent
             if (this.#moveSelection) {
                 this.selectionSet.move(svgPoint)
             } else {
@@ -948,8 +939,8 @@ export class CellDLEditor {
             if (this.#boxMaker) {
                 this.#boxMaker.updateSelectedObjects()
             }
-        } else if (this.editorState === EDITOR_STATE.Selecting
-                || this.editorState === EDITOR_STATE.DrawCompartment) {
+        } else if (this.#editorMode === EDITOR_MODE.Selecting
+                || this.#editorMode === EDITOR_MODE.DrawCompartment) {
             if (this.#boxMaker) {
                 this.#boxMaker.pointerEvent(event, svgPoint)
             }
@@ -976,7 +967,7 @@ export class CellDLEditor {
             }
             return
         }
-        if (this.editorState !== EDITOR_STATE.DrawPath) {
+        if (this.#editorMode !== EDITOR_MODE.PathDrawing) {
             if (this.currentObject && this.moving) {
                 this.moving = false
                 if (this.moved) {
@@ -992,10 +983,10 @@ export class CellDLEditor {
                     this.#moveUndoState.reposition('backwards')
                     this.#moveUndoState = null
                 }
-            } else if (this.editorState === EDITOR_STATE.Selecting
-                    || this.editorState === EDITOR_STATE.DrawCompartment) {
                 if (this.#boxMaker && !this.#boxMaker.pointerEvent(event, svgPoint)) {
                     this.#closeBoxMaker()
+            } else if (this.#editorMode === EDITOR_MODE.Selecting
+                    || this.#editorMode === EDITOR_MODE.DrawCompartment) {
                 }
                 this.#boxMaking = false
             }
@@ -1015,7 +1006,7 @@ export class CellDLEditor {
     }
 
     #keyDownEvent(event: KeyboardEvent) {
-        if (this.editorState === EDITOR_STATE.DrawPath
+        if (this.#editorMode === EDITOR_MODE.PathDrawing
          && (event.key === 'Escape' || event.key === 'Backspace')) {
             if (this.#pathMaker) {
                 // Remove any partial path
@@ -1029,7 +1020,7 @@ export class CellDLEditor {
                 // Prevent the default browser action (navigating back)
                 event.preventDefault()
             }
-        } else if (this.editorState === EDITOR_STATE.Selecting
+        } else if (this.#editorMode === EDITOR_MODE.Selecting
             && (isMacOs() && event.metaKey
             || !isMacOs() && event.ctrlKey)) {
             if (event.key === 'z' && !event.shiftKey) {
