@@ -1004,10 +1004,16 @@ export class CellDLEditor {
                     this.#moveUndoState.reposition('backwards')
                     this.#moveUndoState = null
                 }
-                if (this.#boxMaker && !this.#boxMaker.pointerEvent(event, svgPoint)) {
-                    this.#closeBoxMaker()
             } else if (this.#editorMode === EDITOR_MODE.Selecting
                     || this.#editorMode === EDITOR_MODE.DrawCompartment) {
+                if (this.#boxMaker) {
+                    if (this.#editorMode === EDITOR_MODE.DrawCompartment) {
+                        this.#boxMaker.pointerEvent(event, svgPoint)
+                        this.#boxMaker.makeCompartment()
+                        this.#closeBoxMaker()
+                    } else if (!this.#boxMaker.pointerEvent(event, svgPoint)) {
+                        this.#closeBoxMaker()
+                    }
                 }
                 this.#boxMaking = false
             }

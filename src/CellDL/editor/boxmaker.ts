@@ -139,6 +139,10 @@ export class BoxMaker {
              && point.y < this.#bottomRight.y)
     }
 
+    makeCompartment() {
+        this.#editor.celldlDiagram?.makeCompartment(this.bounds)
+    }
+
     groupComponents() {
         if (this.count) {
             this.#editor.celldlDiagram?.groupComponents(this.bounds, [
