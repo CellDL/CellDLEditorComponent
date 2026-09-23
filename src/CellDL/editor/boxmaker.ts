@@ -139,10 +139,9 @@ export class BoxMaker {
              && point.y < this.#bottomRight.y)
     }
 
-    makeComponentGroup() {
+    groupComponents() {
         if (this.count) {
-            // biome-ignore lint/style/noNonNullAssertion: the editor has a diagram
-            this.#editor.celldlDiagram!.makeComponentGroup(this.bounds, [
+            this.#editor.celldlDiagram?.groupComponents(this.bounds, [
                 ...this.#selectedObjects.values()
             ])
         }

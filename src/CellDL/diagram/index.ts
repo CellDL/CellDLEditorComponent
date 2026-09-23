@@ -636,14 +636,13 @@ export class CellDLDiagram {
         return connection
     }
 
-    makeComponentGroup(bounds: Bounds, objects: CellDLObject[]): CellDLCompartment {
-        // we could simply pass ids into #objects
-        const compartmentGroup = document.createElementNS(SVG_URI, 'g')
-        compartmentGroup.id = this.#nextIdentifier()
+    groupComponents(bounds: Bounds, objects: CellDLObject[]): CellDLComponent {
+        const componentGroup = document.createElementNS(SVG_URI, 'g')
+        componentGroup.id = this.#nextIdentifier()
         const cornerPoints = bounds.asPoints()
-        const compartmentRect = svgRectElement(cornerPoints[0], cornerPoints[1], { class: 'compartment' })
-        const compartmentIntersections = new ShapeIntersections(compartmentRect)
-        compartmentGroup.appendChild(compartmentRect)
+        const componentRect = svgRectElement(cornerPoints[0], cornerPoints[1], { class: 'compartment' })
+        const componentIntersections = new ShapeIntersections(componentRect)
+        componentGroup.appendChild(componentRect)
         const objectIds = new Set(objects.map((obj) => obj.id))
         const interfacePorts: CellDLInterface[] = []
         for (const object of objects) {
@@ -653,35 +652,35 @@ export class CellDLDiagram {
             ) {
                 // Component or connection all inside bounds
                 // biome-ignore lint/style/noNonNullAssertion: object has a celldlSvgElement
-                compartmentGroup.appendChild(object.celldlSvgElement!.svgElement)
+                componentGroup.appendChild(object.celldlSvgElement!.svgElement)
                 if (!object.isConnection) {
                     this.#spatialIndex.remove(object)
                 }
             } else {
-                // Connection that crosses the compartment's boundary
-                const connectionPorts = this.#addConnectionToCompartment(
-                    compartmentGroup,
-                    compartmentIntersections,
+                // Connection that crosses the component group's boundary
+                const connectionPorts = this.#addConnectionToComponent(
+                    componentGroup,
+                    componentIntersections,
                     objectIds,
                     <CellDLConnection>object
                 )
                 interfacePorts.push(...connectionPorts)
             }
         }
-        const compartment = this.#addNewObject(
-            compartmentGroup, {
-                CellDLClass: CellDLCompartment,
+        const component = this.#addNewObject(
+            componentGroup, {
+                CellDLClass: CellDLComponent,
                 metadataProperties: MetadataPropertiesMap.fromProperties([
                     [CELLDL.uri('hasInterface'), interfacePorts.map((p) => p.uri)]
                 ])
             },
             false
-        ) as CellDLCompartment
-        if (compartment) {
-            this.#addMoveableObject(compartment)
+        ) as CellDLComponent
+        if (component) {
+            this.#addMoveableObject(component)
         }
         notifyChanges()
-        return compartment
+        return component
     }
 
     #createConnection(connectedObjects: CellDLConnectedObject[], svgElements: SVGGraphicsElement[]): CellDLConnection|undefined {
@@ -745,9 +744,9 @@ export class CellDLDiagram {
         return this.#createPort<CellDLUnconnectedPort>(CellDLUnconnectedPort, point)
     }
 
-    #addConnectionToCompartment(
-        compartmentGroup: SVGGElement,
-        compartmentIntersections: ShapeIntersections,
+    #addConnectionToComponent(
+        componentGroup: SVGGElement,
+        componentIntersections: ShapeIntersections,
         objectIds: Set<string>,
         connection: CellDLConnection
     ): CellDLInterface[] {
@@ -808,7 +807,7 @@ export class CellDLDiagram {
                 newElements.push(pathElement.svgElement)
                 continue
             }
-            const pathIntersections = compartmentIntersections.intersections(pathElement.svgElement)
+            const pathIntersections = componentIntersections.intersections(pathElement.svgElement)
             if (pathIntersections.length % 2 === 0) {
                 console.warn(`Path unexpectedly intersects selection boundary...`)
             } else {
@@ -836,14 +835,14 @@ export class CellDLDiagram {
                     interfacePorts.push(interfacePort)
                     newConnectors.push(interfacePort)
                     const interfaceElement = <BoundedElement>interfacePort.celldlSvgElement
-                    compartmentGroup.appendChild(interfaceElement.svgElement)
+                    componentGroup.appendChild(interfaceElement.svgElement)
                     const tailSvgElement = pathElement.splitPath(splitPoint, interfaceElement)
                     const headSvgElement = pathElement.svgElement.cloneNode(true) as SVGPathElement
                     headSvgElement.removeAttribute('id')
                     newElements.push(headSvgElement)
                     const newConnection = this.#createConnection(newConnectors, newElements)
                     if (newConnection) {
-                        this.#connectCompartmentConnection(newConnection, compartmentGroup, currentPathInside)
+                        this.#connectComponmentConnection(newConnection, componentGroup, currentPathInside)
                     }
                     newConnectors.length = 0
                     newConnectors.push(interfacePort)
@@ -858,21 +857,21 @@ export class CellDLDiagram {
             // && newElements.length ?? Or newConnectors.length > 1
             const newConnection = this.#createConnection(newConnectors, newElements)
             if (newConnection) {
-                this.#connectCompartmentConnection(newConnection, compartmentGroup, currentPathInside)
+                this.#connectComponmentConnection(newConnection, componentGroup, currentPathInside)
             }
         }
 
         return interfacePorts
     }
 
-    #connectCompartmentConnection(
+    #connectComponmentConnection(
         connection: CellDLConnection,
-        compartmentGroup: SVGGElement,
+        componentGroup: SVGGElement,
         currentPathInside: boolean
     ) {
         if (currentPathInside) {
             // biome-ignore lint/style/noNonNullAssertion: connection will have a CellDLSvgElement
-            compartmentGroup.appendChild(connection.celldlSvgElement!.svgElement)
+            componentGroup.appendChild(connection.celldlSvgElement!.svgElement)
         } else {
             if (connection.source?.isInterface) {
                 (<CellDLInterface>connection.source).addExternalConnection(connection)
