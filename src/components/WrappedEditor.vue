@@ -52,7 +52,8 @@ import { componentLibraryPlugin } from '#root/plugins'
 import { BondgraphPlugin } from '#root/plugins/bondgraph'
 import BondgraphPopover from '#root/plugins/bondgraph/bondgraph.vue'
 
-import DrawingPopover from '#root/plugins/celldl/drawing.vue'
+import { DrawingPlugin } from '#root/plugins/drawing'
+import DrawingPopover from '#root/plugins/drawing/drawing.vue'
 
 // WIP import { ElectricalPlugin } from '#root/plugins/electrical'
 import type { PopoverEventData, ViewState } from '#root/utils/editor-types'
@@ -152,6 +153,7 @@ if (crtInstance) {
 
     componentLibraryPlugin.install(app)
     componentLibraryPlugin.registerPlugin(new BondgraphPlugin())
+    componentLibraryPlugin.registerPlugin(new DrawingPlugin())
 // WIP    componentLibraryPlugin.registerPlugin(new ElectricalPlugin())
 }
 
