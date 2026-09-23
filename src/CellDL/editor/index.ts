@@ -624,18 +624,18 @@ export class CellDLEditor {
         }
     }
 
-    #componentTemplateSelectedEvent(event: CustomEvent) {
+    #componentTemplateSelectedEvent(event: Event) {
         // A component's template has been selected in a tool
 
         this.#changeMode(EDITOR_MODE.AddingComponent)
-        this.#currentTemplateDetails = event.detail
+        this.#currentTemplateDetails = (<CustomEvent>event).detail
     }
 
-    #connectionStyleEvent(event: CustomEvent) {
+    #connectionStyleEvent(event: Event) {
         // A connection style has been selected in a tool
 
         this.#changeMode(EDITOR_MODE.PathDrawing)
-        this.#drawConnectionSettings.style = event.detail.style
+        this.#drawConnectionSettings.style = (<CustomEvent>event).detail.style
     }
 
     #celldlDrawingEvent(event: Event) {
