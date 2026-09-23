@@ -111,6 +111,10 @@ const CELLDL_DIAGRAM_ID = 'celldl-diagram-layer'
 
 const ID_PREFIX = 'ID-'
 
+type AddObjectOptions = {
+    atBack?: boolean
+    hasId?: boolean
+}
 //==============================================================================
 
 export class CellDLDiagram {
@@ -674,7 +678,7 @@ export class CellDLDiagram {
                     [CELLDL.uri('hasInterface'), interfacePorts.map((p) => p.uri)]
                 ])
             },
-            false
+            { hasId: true }
         ) as CellDLComponent
         if (component) {
             this.#addMoveableObject(component)
@@ -716,7 +720,7 @@ export class CellDLDiagram {
                 CellDLClass: CellDLConnection,
                 metadataProperties
             },
-            false
+            { hasId: true }
         ) as CellDLConnection
         this.#addConnection(connection)
         // let the plugins know
@@ -730,7 +734,7 @@ export class CellDLDiagram {
                 CellDLClass: newObjectClass,
                 metadataProperties: new MetadataPropertiesMap()
             },
-            false
+            { hasId: true }
         ) as T
         this.#addMoveableObject(connector as CellDLObject)
         return connector
@@ -882,15 +886,18 @@ export class CellDLDiagram {
         }
     }
 
-    #addNewObject(svgElement: SVGGraphicsElement, objectTemplate: ObjectTemplate, assignId = true) {
+    #addNewObject(svgElement: SVGGraphicsElement, objectTemplate: ObjectTemplate, options: AddObjectOptions={}) {
         const CellDLClass = objectTemplate.CellDLClass
-        if (assignId) {
+        if (!options?.hasId) {
             this.#setUniqueId(svgElement)
         }
-        // @ts-expect-error:
         svgElement.classList.add(CellDLClass.celldlStyleClass)
         if (this.#currentLayer) {
-            this.#currentLayer.appendChild(svgElement)
+            if (options?.atBack) {
+                this.#currentLayer.insertBefore(svgElement, this.#currentLayer.firstChild)
+            } else {
+                this.#currentLayer.appendChild(svgElement)
+            }
         }
         // This is where we create an instanced object of its objectTemplate's class
         const celldlObject = new CellDLClass(this.makeUri(svgElement.id), objectTemplate, this)
