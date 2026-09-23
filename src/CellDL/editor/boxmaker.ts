@@ -208,6 +208,12 @@ export class BoxMaker {
             this.clearControlHandles()
             this.#editorFrame.removeElement(this.#selectionRect)
             this.#selectionRect = null
+
+            if (this.#doubleWalled) {
+                this.#editorFrame.removeElement(this.#doubleBoundary[0])
+                this.#editorFrame.removeElement(this.#doubleBoundary[1])
+                this.#doubleBoundary = [null, null]
+            }
         }
     }
 
