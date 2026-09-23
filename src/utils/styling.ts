@@ -37,8 +37,8 @@ export const SELECTION_STROKE_WIDTH = 3 // pixels
 
 //==============================================================================
 
-export const COMPARTMENT_BACKGROUND = "#ccc"
-export const MEMBRANE_COLOUR = 'purple'
+export const COMPARTMENT_BACKGROUND = "#ddd"
+export const MEMBRANE_COLOUR = '#806000'
 export const MEMBRANE_CORNER_RADIUS = 40
 export const MEMBRANE_DASH = 2  // * width
 export const MEMBRANE_GAP = 5
