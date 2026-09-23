@@ -24,41 +24,29 @@ import { CellDLEditor } from '#editor/editor'
 
 export namespace alert {
     export function clear() {
-        if (CellDLEditor.instance) {
-            CellDLEditor.instance.showMessage('')
-        }
+        CellDLEditor.instance?.showMessage('')
     }
 
     export function error(msg: string) {
         console.error(msg)
-        if (CellDLEditor.instance) {
-            CellDLEditor.instance.showMessage(msg, 'error')
-        }
+        CellDLEditor.instance?.showMessage(msg, 'error')
     }
 
     export function info(msg: string) {
-        if (CellDLEditor.instance) {
-            CellDLEditor.instance.showMessage(msg, 'info')
-        }
+        CellDLEditor.instance?.showMessage(msg, 'info')
     }
 
     export function tooltip(msg: string) {
-        if (CellDLEditor.instance) {
-            CellDLEditor.instance.showTooltip(msg, 'error')
-        }
+        CellDLEditor.instance?.showTooltip(msg, 'error')
     }
 
     export function warn(msg: string) {
         console.warn(msg)
-        if (CellDLEditor.instance) {
-            CellDLEditor.instance.showMessage(msg, 'warn')
-        }
+        CellDLEditor.instance?.showMessage(msg, 'warn')
     }
 
     export function elementError(msg: string, svgElement?: SVGGraphicsElement) {
-        if (svgElement) {
-            svgElement.classList.add('error')
-        }
+        svgElement?.classList.add('error')
         error(msg)
     }
 }
