@@ -78,7 +78,6 @@ export function gradientDefinition(type: string, gradientId: string, stops: Grad
 export const CellDLStylesheet = [
     `svg{font-size:${EM_SIZE}px}`,
     /* Conduits */
-    '.celldl-Conduit{z-index:9999}',
     /* Connections */
     `.celldl-Connection{stroke-linejoin:round;fill:none}`,
     /* Compartments */

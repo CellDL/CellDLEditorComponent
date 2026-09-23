@@ -5,7 +5,6 @@
                 :buttons="toolButtons"
                 type="popover"
                 @button-event="buttonEvent"
-                @popover-event="popoverEvent"
             )
             div#svg-container(ref="svgContainer")
                 EditorContextMenu(
@@ -40,9 +39,7 @@ import '#root/assets/icons.css'
 
 import * as vueCommon from '#root/utils/vueCommon'
 
-import { DEFAULT_CONNECTION_STYLE_DEFINITION } from '#editor/connections'
 import { CellDLDiagram } from '#editor/diagram'
-
 import { CellDLEditor } from '#editor/editor'
 import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS } from '#editor/editor'
 import { editGuides } from '#editor/editor/editguides'
@@ -295,13 +292,6 @@ function buttonEvent(toolId: PANEL_ID, active: boolean) {
     // Tell the editor that a tool has changed
 
     despatchToolbarEvent('state', toolId, active)
-}
-
-//==============================================================================
-
-function popoverEvent(toolId: string, data: PopoverEventData) {
-    // Tell the editor about the popover event
-    despatchToolbarEvent('value', toolId, data.id)
 }
 
 //==============================================================================

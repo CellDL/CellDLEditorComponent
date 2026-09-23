@@ -18,7 +18,6 @@
                     :is="button.panel"
                     :title="button.prompt"
                     :toolId="button.toolId"
-                    @popover-event="popoverEvent"
                 )
                 component(
                     v-if="type === 'panel'"
@@ -54,10 +53,6 @@ const emit = defineEmits<{
     'button-event': [
         toolId: string,
         active: boolean,
-    ],
-    'popover-event': [
-        toolId: string,
-        data: PopoverEventData
     ]
 }>()
 
@@ -86,10 +81,6 @@ function panelEvent(toolId: string, itemId: string, oldValue: string, newValue: 
             }
         })
     )
-}
-
-function popoverEvent(toolId: string, data: PopoverEventData) {
-    emit('popover-event', toolId, data)
 }
 
 function styleEvent(toolId: string, object: string, styling: StyleObject) {
