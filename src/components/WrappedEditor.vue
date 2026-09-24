@@ -61,6 +61,7 @@ import type { PopoverEventData, ViewState } from '#root/utils/editor-types'
 import { TestCellDLEditor, testEditor } from '../../tests/editor'
 
 import PropertiesPanel from './panels/PropertiesPanel.vue'
+import StylingPanel from './panels/StylingPanel.vue'
 
 import EditorToolbar from './toolbar/EditorToolbar.vue'
 import EditorContextMenu from './widgets/EditorContextMenu.vue'
@@ -270,7 +271,7 @@ const panelButtons = vue.ref<EditorToolButton[]>([
         toolId: PANEL_ID.STYLE_PANEL,
         prompt: 'Style',
         icon: 'lucide-Paintbrush',
-        panel: vue.markRaw(PropertiesPanel)
+        panel: vue.markRaw(StylingPanel)
     }
 ])
 
