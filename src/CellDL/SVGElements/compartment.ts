@@ -1,6 +1,5 @@
 //==============================================================================
 
-import type { CellDLObject } from '#editor/celldlObjects'
 import type { CellDLDiagram } from '#editor/diagram'
 import type { PointLike } from '#root/utils/points'
 import {
@@ -11,7 +10,6 @@ import {
     MEMBRANE_GAP,
     MEMBRANE_STROKE_WIDTH
 } from '#root/utils/styling'
-import { BoundedElement } from './boundedelement'
 import { type CompartmentStyling, SVG_URI, svgRect } from '#root/utils/svgUtils'
 
 //==============================================================================
@@ -115,6 +113,8 @@ function updateRectStyling(rect: SVGRectElement, styling: CompartmentStyling, of
     }
     rect.setAttribute('fill', offset <= 0 ? COMPARTMENT_BACKGROUND : 'none')
 }
+
+//==============================================================================
 
 export class Compartment {
     #boundary0: SVGRectElement

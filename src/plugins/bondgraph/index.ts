@@ -290,8 +290,6 @@ const BG_STYLING_TEMPLATE: PropertyGroup = {
 
 //==============================================================================
 
-
-
 const DEFAULT_TRANSFORM_RATIO = 1
 const TRANSFORM_NODE_PROMPT = 'Ratio'
 
@@ -345,8 +343,7 @@ export class BondgraphPlugin implements PluginInterface {
         return ''
     }
 
-    getPanelTemplates(panelId: PANEL_ID): PropertyGroup[]
-    {
+    getPanelTemplates(panelId: PANEL_ID): PropertyGroup[] {
         if (panelId === PANEL_ID.PROPERTIES_PANEL) {
             return [...this.#elementPropertiesTemplate.values()]
         } else if (panelId === PANEL_ID.STYLE_PANEL) {
@@ -1038,7 +1035,7 @@ export class BondgraphPlugin implements PluginInterface {
         let imageData = ''
         try {
             imageData = svgImageData(symbol, species, location,
-                               baseComponent.style, pluginData.fillColours)
+                                     baseComponent.style, pluginData.fillColours)
         // biome-ignore lint/suspicious/noExplicitAny: <>
         } catch (error: any) {
             return (error as Error).message

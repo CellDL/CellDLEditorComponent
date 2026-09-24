@@ -66,7 +66,7 @@ function componentId(toolId: string): string {
 
 //==============================================================================
 
-// What we show in the component
+// What we show in the Vue component
 
 type BondgraphTool = {
     id: string
@@ -82,7 +82,7 @@ const toolDefinitions = vue.ref<BondgraphTool[]>([])
 //==============================================================================
 
 const idToComponent: Map<string, LibraryComponentTemplate> = new Map()
-const idToToolDefinition: Map<string,  BondgraphTool> = new Map()
+const idToToolDefinition: Map<string, BondgraphTool> = new Map()
 
 let activeId: string | undefined
 
@@ -138,7 +138,7 @@ function emitElementActiveEvent(element: HTMLImageElement) {
             })
         )
     } else {
-        // Tell the editor that a path style  has been selected
+        // Tell the editor that a path style has been selected
         document.dispatchEvent(
             new CustomEvent('connection-style', {
                 detail: {
