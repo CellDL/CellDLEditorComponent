@@ -11,26 +11,25 @@ import {
     MEMBRANE_GAP,
     MEMBRANE_STROKE_WIDTH
 } from '#root/utils/styling'
-import { type ICompartmentStyle, SVG_URI, svgRect } from '#root/utils/svgUtils'
-
 import { BoundedElement } from './boundedelement'
+import { type CompartmentStyling, SVG_URI, svgRect } from '#root/utils/svgUtils'
 
 //==============================================================================
 
-export const DEFAULT_COMPARTMENT_STYLE: ICompartmentStyle = {
-    colours: [COMPARTMENT_BACKGROUND],      // WIP -- gradient fill
+export const DEFAULT_COMPARTMENT_STYLE: CompartmentStyling = {
     cornerRadius: MEMBRANE_CORNER_RADIUS,
-    dashed: false,
-    doubleGap: MEMBRANE_GAP,
-    fill: COMPARTMENT_BACKGROUND,           // WIP -- to be removed
+    fill: [COMPARTMENT_BACKGROUND],      // WIP -- gradient fill
     gradientFill: false,                    // WIP -- gradient fill
+    strokeGap: MEMBRANE_GAP,
     strokeColour: MEMBRANE_COLOUR,
+    strokeDashed: false,
     strokeWidth: MEMBRANE_STROKE_WIDTH
 }
 
 //==============================================================================
 
-function createRectAsString(topLeft: PointLike, bottomRight: PointLike, styling: ICompartmentStyle, offset: number=0): string {
+function createRectAsString(topLeft: PointLike, bottomRight: PointLike,
+                            styling: CompartmentStyling, offset: number=0): string {
     const attributes: Record<string, string> = {
         stroke: styling.strokeColour,
         'stroke-width': String(styling.strokeWidth)
@@ -39,7 +38,7 @@ function createRectAsString(topLeft: PointLike, bottomRight: PointLike, styling:
     if (radius > 0) {
         attributes.rx = String(radius)
     }
-    if (styling.dashed) {
+    if (styling.strokeDashed) {
         attributes['stroke-dasharray'] = String(MEMBRANE_DASH*styling.strokeWidth)
     }
     // Background only when a single compartment boundary or this is the innermost boundary
@@ -88,12 +87,11 @@ function updateRectDimensions(rect: SVGRectElement, expand: number) {  // -ve `e
     rect.setAttribute('height', `${Math.max(0, height + 2*expand)}`)
 }
 
-function getRectStyling(rect: SVGRectElement): ICompartmentStyle {
+function getRectStyling(rect: SVGRectElement): CompartmentStyling {
     return {
-        colours: [],         // placeholder
+        fill: [],         // placeholder
         dashed: rect.hasAttribute('stroke-dasharray'),
-        doubleGap: 0,       // placeholder
-        fill: '',           // placeholder
+        strokeGap: 0,       // placeholder
         gradientFill: false,// placeholder
         cornerRadius: Number(rect.getAttribute('rx')) || 0,
         strokeColour: rect.getAttribute('stroke') || MEMBRANE_COLOUR,
@@ -101,7 +99,7 @@ function getRectStyling(rect: SVGRectElement): ICompartmentStyle {
     }
 }
 
-function updateRectStyling(rect: SVGRectElement, styling: ICompartmentStyle, offset: number=0) {
+function updateRectStyling(rect: SVGRectElement, styling: CompartmentStyling, offset: number=0) {
     rect.setAttribute('stroke', styling.strokeColour)
     rect.setAttribute('stroke-width', String(styling.strokeWidth))
     const radius = styling.cornerRadius + offset
@@ -110,7 +108,7 @@ function updateRectStyling(rect: SVGRectElement, styling: ICompartmentStyle, off
     } else {
         rect.removeAttribute('rx')
     }
-    if (styling.dashed) {
+    if (styling.strokeDashed) {
         rect.setAttribute('stroke-dasharray', String(MEMBRANE_DASH*styling.strokeWidth))
     } else {
         rect.removeAttribute('stroke-dasharray')
@@ -122,28 +120,28 @@ export class Compartment {
     #boundary0: SVGRectElement
     #boundary1: SVGRectElement|undefined
     #celldlDiagram!: CellDLDiagram
-    #styling: ICompartmentStyle
+    #styling: CompartmentStyling
     #svgElement: SVGGElement
 
-    private constructor(svgElement: SVGGElement, boundary0: SVGRectElement, boundary1: SVGRectElement|undefined, styling: ICompartmentStyle) {
+    private constructor(svgElement: SVGGElement, boundary0: SVGRectElement, boundary1: SVGRectElement|undefined, styling: CompartmentStyling) {
         this.#svgElement = svgElement
         this.#boundary0 = boundary0
         this.#boundary1 = boundary1
         this.#styling = styling
     }
 
-    static create(id: string, topLeft: PointLike, bottomRight: PointLike, styling: ICompartmentStyle, diagram: CellDLDiagram): Compartment {
+    static create(id: string, topLeft: PointLike, bottomRight: PointLike, styling: CompartmentStyling, diagram: CellDLDiagram): Compartment {
         const svgElement = document.createElementNS(SVG_URI, 'g')
         svgElement.id = id
-        svgElement.insertAdjacentHTML('beforeend', createRectAsString(topLeft, bottomRight,  styling, styling.doubleGap/2))
+        svgElement.insertAdjacentHTML('beforeend', createRectAsString(topLeft, bottomRight, styling, styling.strokeGap/2))
         const boundary0 = svgElement.lastChild as SVGRectElement
         let boundary1: SVGRectElement|undefined
-        if (styling.doubleGap > 0) {
-            svgElement.insertAdjacentHTML('beforeend', createRectAsString(topLeft, bottomRight,  styling, -styling.doubleGap/2))
+        if (styling.strokeGap > 0) {
+            svgElement.insertAdjacentHTML('beforeend', createRectAsString(topLeft, bottomRight, styling, -styling.strokeGap/2))
             boundary1 = svgElement.lastChild as SVGRectElement
-            svgElement.setAttribute('data-double-gap', String(styling.doubleGap))
+            svgElement.setAttribute('data-stroke-gap', String(styling.strokeGap))
         }
-        const self = new  Compartment(svgElement, boundary0, boundary1, styling)
+        const self = new Compartment(svgElement, boundary0, boundary1, styling)
         self.#celldlDiagram = diagram
         return self
     }
@@ -151,11 +149,11 @@ export class Compartment {
     // used when loading compartments from an existing diagram...
     static createFromElement(svgElement: SVGGElement): Compartment|undefined {
         if (svgElement.tagName === 'g') {
-            const doubleGap = Number(svgElement.getAttribute('data-double-gap')) || 0
+            const strokeGap = Number(svgElement.getAttribute('data-stroke-gap')) || 0
             let n = 0
             let boundary0: SVGRectElement|undefined
             let boundary1: SVGRectElement|undefined
-            let styling: ICompartmentStyle|undefined
+            let styling: CompartmentStyling|undefined
             for (const boundary of svgElement.children) {
                 if (boundary.tagName === 'rect') {
                     if (n === 0) {
@@ -165,13 +163,13 @@ export class Compartment {
                         boundary1 = boundary as SVGRectElement
                     }
                     if (styling && n < 2) {
-                        styling.fill = boundary.getAttribute('fill') || COMPARTMENT_BACKGROUND
+                        styling.fill[0] = boundary.getAttribute('fill') || COMPARTMENT_BACKGROUND
                     }
                     n += 1
                 }
             }
             if (styling && boundary0) {
-                styling.doubleGap = doubleGap
+                styling.strokeGap = strokeGap
                 const self = new Compartment(svgElement, boundary0, boundary1, styling)
 //                self.#celldlDiagram = celldlSvgElement.celldlObject.celldlDiagram
                 return self
@@ -187,39 +185,39 @@ export class Compartment {
         return this.#svgElement
     }
 
-    setStyling(styling: ICompartmentStyle) {
-        let doubleGap = Number(this.#svgElement.getAttribute('data-double-gap')) || 0
-        if (doubleGap !== styling.doubleGap) {
-            if (styling.doubleGap === 0) {
+    setStyling(styling: CompartmentStyling) {
+        let strokeGap = Number(this.#svgElement.getAttribute('data-stroke-gap')) || 0
+        if (strokeGap !== styling.strokeGap) {
+            if (styling.strokeGap === 0) {
                 // Double to single boundary
-                updateRectDimensions(this.#boundary0, -doubleGap/2)
+                updateRectDimensions(this.#boundary0, -strokeGap/2)
                 if (this.#boundary1) {
                     this.#svgElement.removeChild(this.#boundary1)
                 }
-                this.#svgElement.removeAttribute('data-double-gap')
-            } else if (doubleGap === 0) {
+                this.#svgElement.removeAttribute('data-stroke-gap')
+            } else if (strokeGap === 0) {
                 // Single to double boundary
                 if (!this.#boundary1) {
                     this.#boundary1 = this.#boundary0.cloneNode() as SVGRectElement
                     this.#svgElement.appendChild(this.#boundary1)
-                    updateRectDimensions(this.#boundary1, -styling.doubleGap/2)
+                    updateRectDimensions(this.#boundary1, -styling.strokeGap/2)
                 }
-                updateRectDimensions(this.#boundary0, styling.doubleGap/2)
-                this.#svgElement.setAttribute('data-double-gap', String(styling.doubleGap))
+                updateRectDimensions(this.#boundary0, styling.strokeGap/2)
+                this.#svgElement.setAttribute('data-stroke-gap', String(styling.strokeGap))
             } else {
                 // adjust
-                const expand = (styling.doubleGap - doubleGap)/2
+                const expand = (styling.strokeGap - strokeGap)/2
                 updateRectDimensions(this.#boundary0, expand)
                 if (this.#boundary1) {
                     updateRectDimensions(this.#boundary1, -expand)
                 }
-                this.#svgElement.setAttribute('data-double-gap', String(styling.doubleGap))
+                this.#svgElement.setAttribute('data-stroke-gap', String(styling.strokeGap))
             }
-            doubleGap = styling.doubleGap
+            strokeGap = styling.strokeGap
         }
-        updateRectStyling(this.#boundary0, styling,  doubleGap/2)
+        updateRectStyling(this.#boundary0, styling,  strokeGap/2)
         if (this.#boundary1) {
-            updateRectStyling(this.#boundary1, styling, -doubleGap/2)
+            updateRectStyling(this.#boundary1, styling, -strokeGap/2)
         }
     }
 }

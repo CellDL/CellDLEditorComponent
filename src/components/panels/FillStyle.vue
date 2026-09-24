@@ -64,10 +64,10 @@ useThemeCssVariables('checkbox')
 useThemeCssVariables('divider')
 useThemeCssVariables('radiobutton')
 
-import type { INodeStyle } from '#root/utils/svgUtils'
+import type { FillStyling } from '#root/utils/svgUtils'
 
 const props = defineProps<{
-    fillStyle: INodeStyle
+    fillStyle: FillStyling
 }>()
 
 const startPrompt = vue.ref(props.fillStyle.gradientFill ? 'Start colour' : 'Fill colour')
@@ -88,7 +88,7 @@ vue.watch(
     () => props.fillStyle,
     () => {
         startPrompt.value = props.fillStyle.gradientFill ? 'Start colour' : 'Fill colour'
-        gradientDirn.value = props.fillStyle.direction ?? 'H'
+        gradientDirn.value = props.fillStyle.gradientDirection ?? 'H'
     }
 )
 
@@ -98,9 +98,9 @@ const colours = vue.computed<{
 }>(() => {
     return {
         // biome-ignore lint/style/noNonNullAssertion: fillColours is at least 1 long
-        start: props.fillStyle.colours[0]!,
+        start: props.fillStyle.fill[0]!,
         // biome-ignore lint/style/noNonNullAssertion: fillColours is at least 1 long
-        stop: props.fillStyle.colours[1]! ?? props.fillStyle.colours[0]!
+        stop: props.fillStyle.fill[1]! ?? props.fillStyle.fill[0]!
     }
 })
 
@@ -113,7 +113,7 @@ const stopColour = vue.computed<string>(() => {
     return new TinyColor(stopColour).toHexString()
 })
 
-const gradientDirn = vue.ref<string>(props.fillStyle.direction ?? 'H')
+const gradientDirn = vue.ref<string>(props.fillStyle.gradientDirection ?? 'H')
 
 function colourChange(e: Event) {
     const target = e.target as HTMLInputElement
@@ -137,14 +137,14 @@ const emit = defineEmits(['change'])
 function emitChange() {
     if (props.fillStyle.gradientFill) {
         emit('change', {
-            gradientFill: true,
-            colours: [colours.value.start, colours.value.stop],
-            direction: gradientDirn.value
+            fill: [colours.value.start, colours.value.stop],
+            gradientDirection: gradientDirn.value,
+            gradientFill: true
         })
     } else {
         emit('change', {
-            gradientFill: false,
-            colours: [colours.value.start]
+            fill: [colours.value.start],
+            gradientFill: false
         })
     }
 }

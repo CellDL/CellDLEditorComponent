@@ -54,7 +54,7 @@ import {
     getSvgFillStyle,
     getSvgPathStyle,
     setSvgPathStyle,
-    type IPathStyle
+    type PathStyling
 } from '#root/utils/svgUtils'
 
 import { alert } from '#editor/editor/alerts'
@@ -908,7 +908,7 @@ export class BondgraphPlugin implements PluginInterface {
                 await this.#updateSvgElement(celldlObject, pluginData.species, pluginData.location)
             }
         } else if (objectType === 'path' && 'pathStyle' in styling) {
-            setSvgPathStyle(celldlObject.celldlSvgElement!.svgElement, styling.pathStyle as IPathStyle)
+            setSvgPathStyle(celldlObject.celldlSvgElement!.svgElement, styling.pathStyle as PathStyling)
         }
     }
 

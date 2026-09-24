@@ -39,15 +39,15 @@ useThemeCssVariables('floatlabel')
 useThemeCssVariables('inputtext')
 useThemeCssVariables('slider')
 
-import type { IPathStyle } from '#root/utils/svgUtils'
+import type { PathStyling } from '#root/utils/svgUtils'
 
 const props = defineProps<{
-    pathStyle: IPathStyle
+    pathStyle: PathStyling
 }>()
 
-const colour = vue.ref(props.pathStyle.colour)
-const dashed = vue.ref(props.pathStyle.dashed)
-const width = vue.ref(props.pathStyle.width)
+const colour = vue.ref(props.pathStyle.strokeColour)
+const dashed = vue.ref(props.pathStyle.strokeDashed)
+const width = vue.ref(props.pathStyle.strokeWidth)
 
 const minWidth = vue.ref<number>(0.5)
 const maxWidth = vue.ref<number>(10)
@@ -56,9 +56,9 @@ const widthStep = vue.ref<number>(0.5)
 vue.watch(
     () => props.pathStyle,
     () => {
-        colour.value = props.pathStyle.colour
-        dashed.value = props.pathStyle.dashed
-        width.value = props.pathStyle.width
+        colour.value = props.pathStyle.strokeColour
+        dashed.value = props.pathStyle.strokeDashed
+        width.value = props.pathStyle.strokeWidth
     }
 )
 
@@ -76,9 +76,9 @@ const emit = defineEmits(['change'])
 
 function emitChange() {
     emit('change', {
-        colour: colour.value,
-        dashed: dashed.value,
-        width: width.value
+        strokeColour: colour.value,
+        strokeDashed: dashed.value,
+        strokeWidth: width.value
     })
 }
 </script>

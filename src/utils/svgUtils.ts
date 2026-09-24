@@ -38,25 +38,24 @@ export const SVG_URI = 'http://www.w3.org/2000/svg'
 
 //==============================================================================
 
-export interface ICompartmentStyle {
+export interface CompartmentStyling extends FillStyling, MembraneStyling {
     cornerRadius: number
-    dashed: boolean
-    doubleGap: number
-    fill: string
+}
+
+export interface FillStyling {
+    fill: string[]
+    gradientFill: boolean
+    gradientDirection?: string
+}
+
+export interface PathStyling {
     strokeColour: string
     strokeWidth: number
+    strokeDashed: boolean
 }
 
-export interface INodeStyle {
-    gradientFill: boolean
-    colours: string[]
-    direction?: string
-}
-
-export interface IPathStyle {
-    colour: string   // defaut is CONNECTION_COLOUR (with opacity of 0.7)
-    width: number    // default is CONNECTION_WIDTH (but +2 when selected)
-    dashed: boolean  // set `dashed` class`
+export interface MembraneStyling extends PathStyling {
+    strokeGap: number
 }
 
 //==============================================================================
@@ -412,19 +411,19 @@ export function getSvgFillStyle(svgText: string): string[] {
 
 //==============================================================================
 
-export function getSvgPathStyle(svgElement: SVGGraphicsElement): IPathStyle {
+export function getSvgPathStyle(svgElement: SVGGraphicsElement): PathStyling {
     return {
-        colour: svgElement.getAttribute('stroke') || CONNECTION_COLOUR,
-        width: lengthToPixels(svgElement.getAttribute('stroke-width')) || CONNECTION_WIDTH,
-        dashed: svgElement.hasAttribute('stroke-dasharray')
+        strokeColour: svgElement.getAttribute('stroke') || CONNECTION_COLOUR,
+        strokeWidth: lengthToPixels(svgElement.getAttribute('stroke-width')) || CONNECTION_WIDTH,
+        strokeDashed: svgElement.hasAttribute('stroke-dasharray')
     }
 }
 
-export function setSvgPathStyle(svgElement: SVGGraphicsElement, pathStyle: IPathStyle) {
-    svgElement.setAttribute('stroke', pathStyle.colour)
-    svgElement.setAttribute('stroke-width', String(pathStyle.width))
-    if (pathStyle.dashed) {
-        svgElement.setAttribute('stroke-dasharray', String(CONNECTION_DASH*pathStyle.width))
+export function setSvgPathStyle(svgElement: SVGGraphicsElement, pathStyle: PathStyling) {
+    svgElement.setAttribute('stroke', pathStyle.strokeColour)
+    svgElement.setAttribute('stroke-width', String(pathStyle.strokeWidth))
+    if (pathStyle.strokeDashed) {
+        svgElement.setAttribute('stroke-dasharray', String(CONNECTION_DASH*pathStyle.strokeWidth))
     } else {
         svgElement.removeAttribute('stroke-dasharray')
     }
