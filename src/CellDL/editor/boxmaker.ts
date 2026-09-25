@@ -18,9 +18,13 @@ limitations under the License.
 
 ******************************************************************************/
 
-import type { CellDLConnectedObject, CellDLObject } from '#editor/celldlObjects'
 import { svgRect } from '#root/utils/svgUtils'
 import { Point } from '#root/utils/points'
+import type {
+    CellDLCompartment,
+    CellDLConnectedObject,
+    CellDLObject
+} from '#editor/celldlObjects'
 import { Bounds, ComputedValue, RestrictedValue } from '#editor/geometry'
 import { ControlPoint } from '#editor/geometry/controls'
 import { MEMBRANE_GAP } from '#root/utils/styling'
@@ -139,8 +143,8 @@ export class BoxMaker {
              && point.y < this.#bottomRight.y)
     }
 
-    makeCompartment() {
-        this.#editor.celldlDiagram?.makeCompartment(this.bounds)
+    makeCompartment(): CellDLCompartment {
+        return this.#editor.celldlDiagram?.makeCompartment(this.bounds)
     }
 
     groupComponents() {

@@ -41,6 +41,7 @@ const STYLING_TEMPLATE: PropertyGroup = {
 
 
 interface PluginData {
+    managed?: boolean
     fillColours?: string[]
 }
 
@@ -82,12 +83,17 @@ export class DrawingPlugin implements PluginInterface {
     addPluginMetadataToStore(_rdfStore: MetadataStore) {
     }
 
-    getPluginData(_celldlObject: CellDLObject): object {
+    getPluginData(celldlObject: CellDLObject): object {
+        if (celldlObject.isCompartment) {
+            return {
+                managed: true
+            }
+        }
         return {}
     }
 
-    statusText(_celldlObject: CellDLObject): string {
-        return ''
+    statusText(celldlObject: CellDLObject): string {
+        return celldlObject.typeName
     }
 
 

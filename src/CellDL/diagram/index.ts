@@ -969,6 +969,7 @@ export class CellDLDiagram {
 
     #loadComponents() {
         this.#loadObject(CELLDL.uri('Component'), CellDLComponent)
+        this.#loadObject(CELLDL.uri('Compartment'), CellDLCompartment)
         this.#loadObject(CELLDL.uri('UnconnectedPort'), CellDLUnconnectedPort)
     }
 

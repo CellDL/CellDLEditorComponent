@@ -670,6 +670,19 @@ export class CellDLEditor {
         }
     }
 
+    #addCompartment() {
+        if (this.#boxMaker) {
+            const celldlObject = this.#boxMaker.makeCompartment()
+            this.#unsetActiveObjects()
+            if (celldlObject) {
+                // Select newly added object
+                this.unsetSelectedObjects()
+                this.setSelectedObject(celldlObject)
+                this.#showStatus(celldlObject.celldlSvgElement?.centroid as Point, celldlObject)
+            }
+        }
+    }
+
     #appDropEvent(event: DragEvent) {
         this.#dragging = false
         event.preventDefault();
@@ -1008,7 +1021,7 @@ export class CellDLEditor {
                 if (this.#boxMaker) {
                     if (this.#editorMode === EDITOR_MODE.DrawCompartment) {
                         this.#boxMaker.pointerEvent(event, svgPoint)
-                        this.#boxMaker.makeCompartment()
+                        this.#addCompartment()
                         this.#closeBoxMaker()
                     } else if (!this.#boxMaker.pointerEvent(event, svgPoint)) {
                         this.#closeBoxMaker()
