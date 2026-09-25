@@ -38,28 +38,6 @@ export const SVG_URI = 'http://www.w3.org/2000/svg'
 
 //==============================================================================
 
-export interface CompartmentStyling extends FillStyling, MembraneStyling {
-    cornerRadius: number
-}
-
-export interface FillStyling {
-    fill: string[]
-    gradientFill: boolean
-    gradientDirection?: string
-}
-
-export interface PathStyling {
-    strokeColour: string
-    strokeWidth: number
-    strokeDashed: boolean
-}
-
-export interface MembraneStyling extends PathStyling {
-    strokeGap: number
-}
-
-//==============================================================================
-
 export interface LatexMathSvgOptions {
     background?: string|string[]
     border?: string

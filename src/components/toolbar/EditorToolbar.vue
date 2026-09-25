@@ -38,7 +38,8 @@ useThemeCssVariables('toolbar')
 
 //==============================================================================
 
-import type { EditorToolButton, PopoverEventData, StyleObject } from '#root/utils/editor-types'
+import type { EditorToolButton, PopoverEventData } from '#root/utils/editor-types'
+import type { Styling } from '#root/utils/styling'
 
 import ToolButton from './ToolButton.vue'
 
@@ -83,7 +84,7 @@ function panelEvent(toolId: string, itemId: string, oldValue: string, newValue: 
     )
 }
 
-function styleEvent(toolId: string, object: string, styling: StyleObject) {
+function styleEvent(toolId: string, object: string, styling: Styling) {
     document.dispatchEvent(
         new CustomEvent('style-event', {
             detail: {

@@ -46,15 +46,17 @@ import {
     type ItemDetails,
     PANEL_ID,
     type PropertyGroup,
-    type StyleObject,
     type ValueChange
 } from '#root/utils/editor-types'
 import type { ConnectionStatus, PluginInterface } from '#root/plugins'
+import type {
+    PathStyling,
+    Styling
+} from '#root/utils/styling'
 import {
     getSvgFillStyle,
     getSvgPathStyle,
-    setSvgPathStyle,
-    type PathStyling
+    setSvgPathStyle
 } from '#root/utils/svgUtils'
 
 import { alert } from '#editor/editor/alerts'
@@ -896,7 +898,7 @@ export class BondgraphPlugin implements PluginInterface {
 
     //==================================
 
-    async updatedComponentStyling(celldlObject: CellDLObject, objectType: string, styling: StyleObject) {
+    async updatedComponentStyling(celldlObject: CellDLObject, objectType: string, styling: Styling) {
         const pluginData = (<PluginData>celldlObject.pluginData(this.id))
         if (objectType === 'node' && 'fillColours' in styling) {
             const fillColours = styling.fillColours as string[] || []

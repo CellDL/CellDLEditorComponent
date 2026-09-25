@@ -13,14 +13,16 @@ import type { PluginInterface } from '#root/plugins'
 import {
     PANEL_ID,
     type PropertyGroup,
-    type StyleObject,
     type ValueChange
 } from '#root/utils/editor-types'
+import type {
+    PathStyling,
+    Styling
+} from '#root/utils/styling'
 import {
     getSvgFillStyle,
 //    getSvgPathStyle,
     setSvgPathStyle,
-    type PathStyling
 } from '#root/utils/svgUtils'
 
 //==============================================================================
@@ -143,7 +145,7 @@ export class DrawingPlugin implements PluginInterface {
 
     //==========================================================================
 
-    async updatedComponentStyling(celldlObject: CellDLObject, objectType: string, styling: StyleObject) {
+    async updatedComponentStyling(celldlObject: CellDLObject, objectType: string, styling: Styling) {
         const pluginData = (<PluginData>celldlObject.pluginData(this.id))
         if (objectType === 'node' && 'fillColours' in styling) {
             const fillColours = styling.fillColours as string[] || []

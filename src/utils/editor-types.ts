@@ -23,7 +23,7 @@ import type * as vue from 'vue'
 //==============================================================================
 
 import type * as locApi from '#root/libopencor/locUIJsonApi'
-import type { PathStyling } from './svgUtils'
+import type { Styling } from './styling'
 
 //==============================================================================
 
@@ -44,15 +44,10 @@ export type ItemDetails = locApi.IUiJsonInput & {
     numeric?: boolean
 }
 
-export type StyleObject = {
-    fillColours?: string[]
-    pathStyle?: PathStyling
-}
-
 export interface PropertyGroup {
     groupId: string
     items: ItemDetails[]
-    styling?: StyleObject
+    styling?: Styling
     title?: string
 }
 

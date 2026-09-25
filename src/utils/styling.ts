@@ -22,6 +22,33 @@ import { EM_SIZE } from '#editor/geometry/units'
 
 //==============================================================================
 
+export interface CompartmentStyling extends FillStyling, MembraneStyling {
+    cornerRadius: number
+}
+
+export interface FillStyling {
+    fill: string[]
+    gradientFill: boolean
+    gradientDirection?: string
+}
+
+export interface PathStyling {
+    strokeColour: string
+    strokeWidth: number
+    strokeDashed: boolean
+}
+
+export interface MembraneStyling extends PathStyling {
+    strokeGap: number
+}
+
+export type Styling = {
+    fillColours?: string[]
+    pathStyle?: PathStyling
+}
+
+//==============================================================================
+
 export const CONNECTION_ARROW_SIZE = [4, 4] // [W, H] pixels
 export const CONNECTION_SPLAY_PADDING = 16 // If <= 1.0 then fraction of elements width and height else pixels
 export const MAX_CONNECTION_SPLAY_PADDING = 20 // pixels

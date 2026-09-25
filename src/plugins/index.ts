@@ -49,9 +49,11 @@ import type {
 import type {
     PANEL_ID,
     PropertyGroup,
-    StyleObject,
     ValueChange
 } from '#root/utils/editor-types'
+
+
+import type { Styling } from '#root/utils/styling'
 
 //==============================================================================
 
@@ -204,7 +206,7 @@ export interface PluginInterface {
      * @param objectType The type of object (`node` or `path`).
      * @param styling Styling for the object.
      */
-    updatedComponentStyling: (celldlObject: CellDLObject, objectType: string, styling: StyleObject) =>  Promise<void>
+    updatedComponentStyling: (celldlObject: CellDLObject, objectType: string, styling: Styling) =>  Promise<void>
 }
 
 //==============================================================================
@@ -416,7 +418,7 @@ export class ComponentLibraryPlugin {
         }
     }
 
-    async updatedComponentStyling(celldlObject: CellDLObject, objectType: string, styling: StyleObject) {
+    async updatedComponentStyling(celldlObject: CellDLObject, objectType: string, styling: Styling) {
         for (const pluginId of celldlObject.pluginIds) {
             const plugin = this.#registeredPlugins.get(pluginId)
             if (plugin && Object.keys(celldlObject.pluginData(pluginId)).length) {

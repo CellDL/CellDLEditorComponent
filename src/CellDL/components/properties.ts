@@ -33,9 +33,9 @@ import {
     type ItemDetails,
     PANEL_ID,
     type PropertyGroup,
-    type StyleObject,
     type ValueChange
 } from '#root/utils/editor-types'
+import type { Styling } from '#root/utils/styling'
 
 //==============================================================================
 //==============================================================================
@@ -217,7 +217,7 @@ export class ObjectPropertiesPanel {
         }
     }
 
-    async updateObjectStyling(celldlObject: CellDLObject|null, objectType: string, styling: StyleObject) {
+    async updateObjectStyling(celldlObject: CellDLObject|null, objectType: string, styling: Styling) {
         if (celldlObject) {
             await componentLibraryPlugin.updatedComponentStyling(celldlObject, objectType, styling)
         }
