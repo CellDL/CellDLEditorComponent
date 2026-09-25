@@ -164,8 +164,9 @@ export class PathMaker {
     static #checkMaxConnections(celldlObject: CellDLConnectedObject): boolean {
         if (celldlObject.numConnections < celldlObject.maxConnections) {
             return true
+        } else if (celldlObject.maxConnections >= 0) {
+            alert.tooltip('Component has maximum number of connections')
         }
-        alert.tooltip('Component has maximum number of connections')
         return false
     }
 

@@ -830,11 +830,13 @@ export class CellDLEditor {
                 element.style.removeProperty('cursor')
                 this.currentObject = currentObject
                 // Set object active regardless of whether it's valid for the path
-                this.#setActiveObjects([currentObject])
                 if (this.#pathMaker === null) {
                     this.#nextPathNode = PathMaker.validStartObject(currentObject)
                 } else {
                     this.#nextPathNode = this.#pathMaker.validPathNode(currentObject)
+                }
+                if (this.#nextPathNode) {
+                    this.#setActiveObjects([currentObject])
                 }
             }
         } else if (this.#editorMode === EDITOR_MODE.DrawCompartment) {

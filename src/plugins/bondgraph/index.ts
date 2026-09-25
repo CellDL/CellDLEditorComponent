@@ -196,6 +196,7 @@ interface PluginData {
     fillColours?: string[]
     junctionType?: string
     location?: string
+    managed?: boolean
     species?: string
     symbol?: string
 }
@@ -474,7 +475,8 @@ export class BondgraphPlugin implements PluginInterface {
     getPluginData(celldlObject: CellDLObject): object {
         if (celldlObject.isConnection) {
             return {
-                baseComponent: {}
+                baseComponent: {},
+                managed: true
             }
         }
         const rows = celldlObject.rdfStore.query(`${SPARQL_PREFIXES}
@@ -512,7 +514,12 @@ export class BondgraphPlugin implements PluginInterface {
                 }
             }
         }
-        return pluginData || {}
+        if (pluginData) {
+            pluginData.managed = true
+            return pluginData
+
+        }
+        return {}
     }
 
     statusText(celldlObject: CellDLObject): string {
@@ -586,6 +593,9 @@ export class BondgraphPlugin implements PluginInterface {
         }
         const sourceData = <PluginData>sourceObject.pluginData(this.id)
         const targetData = <PluginData>targetObject.pluginData(this.id)
+        if (!sourceData.managed || !targetData.managed) {
+            return
+        }
         if (sourceData.junctionType === targetData.junctionType) {
             if (!sourceData.junctionType) {
                 return { alert: 'Direct connections between Bond Elements are not allowed' }

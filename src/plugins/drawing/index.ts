@@ -116,7 +116,7 @@ export class DrawingPlugin implements PluginInterface {
     }
 
     getMaxConnections(_celldlObject: CellDLObject): number {
-        return Infinity
+        return -1
     }
 
     //==========================================================================
