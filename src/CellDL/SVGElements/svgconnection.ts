@@ -18,23 +18,23 @@ limitations under the License.
 
 ******************************************************************************/
 
-import SVGPathCommander from 'svg-path-commander'
 import type { ShapeTypes } from 'svg-path-commander'
+import SVGPathCommander from 'svg-path-commander'
 
 //==============================================================================
-
-import type { PointLike } from '#root/utils/points'
-import { alert } from '#editor/editor/alerts'
 
 import type { CellDLConnection } from '#editor/celldlObjects'
+import { alert } from '#editor/editor/alerts'
+
+import type { PointLike } from '#root/utils/points'
 
 //==============================================================================
 
-import { ID_PART_SEPARATOR, type PathElement } from './pathelement'
-import { LinearPath } from './linearpath'
-import { RectilinearPath } from './rectilinearpath'
 import { CellDLSVGElement, type DomLocation, type ElementMoveOptions } from '.'
 import type { BoundedElement } from './boundedelement'
+import { LinearPath } from './linearpath'
+import { ID_PART_SEPARATOR, type PathElement } from './pathelement'
+import { RectilinearPath } from './rectilinearpath'
 
 //==============================================================================
 

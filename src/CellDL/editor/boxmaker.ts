@@ -18,8 +18,6 @@ limitations under the License.
 
 ******************************************************************************/
 
-import { svgRect } from '#root/utils/svgUtils'
-import { Point } from '#root/utils/points'
 import type {
     CellDLCompartment,
     CellDLConnectedObject,
@@ -27,11 +25,13 @@ import type {
 } from '#editor/celldlObjects'
 import { Bounds, ComputedValue, RestrictedValue } from '#editor/geometry'
 import { ControlPoint } from '#editor/geometry/controls'
+import { Point } from '#root/utils/points'
 import { MEMBRANE_GAP } from '#root/utils/styling'
+import { svgRect } from '#root/utils/svgUtils'
 
 import { type CellDLEditor, CONTEXT_MENU, getElementId } from '.'
 import { editGuides } from './editguides'
-import { type EditorFrame, EDITOR_FRAME_ID } from './editorframe'
+import { EDITOR_FRAME_ID, type EditorFrame } from './editorframe'
 
 //==============================================================================
 
