@@ -88,11 +88,11 @@ function updateRectDimensions(rect: SVGRectElement, expand: number) {  // -ve `e
 function getRectStyling(rect: SVGRectElement): CompartmentStyling {
     return {
         fill: [],         // placeholder
-        dashed: rect.hasAttribute('stroke-dasharray'),
-        strokeGap: 0,       // placeholder
         gradientFill: false,// placeholder
         cornerRadius: Number(rect.getAttribute('rx')) || 0,
         strokeColour: rect.getAttribute('stroke') || MEMBRANE_COLOUR,
+        strokeDashed: rect.hasAttribute('stroke-dasharray'),
+        strokeGap: 0,       // placeholder
         strokeWidth: Number(rect.getAttribute('stroke-width')) || MEMBRANE_STROKE_WIDTH
     }
 }
