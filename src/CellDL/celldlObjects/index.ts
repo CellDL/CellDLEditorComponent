@@ -238,6 +238,10 @@ export class CellDLObject {
         return this.#celldlSvgElement?.svgElement || null
     }
 
+    get typeName(): string {
+        return this.#celldlTypeName
+    }
+
     pluginData(pluginId: string): object {
         return this.#pluginData.get(pluginId) || {}
     }
