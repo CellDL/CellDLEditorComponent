@@ -952,7 +952,7 @@ export class CellDLDiagram {
         return this.#kb.subjectsOfType(parentType).filter((st) => st[0].value.startsWith(this.#documentNode.value))
     }
 
-    #loadObject<T>(type: NamedNode, CellDLClass: Constructor<T>) {
+    #loadObject<T>(type: NamedNode, CellDLClass: T) {
         for (const subjectType of this.#subjectsOfType(type)) {
             if (subjectType[1].equals(type)) {
                 const object = this.#celldlObjectFromRdf(CellDLClass as Constructor<CellDLObject>, subjectType[0])

@@ -78,7 +78,7 @@ export class CellDLObject {
 
     #celldlStyleClass: CELLDL_STYLE_CLASS
     #celldlDiagram: CellDLDiagram
-    #celldlSvgElement: CellDLSVGElement|undefined
+    #celldlSvgElement?: CellDLSVGElement
     #celldlTypeName: string
 
     #label: string | null = null
