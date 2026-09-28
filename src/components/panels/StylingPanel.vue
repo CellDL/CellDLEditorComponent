@@ -3,16 +3,9 @@
         template(#title)
             div {{ title }}
         template(#content)
-            div(
-                v-if="!properties.objectId"
-            ) Please select a single element or path.
-            template(
-                v-else
-            )
-                .group(
-                    v-for="group in expandedGroups"
-                )
-                    p.bold {{ group.groupId }}
+            div(v-if="!properties.objectId") Please select a single element or path.
+            template(v-else)
+                .group(v-for="group in expandedGroups")
                     FillStyle(
                         v-if="group.objectType === 'node'"
                         :fillStyle="group.objectStyle"
@@ -78,7 +71,6 @@ function setExpandededGroups(groups: PropertyGroup[]) {
         const styling = group.styling || {}
         const objectType = 'fillColours' in styling ? 'node'
                          : 'pathStyle' in styling ? 'path'
-                         : group.items.length > 0 ? 'items'
                          : 'none'
         let objectStyle: FillStyling|PathStyling|undefined
         if ('fillColours' in styling) {
