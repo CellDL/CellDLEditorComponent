@@ -171,6 +171,7 @@ export class ObjectPropertiesPanel {
             this.#componentPropertiesRef.value.objectId = celldlObject.id
             for (const group of this.#componentPropertiesRef.value.groups) {
                 group.items.length = 0
+                group.styling = {}
             }
             if (this.#panelId === PANEL_ID.METADATA_PANEL) {
                 // First get generic metadata
