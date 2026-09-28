@@ -207,6 +207,8 @@ enum BG_PROPERTY_GROUP_ID {
     ElementVariables = 'bg-element-variables'
 }
 
+const BG_PROPERTY_GROUP_IDS = Object.entries(BG_PROPERTY_GROUP_ID).map(([_, value]) => value as string)
+
 const BG_ELEMENT_TYPE_ITEM  = `${BG_PROPERTY_GROUP_ID.ElementProperties}/bg-element-type`
 const BG_ELEMENT_SPECIES_ITEM  = `${BG_PROPERTY_GROUP_ID.ElementProperties}/bg-element-species`
 const BG_ELEMENT_LOCATION_ITEM  = `${BG_PROPERTY_GROUP_ID.ElementProperties}/bg-element-location`
@@ -631,20 +633,22 @@ export class BondgraphPlugin implements PluginInterface {
         if (panelId === PANEL_ID.PROPERTIES_PANEL) {
             if (!celldlObject.isConnection) {
                 const pluginData = (<PluginData>celldlObject.pluginData(this.id))
-                componentProperties.forEach(componentGroup => {
-                    const groupTemplate = this.#elementPropertiesTemplate.get(componentGroup.groupId)
-                    if (groupTemplate) {
-                        if (componentGroup.groupId === BG_PROPERTY_GROUP_ID.ElementProperties) {
-                            this.#loadElementProperties(celldlObject, componentGroup, groupTemplate)
-                        } else if (componentGroup.groupId === BG_PROPERTY_GROUP_ID.ElementInitialValue) {
-                            this.#loadElementProperties(celldlObject, componentGroup, groupTemplate)
-                        } else if (pluginData.elementTemplate) {
-                            if (componentGroup.groupId === BG_PROPERTY_GROUP_ID.ElementParameters) {
-                                this.#setVariableItems(pluginData.elementTemplate.parameters, componentGroup)
-                                this.#loadVariableItems(celldlObject, componentGroup)
-                            } else if (componentGroup.groupId === BG_PROPERTY_GROUP_ID.ElementVariables) {
-                                this.#setVariableItems(pluginData.elementTemplate.variables, componentGroup)
-                                this.#loadVariableItems(celldlObject, componentGroup)
+                componentProperties.forEach(group => {
+                   if (BG_PROPERTY_GROUP_IDS.includes(group.groupId)) {
+                        const groupTemplate = this.#elementPropertiesTemplate.get(group.groupId)
+                        if (groupTemplate) {
+                            if (group.groupId === BG_PROPERTY_GROUP_ID.ElementProperties) {
+                                this.#loadElementProperties(celldlObject, group, groupTemplate)
+                            } else if (group.groupId === BG_PROPERTY_GROUP_ID.ElementInitialValue) {
+                                this.#loadElementProperties(celldlObject, group, groupTemplate)
+                            } else if (pluginData.elementTemplate) {
+                                if (group.groupId === BG_PROPERTY_GROUP_ID.ElementParameters) {
+                                    this.#setVariableItems(pluginData.elementTemplate.parameters, group)
+                                    this.#loadVariableItems(celldlObject, group)
+                                } else if (group.groupId === BG_PROPERTY_GROUP_ID.ElementVariables) {
+                                    this.#setVariableItems(pluginData.elementTemplate.variables, group)
+                                    this.#loadVariableItems(celldlObject, group)
+                                }
                             }
                         }
                     }
@@ -653,7 +657,9 @@ export class BondgraphPlugin implements PluginInterface {
             }
         } else if (panelId === PANEL_ID.STYLE_PANEL) {
             componentProperties.forEach(group => {
-                this.#loadElementStyling(celldlObject, group, celldlObject.isConnection)
+                if (group.groupId === BG_STYLE_GROUP_ID) {
+                    this.#loadElementStyling(celldlObject, group, celldlObject.isConnection)
+                }
             })
         }
     }
