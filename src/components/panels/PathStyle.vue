@@ -26,6 +26,7 @@
                 binary
                 @change="emitChange"
             )
+        Divider
 </template>
 
 <script setup lang="ts">
@@ -98,7 +99,7 @@ function emitChange() {
 }
 
 .spacer {
-    height: 10px;
+    height: 20px;
 }
 /* Based on https://rebeccamdeprey.com/blog/styling-the-html-color-input */
 

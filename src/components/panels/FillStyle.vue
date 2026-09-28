@@ -1,14 +1,6 @@
 <template lang="pug">
     .card
         .flexPrompt
-            label(for="gradientCheckbox") Gradient fill:
-            Checkbox#gradientCheckbox(
-                v-model="fillStyle.gradientFill"
-                @change="styleChange"
-                binary
-            )
-        Divider
-        .flexPrompt
             label(for="startInput") {{ startPrompt }}:
             input.colour#startInput(
                 type="color"
@@ -30,12 +22,20 @@
                 :value="stopColour"
                 @input="colourChange"
             )
-        .spacer
+        Divider
+        .flexPrompt
+            label(for="gradientCheckbox") Gradient fill:
+            Checkbox#gradientCheckbox(
+                v-model="fillStyle.gradientFill"
+                @change="styleChange"
+                binary
+            )
+        .spacer(:class="{ hidden: !fillStyle.gradientFill }")
         .flexPrompt#stopColour(:class="{ hidden: !fillStyle.gradientFill }")
             label Direction:
             #directions
                 .flex.items-right.gap-2
-                    label(for="horizontal") H
+                    label.dirn(for="horizontal") H
                     RadioButton#horizontal(
                         v-model="gradientDirn"
                         inputId="horizontal"
@@ -44,7 +44,7 @@
                         @change="emitChange"
                     )
                 .flex.items-right.gap-2
-                    label(for="vertical") V
+                    label.dirn(for="vertical") V
                     RadioButton#vertical(
                         v-model="gradientDirn"
                         inputId="vertical"
@@ -52,6 +52,7 @@
                         value="V"
                         @change="emitChange"
                     )
+        Divider
 </template>
 
 <script setup lang="ts">
@@ -180,7 +181,11 @@ function emitChange() {
 }
 
 .spacer {
-    height: 10px;
+    height: 20px;
+}
+
+.dirn {
+    margin-right: 10px;
 }
 /* Based on https://rebeccamdeprey.com/blog/styling-the-html-color-input */
 
