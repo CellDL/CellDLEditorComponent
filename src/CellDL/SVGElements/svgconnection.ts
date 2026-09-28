@@ -27,6 +27,8 @@ import type { CellDLConnection } from '#editor/celldlObjects'
 import { alert } from '#editor/editor/alerts'
 
 import type { PointLike } from '#root/utils/points'
+import type { PathStyling, Styling } from '#root/utils/styling'
+import { getSvgPathStyle, setSvgPathStyle } from '#root/utils/svgUtils'
 
 //==============================================================================
 
@@ -210,6 +212,21 @@ export class SvgConnection extends CellDLSVGElement {
             this.#moveableElement.startMove(svgPoint)
         }
     }
+
+//==============================================================================
+
+    getStyle(): Styling {
+        return {
+            pathStyle: getSvgPathStyle(this.svgElement)
+        }
+    }
+
+    setStyle(styling: Styling) {
+        if (styling.pathStyle) {
+            setSvgPathStyle(this.svgElement, styling.pathStyle as PathStyling)
+        }
+    }
 }
 
+//==============================================================================
 //==============================================================================

@@ -50,13 +50,10 @@ import {
 } from '#root/utils/editor-types'
 import type { ConnectionStatus, PluginInterface } from '#root/plugins'
 import type {
-    PathStyling,
     Styling
 } from '#root/utils/styling'
 import {
-    getSvgFillStyle,
-    getSvgPathStyle,
-    setSvgPathStyle
+    getSvgFillStyle
 } from '#root/utils/svgUtils'
 
 import { alert } from '#editor/editor/alerts'
@@ -695,9 +692,7 @@ export class BondgraphPlugin implements PluginInterface {
 
     #loadElementStyling(celldlObject: CellDLObject, componentGroup: PropertyGroup, connection: boolean) {
         if (connection) {
-            componentGroup.styling = {
-                pathStyle: getSvgPathStyle(celldlObject.celldlSvgElement!.svgElement)
-            }
+            componentGroup.styling = celldlObject.celldlSvgElement!.getStyle()
         } else {
             const pluginData = (<PluginData>celldlObject.pluginData(this.id))
             if (!('fillColours' in pluginData)) {
@@ -917,7 +912,7 @@ export class BondgraphPlugin implements PluginInterface {
                 await this.#updateSvgElement(celldlObject, pluginData.species, pluginData.location)
             }
         } else if (objectType === 'path' && 'pathStyle' in styling) {
-            setSvgPathStyle(celldlObject.celldlSvgElement!.svgElement, styling.pathStyle as PathStyling)
+            celldlObject.celldlSvgElement!.setStyle(styling)
         }
     }
 

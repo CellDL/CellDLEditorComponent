@@ -23,6 +23,7 @@ import * as vue from 'vue'
 import { Point, type PointLike, PointMath } from '#root/utils/points'
 import { CONNECTION_SPLAY_PADDING, MAX_CONNECTION_SPLAY_PADDING } from '#root/utils/styling'
 import { CONNECTION_WIDTH, SELECTION_STROKE_WIDTH } from '#root/utils/styling'
+import type { Styling } from '#root/utils/styling'
 import { svgCircle } from '#root/utils/svgUtils'
 
 import { CELLDL_STYLE_CLASS, type CellDLObject } from '#editor/celldlObjects'
@@ -665,6 +666,15 @@ export class CellDLSVGElement {
         this.svgElement.innerHTML = `<image href="${imageData}"/>`
         await vue.nextTick()            // Wait for image to render
         this.#updatedSvgElement()
+    }
+
+//==============================================================================
+
+    getStyle(): Styling {
+        return {}
+    }
+
+    setStyle(_styling: Styling) {
     }
 }
 
