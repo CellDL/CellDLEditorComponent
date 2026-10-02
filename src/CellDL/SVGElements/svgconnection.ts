@@ -27,16 +27,21 @@ import type { CellDLConnection } from '#editor/celldlObjects'
 import { alert } from '#editor/editor/alerts'
 
 import type { PointLike } from '#root/utils/points'
-import type { PathStyling, Styling } from '#root/utils/styling'
-import { getSvgPathStyle, setSvgPathStyle } from '#root/utils/svgUtils'
+import {
+    CONNECTION_COLOUR,
+    CONNECTION_DASH,
+    CONNECTION_WIDTH,
+    type Styling
+} from '#root/utils/styling'
+import { getStrokeString, setStrokeFromString } from '#root/utils/svgUtils'
 
 //==============================================================================
 
 import { CellDLSVGElement, type DomLocation, type ElementMoveOptions } from '.'
 import type { BoundedElement } from './boundedelement'
-import { LinearPath } from './linearpath'
-import { ID_PART_SEPARATOR, type PathElement } from './pathelement'
-import { RectilinearPath } from './rectilinearpath'
+import { LinearPath } from './utils/linearpath'
+import { ID_PART_SEPARATOR, type PathElement } from './utils/pathelement'
+import { RectilinearPath } from './utils/rectilinearpath'
 
 //==============================================================================
 

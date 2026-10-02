@@ -290,30 +290,46 @@ export class RectilinearPath extends PathElement {
         delta: PointLike
     ) {
         const nPoints = this.pathPoints.length
+        let closePointIndex: number
+        let splitAfterIndex: number
+        if (index === 0) {
+            closePointIndex = 2
+            splitAfterIndex = 1
+        } else if (index === nPoints - 1) {
+            closePointIndex = nPoints - 3
+            splitAfterIndex = nPoints - 3
+        } else {
+            return
+        }
+
+        const closePoint = this.pathPoints[closePointIndex]!
+
+// detect when path goes through component and switch it to other side...
+// in fact detect when point after splay is closer than splay and rotate splay...
+const otherFace = element.boundaryFace(closePoint)
+
+
         const boundaryPoint = this.pathPoints.at(index)!
         splayPoint.adjustValue(delta)
-        const boundaryIntersection = element.boundaryIntersections(splayPoint)[0]
-        if (boundaryIntersection) {
-            boundaryPoint.reassignPosition(boundaryIntersection)
+        const boundaryIntersection = element.boundaryIntersections(splayPoint)
+
+
+console.log(nPoints, index, face, otherFace, boundaryIntersection)
+        if (boundaryIntersection[0]) {
+            boundaryPoint.reassignPosition(boundaryIntersection[0])
         }
-        const dirn = ['L', 'R'].includes(face) ? 'H' : ['T', 'B'].includes(face) ? 'V' : ''
+
+//        const delta
+//        if (face === 'L')
+
+
         if (nPoints === 4) {
-            if (index === 0) {
-                if (
-                    (dirn === 'H' && !roundEqual(splayPoint.y, this.pathPoints[2]!.y)) ||
-                    (dirn === 'V' && !roundEqual(splayPoint.x, this.pathPoints[2]!.x))
-                ) {
-                    //splayPoint.x !== this.pathPoints[2].x) {
-                    this.#splitPath(dirn, 1)
-                }
-            } else {
-                if (
-                    (dirn === 'H' && !roundEqual(splayPoint.y, this.pathPoints[nPoints - 3]!.y)) ||
-                    (dirn === 'V' && !roundEqual(splayPoint.x, this.pathPoints[nPoints - 3]!.x))
-                ) {
-                    //splayPoint.x !== this.pathPoints[nPoints-3].x) {
-                    this.#splitPath(dirn, nPoints - 3)
-                }
+            const dirn = ['L', 'R'].includes(face) ? 'H' : ['T', 'B'].includes(face) ? 'V' : ''
+            if (
+                (dirn === 'H' && !roundEqual(splayPoint.y, closePoint.y)) ||
+                (dirn === 'V' && !roundEqual(splayPoint.x, closePoint.x))
+            ) {
+                this.#splitPath(dirn, splitAfterIndex)
             }
         }
         this.setDirty()

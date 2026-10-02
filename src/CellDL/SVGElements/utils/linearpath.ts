@@ -23,19 +23,22 @@ import type { NormalArray } from 'svg-path-commander'
 
 //==============================================================================
 
-import { type Point, type PointLike, PointMath } from '#root/utils/points'
 import { FixedValue, RestrictedValue } from '#editor/geometry'
+import { lengthToPixels } from '#editor/geometry/units'
+
+import { type Point, type PointLike, PointMath } from '#root/utils/points'
+import { CONNECTION_WIDTH } from '#root/utils/styling'
 
 import type { BoundedElement } from './boundedelement'
 import { FixedPathPoint, PathElement, PathPoint } from './pathelement'
-import { getSvgPathStyle } from '#root/utils/svgUtils'
 
 //==============================================================================
 
 export class LinearPath extends PathElement {
 
     addControlHandle(svgPoint: PointLike): PathPoint|undefined {
-        const halfWidth: number = getSvgPathStyle(this.svgElement).width/2
+        const strokeWidth = this.svgElement.getAttribute('stroke-width')
+        const halfWidth = (lengthToPixels(strokeWidth) || CONNECTION_WIDTH)/2
         const nPoints = this.pathPoints.length
         const newPoints: PathPoint[] = []
         let index = 0

@@ -26,7 +26,7 @@ import { ControlRect } from '#editor/geometry/controls'
 import { Transform } from '#editor/geometry/transforms'
 
 import { CellDLSVGElement, type ElementMoveOptions } from '.'
-import type { PathElement } from './pathelement'
+import type { PathElement } from './utils/pathelement'
 
 //==============================================================================
 
