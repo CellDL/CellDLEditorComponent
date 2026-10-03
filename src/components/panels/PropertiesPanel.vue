@@ -38,8 +38,9 @@ useThemeCssVariables('accordionpanel')
 
 import type { ComponentProperties } from '#root/utils/editor-types'
 
-import ToolPanel from '../toolbar/ToolPanel.vue'
 import InputWidget from '../widgets/InputWidget.vue'
+
+import ToolPanel from './ToolPanel.vue'
 
 const props = defineProps<{
     title: string
