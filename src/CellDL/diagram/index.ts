@@ -111,6 +111,7 @@ const DIAGRAM_MARGIN = 20
 const CELLDL_DIAGRAM_ID = 'celldl-diagram-layer'
 
 const ID_PREFIX = 'ID-'
+export const ID_PART_SEPARATOR = '-'
 
 type AddObjectOptions = {
     atBack?: boolean
@@ -291,7 +292,7 @@ export class CellDLDiagram {
             // biome-ignore lint/style/noNonNullAssertion: `index` is in range
             const element = elementsWithId[index]!
             if (element.id.startsWith(ID_PREFIX)) {
-                const parts = element.id.substring(ID_PREFIX.length).split('-')
+                const parts = element.id.substring(ID_PREFIX.length).split(ID_PART_SEPARATOR)
                 if (parts.length) {
                     // @ts-expect-error:
                     const lastIdentifier = +parts[0]

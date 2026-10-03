@@ -24,6 +24,7 @@ import SVGPathCommander from 'svg-path-commander'
 //==============================================================================
 
 import type { CellDLConnection, CellDLObject } from '#editor/celldlObjects'
+import { ID_PART_SEPARATOR } from '#editor/diagram'
 import type { EditorFrame } from '#editor/editor/editorframe'
 import type { FixedValue, RestrictedValue } from '#editor/geometry'
 import { ControlPoint } from '#editor/geometry/controls'
@@ -37,7 +38,6 @@ import type { BoundedElement } from './boundedelement'
 
 //==============================================================================
 
-export const ID_PART_SEPARATOR = '-'
 
 //==============================================================================
 
