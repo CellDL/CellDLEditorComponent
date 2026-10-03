@@ -329,6 +329,25 @@ export class CellDLDiagram {
         }
     }
 
+    addDefinition(definitionId: string, definition: string) {
+        const defn = this.#defsElement?.querySelector(`#${definitionId}`)
+        if (defn) {
+            this.#defsElement?.removeChild(defn)
+        }
+        this.#defsElement?.insertAdjacentHTML('beforeend', definition)
+        const element = this.#defsElement?.lastChild
+        if (element) {
+            element.setAttribute('id', definitionId)
+        }
+    }
+
+    removeDefinition(definitionId: string) {
+        const defn = this.#defsElement?.querySelector(`#${definitionId}`)
+        if (defn) {
+            this.#defsElement?.removeChild(defn)
+        }
+    }
+
     objectById(id: string): CellDLObject | null {
         return this.#objects.get(id) || null
     }
