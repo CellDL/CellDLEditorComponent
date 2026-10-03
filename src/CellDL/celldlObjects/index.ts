@@ -29,6 +29,7 @@ import { alert } from '#editor/editor/alerts'
 import { editGuides } from '#editor/editor/editguides'
 
 import { BoundedElement } from '#editor/SVGElements/boundedelement'
+import { CompartmentElement } from '#editor/SVGElements/compartmentelement'
 import type { ObjectTemplate } from '#editor/components'
 import type { CellDLDiagram } from '#editor/diagram'
 import { SvgConnection } from '#editor/SVGElements/svgconnection'
@@ -459,24 +460,6 @@ export class CellDLComponent extends CellDLConnectedObject {
     static celldlStyleClass = CELLDL_STYLE_CLASS.Component
     static celldlTypeName = 'Component'
 
-    get hasEditGuides() {
-        return true
-    }
-}
-
-//==============================================================================
-
-export class CellDLConduit extends CellDLComponent {
-    static readonly celldlStyleClass = CELLDL_STYLE_CLASS.Conduit
-    static celldlTypeName = 'Conduit'
-}
-
-//==============================================================================
-
-export class CellDLCompartment extends CellDLConnectedObject {
-    static readonly celldlStyleClass = CELLDL_STYLE_CLASS.Compartment
-    static celldlTypeName = 'Compartment'
-
     #interfacePorts: CellDLInterface[] = []
 
     constructor(
@@ -492,19 +475,19 @@ export class CellDLCompartment extends CellDLConnectedObject {
     }
 
     toString(): string {
-        return `${super.toString()}  Ports: ${this.#interfacePorts.map((c) => c.id).join(', ')}`
+        const text = super.toString()
+        if (this.#interfacePorts.length) {
+            return `${text}  Ports: ${this.#interfacePorts.map((c) => c.id).join(', ')}`
+        }
+        return text
     }
 
     get interfacePorts() {
         return this.#interfacePorts
     }
 
-    get isAlignable() {
-        return false
-    }
-
-    startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
-        super.startMove(svgPoint, options)
+    get hasEditGuides() {
+        return true
     }
 
     move(svgPoint: PointLike, options: ElementMoveOptions={}) {
@@ -519,6 +502,52 @@ export class CellDLCompartment extends CellDLConnectedObject {
         super.endMove()
         for (const port of this.#interfacePorts) {
             port.endMove()
+        }
+    }
+
+}
+
+//==============================================================================
+
+export class CellDLConduit extends CellDLComponent {
+    static readonly celldlStyleClass = CELLDL_STYLE_CLASS.Conduit
+    static celldlTypeName = 'Conduit'
+}
+
+//==============================================================================
+
+export class CellDLCompartment extends CellDLConnectedObject {
+    static readonly celldlStyleClass = CELLDL_STYLE_CLASS.Compartment
+    static celldlTypeName = 'Compartment'
+
+
+    constructor(
+        uri: NamedNode,
+        objectTemplate: ObjectTemplate,
+        celldlDiagram: CellDLDiagram
+    ) {
+        super(uri, objectTemplate, celldlDiagram)
+    }
+
+    get isAlignable() {
+        return false
+    }
+
+    assignSvgElement(svgElement: SVGGraphicsElement, align: boolean) {
+        new CompartmentElement(this, svgElement, this.isAlignable, align)
+    }
+
+    startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
+        super.startMove(svgPoint, options)
+    }
+
+    move(svgPoint: PointLike, options: ElementMoveOptions={}) {
+        super.move(svgPoint, options)
+        }
+    }
+
+    endMove() {
+        super.endMove()
         }
     }
 }

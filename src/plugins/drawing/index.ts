@@ -114,47 +114,27 @@ export class DrawingPlugin implements PluginInterface {
 
     //==========================================================================
 
-    loadComponentProperties(componentProperties: PropertyGroup[], panelId: PANEL_ID, celldlObject: CellDLObject) {
+    loadComponentProperties(properties: PropertyGroup[], panelId: PANEL_ID, celldlObject: CellDLObject) {
         alert.clear()
-        if (panelId === PANEL_ID.STYLE_PANEL) {
-            componentProperties.forEach(group => {
-                this.#loadElementStyling(celldlObject, group)
+        if (panelId === PANEL_ID.STYLE_PANEL
+         && celldlObject.celldlSvgElement
+         && (<PluginData>celldlObject.pluginData(this.id)).managed) {
+            properties.forEach(group => {
+                if (group.groupId === STYLE_GROUP_ID) {
+                    if (celldlObject.celldlSvgElement) {
+                        group.styling = celldlObject.celldlSvgElement.getStyle()
+                    }
+                }
             })
         }
     }
 
-    #loadElementStyling(celldlObject: CellDLObject, componentGroup: PropertyGroup) {
-        if (celldlObject.celldlSvgElement) {
-            const pluginData = (<PluginData>celldlObject.pluginData(this.id))
-            if (!('fillColours' in pluginData)) {
-                pluginData.fillColours = getSvgFillStyle(celldlObject.celldlSvgElement.svgElement.outerHTML)
-            }
-            componentGroup.styling = {
-                fillColours: pluginData.fillColours || []
-            }
-        }
-    }
-
-    //==========================================================================
-
     async updateObjectProperties(_celldlObject: CellDLObject, _panelId: PANEL_ID, _itemId: string, _value: ValueChange,
                                  _componentProperties: PropertyGroup[]) {
-
     }
 
-    //==========================================================================
-
-    async updatedComponentStyling(celldlObject: CellDLObject, objectType: string, styling: Styling) {
-        const pluginData = (<PluginData>celldlObject.pluginData(this.id))
-        if (objectType === 'node' && 'fillColours' in styling) {
-            const fillColours = styling.fillColours as string[] || []
-            if (fillColours.toString() !== pluginData.fillColours?.toString()) {
-                pluginData.fillColours = [...fillColours]
-//                await this.#updateSvgElement(celldlObject, pluginData.species, pluginData.location)
-            }
-        } else if (objectType === 'path' && 'pathStyle' in styling) {
-            setSvgPathStyle(celldlObject.celldlSvgElement!.svgElement, styling.pathStyle as PathStyling)
-        }
+    async updatedComponentStyling(celldlObject: CellDLObject, styling: Styling) {
+        celldlObject.celldlSvgElement?.setStyle(styling)
     }
 
     styleRules(): string {

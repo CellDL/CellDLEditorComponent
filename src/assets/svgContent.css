@@ -115,6 +115,12 @@
     rx: calc(var(--editor-membrane-radius) - var(--editor-membrane-gap)/2) /* See DOUBLE_BOUNDARY_OFFSET */
 }
 
+/* Compartments */
+
+#svg-container #compartment-select-rect {
+    fill: none;
+}
+
 /* Components */
 #svg-container .celldl-Component.editor {
     pointer-events: all;

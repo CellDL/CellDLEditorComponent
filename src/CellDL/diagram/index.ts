@@ -65,7 +65,7 @@ import {
 
 import { setInternalIds } from '#editor/SVGElements'
 import type { BoundedElement } from '#editor/SVGElements/boundedelement'
-import { Compartment, DEFAULT_COMPARTMENT_STYLE } from '#editor/SVGElements/compartment'
+import { createCompartmentSvgElement } from '#editor/SVGElements/utils/compartment'
 import type { SvgConnection } from '#editor/SVGElements/svgconnection'
 
 import { type CellDLEditor, notifyChanges } from '#editor/editor'
@@ -643,11 +643,10 @@ export class CellDLDiagram {
 
     makeCompartment(bounds: Bounds): CellDLCompartment {
         const cornerPoints = bounds.asPoints()
-        const compartment = Compartment.create(this.#nextIdentifier(),
-                                               cornerPoints[0], cornerPoints[1],
-                                               DEFAULT_COMPARTMENT_STYLE, this)
+        const svgElement = createCompartmentSvgElement(this.#nextIdentifier(),
+                                                cornerPoints[0], cornerPoints[1])
         const compartmentObject = this.#addNewObject(
-            compartment.svgElement, {
+            svgElement, {
                 CellDLClass: CellDLCompartment,
                 metadataProperties: MetadataPropertiesMap.fromProperties([])
             },
