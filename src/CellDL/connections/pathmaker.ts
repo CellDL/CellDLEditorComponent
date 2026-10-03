@@ -171,6 +171,15 @@ export class PathMaker {
     }
 
     static validStartObject(celldlObject: CellDLObject): PathNode | null {
+        if (celldlObject.isUnconnectedPort) {
+            const connection = celldlObject.connections[0]
+            // An UnconnectedPort is only valid if it is the target of a connection
+            if (connection) {
+                if (connection.connectedObjects[1]?.id !== celldlObject.id) {
+                    return null
+                }
+            }
+        }
         if (celldlObject.isConnectable && !celldlObject.isConduit) {
             if (PathMaker.#checkMaxConnections(<CellDLConnectedObject>celldlObject)) {
                 return new PathNode(<CellDLConnectedObject>celldlObject)
@@ -191,6 +200,15 @@ export class PathMaker {
     }
 
     validPathNode(celldlObject: CellDLObject): PathNode | null {
+        if (celldlObject.isUnconnectedPort) {
+            const connection = celldlObject.connections[0]
+            // An UnconnectedPort is only valid if it is the source of a connection
+            if (connection) {
+                if (connection.connectedObjects[0]?.id !== celldlObject.id) {
+                    return null
+                }
+            }
+        }
         if (!celldlObject.isConnectable) {
             if (!celldlObject.isConnection) {
                 alert.tooltip('Component does not allow connections')
