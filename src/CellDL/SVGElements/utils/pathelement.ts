@@ -33,11 +33,8 @@ import type { FoundPoint } from '#editor/geometry/pathutils'
 import type { Point, PointLike } from '#root/utils/points'
 import { svgPathElement } from '#root/utils/svgUtils'
 
-import type { ElementMoveOptions } from '.'
-import type { BoundedElement } from './boundedelement'
-
-//==============================================================================
-
+import type { ElementMoveOptions } from '..'
+import type { BoundedElement } from '../boundedelement'
 
 //==============================================================================
 
