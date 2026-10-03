@@ -35,6 +35,8 @@
 import * as vue from 'vue'
 import Slider from 'primevue/slider'
 import { TinyColor } from '@ctrl/tinycolor'
+
+import { STYLE_STRING_FIELD_SEPARATOR } from '#root/utils/styling'
 import { useThemeCssVariables } from '#root/utils/themeCssVariables'
 
 useThemeCssVariables('checkbox')
@@ -64,7 +66,7 @@ function  makeColour(colour: string): string {
 }
 
 function setStroke(strokeStyle: string) {
-    const strokeArray: string[] = strokeStyle.split('-')
+    const strokeArray: string[] = strokeStyle.split(STYLE_STRING_FIELD_SEPARATOR)
     stroke.value.colour = makeColour((strokeArray.at(0)) as string)
     stroke.value.width = Number((strokeArray.at(1)) as string)
     stroke.value.dashed = strokeArray.at(2) === '1'
@@ -96,7 +98,7 @@ function emitChange() {
         String(stroke.value.width),
         stroke.value.dashed ? '1' : '0',
         String(stroke.value.dashScale)
-    ].join('-'))
+    ].join(STYLE_STRING_FIELD_SEPARATOR))
 }
 //==============================================================================
 </script>

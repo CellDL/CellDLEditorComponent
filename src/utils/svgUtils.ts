@@ -29,7 +29,7 @@ import { round } from '#editor/utils'
 
 import { latexAsSvgDocument } from '#root/mathjax'
 import type { PointLike } from '#root/utils/points'
-import type { StrokeAttributes } from '#root/utils/styling'
+import { STYLE_STRING_FIELD_SEPARATOR, type StrokeAttributes } from '#root/utils/styling'
 import type { StringProperties } from '#root/utils/types'
 
 //==============================================================================
@@ -349,7 +349,7 @@ export function getFillFromString(fillString: string|undefined, gradientId: stri
         dataFillStyle = fillAttribute
     } else {
         dataFillStyle = fillString
-        const fillArray: string[] = fillString.split('-')
+        const fillArray: string[] = fillString.split(STYLE_STRING_FIELD_SEPARATOR)
         if (fillArray.length === 0) {
             fillAttribute = 'transparent'
             dataFillStyle = fillAttribute
@@ -385,18 +385,19 @@ export function getStrokeString(svgElement: SVGGraphicsElement, defaults: Stroke
     if (svgElement.hasAttribute('stroke-dasharray')) {
         const dashString = svgElement.getAttribute('stroke-dasharray') as string
         const dashWidth = Number(
-            ((dashString.includes(',')) ? dashString.split(',') : dashString.split(',')).at(0)?.trim())
+            ((dashString.includes(',')) ? dashString.split(STYLE_STRING_FIELD_SEPARATOR)
+                                        : dashString.split(STYLE_STRING_FIELD_SEPARATOR)).at(0)?.trim())
         strokeAttributes.push('1')
         strokeAttributes.push(String(dashWidth/strokeWidth))
     } else {
         strokeAttributes.push('0')
         strokeAttributes.push(String(defaults.dashScale || 0))
     }
-    return strokeAttributes.join('-')
+    return strokeAttributes.join(STYLE_STRING_FIELD_SEPARATOR)
 }
 
 export function setStrokeFromString(svgElement: SVGGraphicsElement, strokeString: string) {
-    const strokeArray = strokeString.split('-')
+    const strokeArray = strokeString.split(STYLE_STRING_FIELD_SEPARATOR)
     if (strokeArray.length >= 4) {
         const strokeWidth = Number(strokeArray.at(1) as string)
         svgElement.setAttribute('stroke', strokeArray.at(0) as string)

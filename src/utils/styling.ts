@@ -38,7 +38,7 @@ export type Styling = {
     /**
      * The background fill of a bounded element.
      *
-     * The value is a string with `-` separated sub-fields, which represent
+     * The value is a string with comma-separated sub-fields, which represent
      * either a single colour value or the direction of a gradient fill
      * followed by two or three gradient stop colours.
      */
@@ -55,13 +55,17 @@ export type Styling = {
     /**
      * The style of a line or path including those that make up a membrane.
      *
-     * The value is a string with four `-` separated sub-fields, in order
+     * The value is a string with four comma-separated sub-fields, in order
      * being the stroke colour, stroke width, whether the stroke is dashed,
      * and if so, the length of a dash as a multiplier to apply to the stroke's
      * width.
      */
     pathStyle?: string
 }
+
+//==============================================================================
+
+export const STYLE_STRING_FIELD_SEPARATOR = ','
 
 //==============================================================================
 

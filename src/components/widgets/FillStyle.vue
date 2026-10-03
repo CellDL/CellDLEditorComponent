@@ -74,6 +74,8 @@
 
 import * as vue from 'vue'
 import { TinyColor } from '@ctrl/tinycolor'
+
+import { STYLE_STRING_FIELD_SEPARATOR } from '#root/utils/styling'
 import { useThemeCssVariables } from '#root/utils/themeCssVariables'
 
 useThemeCssVariables('button')
@@ -107,7 +109,7 @@ function  makeColour(colour: string): string {
 }
 
 function setFill(fillStyle: string) {
-    const fillArray: string[] = fillStyle.split('-')
+    const fillArray: string[] = fillStyle.split(STYLE_STRING_FIELD_SEPARATOR)
     fill.value.startPrompt = fillArray.length > 1 ? 'Start colour' : 'Fill colour'
     fill.value.startColour = makeColour((fillArray.length > 1 ? fillArray.at(1) : fillArray.at(0)) as string)
     fill.value.middleEnabled = fillArray.length > 3
@@ -171,7 +173,7 @@ function emitChange() {
             fillString.push(fill.value.middleColour)
         }
         fillString.push(fill.value.stopColour)
-        emit('change', fillString.join('-'))
+        emit('change', fillString.join(STYLE_STRING_FIELD_SEPARATOR))
     } else {
         emit('change', fill.value.startColour)
     }

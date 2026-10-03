@@ -18,6 +18,8 @@
 
 import * as vue from 'vue'
 import Slider from 'primevue/slider'
+
+import { STYLE_STRING_FIELD_SEPARATOR } from '#root/utils/styling'
 import { useThemeCssVariables } from '#root/utils/themeCssVariables'
 
 useThemeCssVariables('floatlabel')
@@ -30,7 +32,7 @@ const emit = defineEmits(['change'])
 const radius = vue.ref<number>(0)
 
 function setRadius(cornerStyle: string) {
-    radius.value = Number(cornerStyle.split('-').at(0) as string)
+    radius.value = Number(cornerStyle.split(STYLE_STRING_FIELD_SEPARATOR).at(0) as string)
 }
 
 setRadius(cornerStyle)

@@ -18,6 +18,8 @@
 
 import * as vue from 'vue'
 import Slider from 'primevue/slider'
+
+import { STYLE_STRING_FIELD_SEPARATOR } from '#root/utils/styling'
 import { useThemeCssVariables } from '#root/utils/themeCssVariables'
 
 useThemeCssVariables('floatlabel')
@@ -30,7 +32,7 @@ const emit = defineEmits(['change'])
 const gap = vue.ref<number>(0)
 
 function setGap(gapStyle: string) {
-    gap.value = Number(gapStyle.split('-').at(0) as string)
+    gap.value = Number(gapStyle.split(STYLE_STRING_FIELD_SEPARATOR).at(0) as string)
 }
 
 setGap(gapStyle)
