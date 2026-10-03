@@ -24,6 +24,7 @@ import SVGPathCommander from 'svg-path-commander'
 //==============================================================================
 
 import type { CellDLConnection } from '#editor/celldlObjects'
+import { ID_PART_SEPARATOR } from '#editor/diagram'
 import { alert } from '#editor/editor/alerts'
 
 import type { PointLike } from '#root/utils/points'
@@ -40,7 +41,7 @@ import { getStrokeString, setStrokeFromString } from '#root/utils/svgUtils'
 import { CellDLSVGElement, type DomLocation, type ElementMoveOptions } from '.'
 import type { BoundedElement } from './boundedelement'
 import { LinearPath } from './utils/linearpath'
-import { ID_PART_SEPARATOR, type PathElement } from './utils/pathelement'
+import type { PathElement } from './utils/pathelement'
 import { RectilinearPath } from './utils/rectilinearpath'
 
 //==============================================================================
