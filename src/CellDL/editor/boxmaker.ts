@@ -144,7 +144,7 @@ export class BoxMaker {
     }
 
     makeCompartment(): CellDLCompartment {
-        return this.#editor.celldlDiagram?.makeCompartment(this.bounds)
+        return this.#editor.celldlDiagram?.makeCompartment(this.bounds) as CellDLCompartment
     }
 
     groupComponents() {

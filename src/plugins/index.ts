@@ -51,8 +51,6 @@ import type {
     PropertyGroup,
     ValueChange
 } from '#root/utils/editor-types'
-
-
 import type { Styling } from '#root/utils/styling'
 
 //==============================================================================

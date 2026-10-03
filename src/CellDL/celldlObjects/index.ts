@@ -397,7 +397,6 @@ export class CellDLConnectedObject extends CellDLMoveableObject {
         this.#maxConnections = componentLibraryPlugin.getMaxConnections(this)
     }
 
-
     toString(): string {
         return `${super.toString()}  Connections: ${[...this.#connections.keys()].join(', ')}`
     }

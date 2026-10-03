@@ -22,12 +22,6 @@ import { EM_SIZE } from '#editor/geometry/units'
 
 //==============================================================================
 
-export type StrokeAttributes = {
-    colour: string
-    width: number
-    dashed?: boolean
-    dashScale?: number
-}
 
 export type Styling = {
     /**
@@ -66,6 +60,15 @@ export type Styling = {
 //==============================================================================
 
 export const STYLE_STRING_FIELD_SEPARATOR = ','
+
+//==============================================================================
+
+export type StrokeAttributes = {
+    colour: string
+    width: number
+    dashed?: boolean
+    dashScale?: number
+}
 
 //==============================================================================
 

@@ -490,7 +490,7 @@ export class PathMaker {
         return true
     }
 
-    // We assume that ``endComponent`` is a ``validPathNode()``
+    // We assume that ``endNode`` is a ``validPathNode()``
     finishPath(endNode: PathNode, celldlDiagram: CellDLDiagram, shiftKey: boolean = false) {
         // Add the last point to the path
         if (!this.#addNode(endNode, this.#style === ConnectionStyle.Rectilinear || shiftKey)) {

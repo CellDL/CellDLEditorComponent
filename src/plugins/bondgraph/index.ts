@@ -652,7 +652,6 @@ export class BondgraphPlugin implements PluginInterface {
                             }
                         }
                     }
-
                 })
             }
         } else if (panelId === PANEL_ID.STYLE_PANEL) {
