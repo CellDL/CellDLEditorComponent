@@ -20,10 +20,13 @@ limitations under the License.
 
 import { CELLDL_STYLE_CLASS, type CellDLConnectedObject, type CellDLObject } from '#editor/celldlObjects'
 import { editGuides } from '#editor/editor/editguides'
-import { Point, type PointLike } from '#root/utils/points'
 import { RestrictedPoint, type RestrictedValue } from '#editor/geometry'
 import { ControlRect } from '#editor/geometry/controls'
 import { Transform } from '#editor/geometry/transforms'
+
+import { Point, type PointLike } from '#root/utils/points'
+import type { Styling } from '#root/utils/styling'
+import { getFillString } from '#root/utils/svgUtils'
 
 import { CellDLSVGElement, type ElementMoveOptions } from '.'
 import type { PathElement } from './utils/pathelement'
@@ -165,6 +168,18 @@ export class BoundedElement extends CellDLSVGElement {
             }
             ;(<CellDLConnectedObject>this.celldlObject).connections.forEach((c) => { c.redraw() })
         }
+    }
+
+//==============================================================================
+
+    getStyle(): Styling {
+        // if an annotation region then havw cornerStyle but no strokeStyle nor gapStyle
+        return {
+            fillStyle: getFillString(this.svgElement)
+        }
+    }
+
+    setStyle(_styling: Styling) {
     }
 }
 

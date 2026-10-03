@@ -22,29 +22,45 @@ import { EM_SIZE } from '#editor/geometry/units'
 
 //==============================================================================
 
-export interface CompartmentStyling extends FillStyling, MembraneStyling {
-    cornerRadius: number
-}
-
-export interface FillStyling {
-    fill: string[]
-    gradientFill: boolean
-    gradientDirection?: string
-}
-
-export interface PathStyling {
-    strokeColour: string
-    strokeWidth: number
-    strokeDashed: boolean
-}
-
-export interface MembraneStyling extends PathStyling {
-    strokeGap: number
+export type StrokeAttributes = {
+    colour: string
+    width: number
+    dashed?: boolean
+    dashScale?: number
 }
 
 export type Styling = {
-    fillColours?: string[]
-    pathStyle?: PathStyling
+    /**
+     * The corner radius of a rectangular element.
+     */
+    cornerStyle?: string
+
+    /**
+     * The background fill of a bounded element.
+     *
+     * The value is a string with `-` separated sub-fields, which represent
+     * either a single colour value or the direction of a gradient fill
+     * followed by two or three gradient stop colours.
+     */
+    fillStyle?: string
+
+    /**
+     * The gap between two parallel paths that represent a membrane.
+     *
+     * A membrane can be either the boundary of a compartment or a
+     * a standlone segment.
+     */
+    gapStyle?: string
+
+    /**
+     * The style of a line or path including those that make up a membrane.
+     *
+     * The value is a string with four `-` separated sub-fields, in order
+     * being the stroke colour, stroke width, whether the stroke is dashed,
+     * and if so, the length of a dash as a multiplier to apply to the stroke's
+     * width.
+     */
+    pathStyle?: string
 }
 
 //==============================================================================

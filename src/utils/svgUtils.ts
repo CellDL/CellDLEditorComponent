@@ -29,7 +29,7 @@ import { round } from '#editor/utils'
 
 import { latexAsSvgDocument } from '#root/mathjax'
 import type { PointLike } from '#root/utils/points'
-import { CONNECTION_COLOUR,  CONNECTION_DASH, CONNECTION_WIDTH } from '#root/utils/styling'
+import type { StrokeAttributes } from '#root/utils/styling'
 import type { StringProperties } from '#root/utils/types'
 
 //==============================================================================
@@ -39,12 +39,11 @@ export const SVG_URI = 'http://www.w3.org/2000/svg'
 //==============================================================================
 
 export interface LatexMathSvgOptions {
-    background?: string|string[]
+    background?: string
     border?: string
     'border-width'?: string
     class?: string
     'corner-radius'?: string
-    'middle-colour'?: string
     'min-height'?: string
     'min-width'?: string
     padding?: string
@@ -246,56 +245,9 @@ function latexToSvgRect(latex: string, suffix: string,
         // @ts-expect-error: `scale` is two long
         svgElement.setAttribute('height', pixelsToLength(height/scale[1], 'ex') as number)
 
-        let fill: string
-        const dataFillStyle: string[] = []
-        if (!options.background) {
-            fill = 'transparent'
-            dataFillStyle.push(fill)
-        } else if (Array.isArray(options.background)) {
-            const stopColours: string[] = [...options.background]
-            let direction = 'H'
-            // @ts-expect-error: `stopColours` is at least one long
-            if (stopColours.length && ['H', 'V'].includes(stopColours[0])) {
-                // @ts-expect-error: `stopColours` is at least one long
-                direction = stopColours.shift()
-            }
-            if (stopColours.length === 0) {
-                fill = 'transparent'
-                dataFillStyle.push(fill)
-            } else if (stopColours.length === 1) {
-                // @ts-expect-error: `stopColours` is at one long
-                fill = stopColours[0].trim()
-                dataFillStyle.push(fill)
-            } else {
-                dataFillStyle.push(direction)
-                const gradientFillId = 'fill'
-                const transform = (direction === 'V') ? 'gradientTransform="rotate(90)"' : ''
-                gradient.push(`<linearGradient id="${gradientFillId}" ${transform}>`)
-                if (stopColours.length === 2 && options['middle-colour']) {
-                    // @ts-expect-error: `stopColours` is at two long
-                    let colour = stopColours[0].trim()
-                    gradient.push(`<stop stop-color="${colour}" offset="0%"/>`)
-                    dataFillStyle.push(colour)
-                    gradient.push(`<stop stop-color="${options['middle-colour']}" offset="50%"/>`)
-                    // @ts-expect-error: `stopColours` is at two long
-                    colour = stopColours[1].trim()
-                    gradient.push(`<stop stop-color="${colour}" offset="100%"/>`)
-                    dataFillStyle.push(colour)
-                } else {
-                    const stops = stopColours.length - 1
-                    stopColours.forEach((colour: string, index: number) => {
-                        colour = colour.trim()
-                        gradient.push(`<stop stop-color="${colour}" offset="${100*index/stops}%"/>`)
-                        dataFillStyle.push(colour)
-                    })
-                }
-                gradient.push('</linearGradient>')
-                fill = `url(#${gradientFillId})`
-            }
-        } else {
-            fill = options.background.trim()
-            dataFillStyle.push(fill)
-        }
+        const fill = getFillFromString(options.background, 'fill-gradient')
+        gradient.push(...fill.gradient)
+
         // @ts-expect-error: `scale` is two long
         const stroke = border ? ` stroke="${options.border}" stroke-width="${round(scale[0]*border)}"` : ''
         const radius = getLengthFromOptions(options, 'corner-radius');
@@ -304,7 +256,7 @@ function latexToSvgRect(latex: string, suffix: string,
         // @ts-expect-error: `scale` is two long
         const topLeft = `x="${round(viewBox[0]+border*scale[0])}" y="${round(viewBox[1]+border*scale[1])}"`
         const rectClass = options.class ? ` class="${options.class}"` : ''
-        const bgRect = `<rect ${topLeft}${rectSize} fill="${fill}" data-fill-style="${dataFillStyle.join(' ')}"${stroke}${cornerRadius}${rectClass}></rect>`
+        const bgRect = `<rect ${topLeft}${rectSize} fill="${fill.fillAttribute}" data-fill-style="${fill.dataFillStyle}"${stroke}${cornerRadius}${rectClass}></rect>`
         svgElement.firstElementChild?.insertAdjacentHTML('afterend', bgRect)
 
         if (suffix !== '') {
@@ -366,44 +318,95 @@ export function svgFromDataUrl(dataUri: string): string|undefined {
 
 //==============================================================================
 
-export function getSvgFillStyle(svgText: string): string[] {
+export function getFillString(svgElement: SVGGraphicsElement): string {
+    const svgText = svgElement.outerHTML
     const dataUrl = svgText.match(/<image href="(?<dataUrl>.*)"><\/image>/)
     if (!dataUrl) {
-        return []
+        return ''
     }
     const svgData = svgFromDataUrl(dataUrl.groups?.dataUrl as string)
     if (svgData) {
         const fillStyle = svgData.match(/ data-fill-style="(?<fillStyle>[^"]*)"/)
         if (fillStyle) {
-            return (fillStyle.groups?.fillStyle as string).split(' ')
+            return fillStyle.groups?.fillStyle as string
         }
         const fill = svgData.match(/ fill="(?<fill>[^"]*)"/)
         if (fill && !(fill.groups?.fill as string).startsWith('url(')) {
-            return fill
+            return fill.groups?.fill as string
         }
         // Shouldn't get here...
-        return ['yellow']
+        return 'yellow'
     }
-    return []
+    return ''
+}
+
+export function getFillFromString(fillString: string|undefined, gradientId: string) {
+    let fillAttribute: string
+    const gradient: string[] = []
+    let dataFillStyle: string = ''
+    if (!fillString) {
+        fillAttribute = 'transparent'
+        dataFillStyle = fillAttribute
+    } else {
+        dataFillStyle = fillString
+        const fillArray: string[] = fillString.split('-')
+        if (fillArray.length === 0) {
+            fillAttribute = 'transparent'
+            dataFillStyle = fillAttribute
+        } else if (fillArray.length === 1) {
+            fillAttribute = (fillArray[0] as string).trim()
+        } else {
+            const transform = (fillArray.at(0) === 'V') ? 'gradientTransform="rotate(90)"' : ''
+            gradient.push(`<linearGradient id="${gradientId}" ${transform}>`)
+            const nStops = fillArray.length - 2
+            fillArray.slice(1).forEach((colour: string, index: number) => {
+                colour = colour.trim()
+                gradient.push(`<stop stop-color="${colour}" offset="${100*index/nStops}%"/>`)
+            })
+            gradient.push('</linearGradient>')
+            fillAttribute = `url(#${gradientId})`
+        }
+    }
+    return {
+        fillAttribute,
+        dataFillStyle,
+        gradient,
+    }
 }
 
 //==============================================================================
 
-export function getSvgPathStyle(svgElement: SVGGraphicsElement): PathStyling {
-    return {
-        strokeColour: svgElement.getAttribute('stroke') || CONNECTION_COLOUR,
-        strokeWidth: lengthToPixels(svgElement.getAttribute('stroke-width')) || CONNECTION_WIDTH,
-        strokeDashed: svgElement.hasAttribute('stroke-dasharray')
+export function getStrokeString(svgElement: SVGGraphicsElement, defaults: StrokeAttributes): string {
+    const strokeWidth = lengthToPixels(svgElement.getAttribute('stroke-width')) || defaults.width
+    const strokeAttributes = [
+        svgElement.getAttribute('stroke') || defaults.colour,
+        String(strokeWidth)
+    ]
+    if (svgElement.hasAttribute('stroke-dasharray')) {
+        const dashString = svgElement.getAttribute('stroke-dasharray') as string
+        const dashWidth = Number(
+            ((dashString.includes(',')) ? dashString.split(',') : dashString.split(',')).at(0)?.trim())
+        strokeAttributes.push('1')
+        strokeAttributes.push(String(dashWidth/strokeWidth))
+    } else {
+        strokeAttributes.push('0')
+        strokeAttributes.push(String(defaults.dashScale || 0))
     }
+    return strokeAttributes.join('-')
 }
 
-export function setSvgPathStyle(svgElement: SVGGraphicsElement, pathStyle: PathStyling) {
-    svgElement.setAttribute('stroke', pathStyle.strokeColour)
-    svgElement.setAttribute('stroke-width', String(pathStyle.strokeWidth))
-    if (pathStyle.strokeDashed) {
-        svgElement.setAttribute('stroke-dasharray', String(CONNECTION_DASH*pathStyle.strokeWidth))
-    } else {
-        svgElement.removeAttribute('stroke-dasharray')
+export function setStrokeFromString(svgElement: SVGGraphicsElement, strokeString: string) {
+    const strokeArray = strokeString.split('-')
+    if (strokeArray.length >= 4) {
+        const strokeWidth = Number(strokeArray.at(1) as string)
+        svgElement.setAttribute('stroke', strokeArray.at(0) as string)
+        svgElement.setAttribute('stroke-width', String(strokeWidth))
+        const dashScale = Number(strokeArray.at(3) as string)
+        if (strokeArray.at(2) === '1' && dashScale > 0) {
+            svgElement.setAttribute('stroke-dasharray', String(dashScale*strokeWidth))
+        } else {
+            svgElement.removeAttribute('stroke-dasharray')
+        }
     }
 }
 

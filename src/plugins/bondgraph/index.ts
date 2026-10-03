@@ -53,7 +53,7 @@ import type {
     Styling
 } from '#root/utils/styling'
 import {
-    getSvgFillStyle
+    getFillString
 } from '#root/utils/svgUtils'
 
 import { alert } from '#editor/editor/alerts'
@@ -190,7 +190,7 @@ type ElementTemplate = ElementTypeName & {
 interface PluginData {
     baseComponent: BGBaseComponent
     elementTemplate?: ElementTemplate
-    fillColours?: string[]
+    fillString?: string
     junctionType?: string
     location?: string
     managed?: boolean
@@ -701,11 +701,11 @@ export class BondgraphPlugin implements PluginInterface {
             componentGroup.styling = celldlObject.celldlSvgElement!.getStyle()
         } else {
             const pluginData = (<PluginData>celldlObject.pluginData(this.id))
-            if (!('fillColours' in pluginData)) {
-                pluginData.fillColours = getSvgFillStyle(celldlObject.celldlSvgElement!.svgElement.outerHTML)
+            if (!('fillString' in pluginData)) {
+                pluginData.fillString = celldlObject.celldlSvgElement!.getStyle().fillStyle // getFillString(celldlObject.celldlSvgElement!.svgElement)
             }
             componentGroup.styling = {
-                fillColours: pluginData.fillColours || []
+                fillStyle: pluginData.fillString
             }
         }
     }
@@ -909,15 +909,16 @@ export class BondgraphPlugin implements PluginInterface {
 
     //==================================
 
-    async updatedComponentStyling(celldlObject: CellDLObject, objectType: string, styling: Styling) {
+    async updatedComponentStyling(celldlObject: CellDLObject, styling: Styling) {
         const pluginData = (<PluginData>celldlObject.pluginData(this.id))
-        if (objectType === 'node' && 'fillColours' in styling) {
-            const fillColours = styling.fillColours as string[] || []
-            if (fillColours.toString() !== pluginData.fillColours!.toString()) {
-                pluginData.fillColours = [...fillColours]
+        if (styling.fillStyle) {   // we don't need styleType, just the presence of `fillStyle` in the `styling` object
+            const fillString = styling.fillStyle
+            if (fillString !== pluginData.fillString) {
+                pluginData.fillString = fillString
                 await this.#updateSvgElement(celldlObject, pluginData.species, pluginData.location)
             }
-        } else if (objectType === 'path' && 'pathStyle' in styling) {
+        }
+        if (styling.pathStyle) {
             celldlObject.celldlSvgElement!.setStyle(styling)
         }
     }
@@ -1048,7 +1049,7 @@ export class BondgraphPlugin implements PluginInterface {
         let imageData = ''
         try {
             imageData = svgImageData(symbol, species, location,
-                                     baseComponent.style, pluginData.fillColours)
+                                     baseComponent.style, pluginData.fillString)
         // biome-ignore lint/suspicious/noExplicitAny: <>
         } catch (error: any) {
             return (error as Error).message

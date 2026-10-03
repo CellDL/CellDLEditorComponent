@@ -213,7 +213,6 @@ function typeset(latex: string, style: BGElementStyle, base64: boolean=false): s
             padding: ICON_PADDING,
             'corner-radius': ICON_RADIUS,
             background: style.background,
-            'middle-colour': 'white',
             border: style.border || MIN_BORDER_COLOUR
         }
     )
@@ -237,11 +236,10 @@ export function svgImageData(symbol: string,
                              species: string|undefined,
                              location: string|undefined,
                              elementStyle: BGElementStyle,
-                             background: string[]|undefined): string {
+                             fillString?: string): string {
     const latex = makeLatex(symbol, species, location)
-    const style = (!!background && background.length)
-                ? Object.assign({}, elementStyle, { background })
-                : elementStyle
+    const style = fillString ? Object.assign({}, elementStyle, { background: fillString })
+                             : elementStyle
     return typeset(latex, style)
 }
 

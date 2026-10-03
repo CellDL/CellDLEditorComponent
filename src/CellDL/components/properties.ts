@@ -218,9 +218,9 @@ export class ObjectPropertiesPanel {
         }
     }
 
-    async updateObjectStyling(celldlObject: CellDLObject|null, objectType: string, styling: Styling) {
+    async updateObjectStyling(celldlObject: CellDLObject|null, styling: Styling) {
         if (celldlObject) {
-            await componentLibraryPlugin.updatedComponentStyling(celldlObject, objectType, styling)
+            await componentLibraryPlugin.updatedComponentStyling(celldlObject, styling)
         }
     }
 }

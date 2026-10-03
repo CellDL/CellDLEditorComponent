@@ -206,7 +206,7 @@ export interface PluginInterface {
      * @param objectType The type of object (`node` or `path`).
      * @param styling Styling for the object.
      */
-    updatedComponentStyling: (celldlObject: CellDLObject, objectType: string, styling: Styling) =>  Promise<void>
+    updatedComponentStyling: (celldlObject: CellDLObject, styling: Styling) =>  Promise<void>
 }
 
 //==============================================================================
@@ -418,11 +418,11 @@ export class ComponentLibraryPlugin {
         }
     }
 
-    async updatedComponentStyling(celldlObject: CellDLObject, objectType: string, styling: Styling) {
+    async updatedComponentStyling(celldlObject: CellDLObject, styling: Styling) {
         for (const pluginId of celldlObject.pluginIds) {
             const plugin = this.#registeredPlugins.get(pluginId)
             if (plugin && Object.keys(celldlObject.pluginData(pluginId)).length) {
-                await plugin.updatedComponentStyling(celldlObject, objectType, styling)
+                await plugin.updatedComponentStyling(celldlObject, styling)
             }
         }
     }

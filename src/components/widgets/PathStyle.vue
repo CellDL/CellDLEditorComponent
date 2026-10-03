@@ -1,17 +1,17 @@
 <template lang="pug">
     .card
         .flexPrompt
-            label(for="colour") Path colour
+            label Path colour
             input.colour#colour(
                 type="color"
-                :value="pathColour"
+                :value="stroke.colour"
                 @input="colourChange"
             )
         .spacer
         FloatLabel(variant="on")
-            InputText(v-model.number="width")
+            InputText(v-model.number="stroke.width")
             Slider(
-                v-model="width"
+                v-model="stroke.width"
                 :min="minWidth"
                 :max="maxWidth"
                 :step="widthStep"
@@ -20,9 +20,9 @@
             label Width (px)
         .spacer
         .flexPrompt
-            label(for="dashed") Dashed:
+            label Dashed:
             Checkbox#gradientCheckbox(
-                v-model="dashed"
+                v-model="stroke.dashed"
                 binary
                 @change="emitChange"
             )
@@ -30,6 +30,8 @@
 </template>
 
 <script setup lang="ts">
+//==============================================================================
+
 import * as vue from 'vue'
 import Slider from 'primevue/slider'
 import { TinyColor } from '@ctrl/tinycolor'
@@ -40,48 +42,63 @@ useThemeCssVariables('floatlabel')
 useThemeCssVariables('inputtext')
 useThemeCssVariables('slider')
 
-import type { PathStyling } from '#root/utils/svgUtils'
+//==============================================================================
 
-const props = defineProps<{
-    pathStyle: PathStyling
-}>()
+const { pathStyle } = defineProps<{ pathStyle: string }>()
 
-const colour = vue.ref(props.pathStyle.strokeColour)
-const dashed = vue.ref(props.pathStyle.strokeDashed)
-const width = vue.ref(props.pathStyle.strokeWidth)
+const emit = defineEmits(['change'])
+
+//==============================================================================
+
+type StrokeFields = {
+    colour?: string
+    dashed?: boolean
+    width?: number
+    dashScale?: number
+}
+
+const stroke = vue.ref<StrokeFields>({})
+
+function  makeColour(colour: string): string {
+    return new TinyColor(colour).toHexString()
+}
+
+function setStroke(strokeStyle: string) {
+    const strokeArray: string[] = strokeStyle.split('-')
+    stroke.value.colour = makeColour((strokeArray.at(0)) as string)
+    stroke.value.width = Number((strokeArray.at(1)) as string)
+    stroke.value.dashed = strokeArray.at(2) === '1'
+    stroke.value.dashScale = Number(strokeArray.at(3) as string)
+}
+
+setStroke(pathStyle)
+
+vue.watch(
+    () => pathStyle,
+    () => setStroke(pathStyle)
+)
 
 const minWidth = vue.ref<number>(0.5)
 const maxWidth = vue.ref<number>(10)
 const widthStep = vue.ref<number>(0.5)
 
-vue.watch(
-    () => props.pathStyle,
-    () => {
-        colour.value = props.pathStyle.strokeColour
-        dashed.value = props.pathStyle.strokeDashed
-        width.value = props.pathStyle.strokeWidth
-    }
-)
-
-const pathColour = vue.computed<string>(() => {
-    return new TinyColor(colour.value).toHexString()
-})
+//==============================================================================
 
 function colourChange(e: Event) {
     const target = e.target as HTMLInputElement
-    colour.value = target.value
+    stroke.value.colour = target.value
     emitChange()
 }
 
-const emit = defineEmits(['change'])
-
 function emitChange() {
-    emit('change', {
-        strokeColour: colour.value,
-        strokeDashed: dashed.value,
-        strokeWidth: width.value
-    })
+    emit('change', [
+        stroke.value.colour,
+        String(stroke.value.width),
+        stroke.value.dashed ? '1' : '0',
+        String(stroke.value.dashScale)
+    ].join('-'))
 }
+//==============================================================================
 </script>
 
 <style>

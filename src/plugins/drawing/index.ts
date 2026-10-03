@@ -16,14 +16,8 @@ import {
     type ValueChange
 } from '#root/utils/editor-types'
 import type {
-    PathStyling,
     Styling
 } from '#root/utils/styling'
-import {
-    getSvgFillStyle,
-//    getSvgPathStyle,
-    setSvgPathStyle,
-} from '#root/utils/svgUtils'
 
 //==============================================================================
 
@@ -42,7 +36,6 @@ const STYLING_TEMPLATE: PropertyGroup = {
 
 interface PluginData {
     managed?: boolean
-    fillColours?: string[]
 }
 
 //==============================================================================

@@ -29,7 +29,7 @@ import type { BGBaseComponent } from '.'
 
 export interface BGElementStyle {
     text: string
-    background: string|string[]
+    background: string
     border?: string
 }
 

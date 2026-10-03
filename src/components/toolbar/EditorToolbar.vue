@@ -84,14 +84,13 @@ function panelEvent(toolId: string, itemId: string, oldValue: string, newValue: 
     )
 }
 
-function styleEvent(toolId: string, object: string, styling: Styling) {
+function styleEvent(toolId: string, styling: Styling) {
     document.dispatchEvent(
         new CustomEvent('style-event', {
             detail: {
                 type: 'value',
                 source: toolId,
-                object,
-                styling
+                styling: styling
             }
         })
     )

@@ -451,7 +451,7 @@ export class CellDLEditor {
         const detail = (<CustomEvent>event).detail
         if (detail.source === this.#openPanel?.panelId) {
             if (this.#openPanel && this.selectionSet.size === 1) {
-                await this.#openPanel.updateObjectStyling(this.selectionSet.objects[0]!, detail.object, detail.styling)
+                await this.#openPanel.updateObjectStyling(this.selectionSet.objects[0]!, detail.styling)
                 notifyChanges()
             }
         }

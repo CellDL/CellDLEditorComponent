@@ -58,7 +58,7 @@ vue.watch(
     { deep: true }
 )
 
-const emit = defineEmits(['panel-event', 'style-event'])
+const emit = defineEmits(['panel-event'])
 
 function updateProperties(itemId: string, oldValue: number | string, newValue: number | string) {
     vue.nextTick().then(() => {
