@@ -90,10 +90,10 @@ export class BoundedElement extends CellDLSVGElement {
         this.#controlRect.centroid.yValue.reassignMaximum(Infinity)
     }
 
-    move(svgPoint: PointLike, _options: ElementMoveOptions={}) {
+    move(svgPoint: PointLike, options: ElementMoveOptions={}) {
         const savedCentroid = this.centroid
         // This sets the control rect's attributes but doesn't paint anything
-        this.#controlRect.move(svgPoint)
+        this.#controlRect.move(svgPoint, options)
         this.setCentroid(this.#controlRect.centroid.point)
         const centroidDelta = this.centroid.subtract(savedCentroid)
         // Reset any restrictions for `elementBoundingBoxBoxMoved()`

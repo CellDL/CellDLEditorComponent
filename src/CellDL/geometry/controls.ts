@@ -20,7 +20,7 @@ limitations under the License.
 
 import type { CellDLConnection, CellDLObject } from '#editor/celldlObjects'
 import type { EditorFrame } from '#editor/editor/editorframe'
-import { editGuides } from '#editor/editor/editguides'
+import { editGuides, type GridAlignOptions } from '#editor/editor/editguides'
 
 import { svgCircle, svgRect } from '#root/utils/svgUtils'
 
@@ -259,9 +259,9 @@ export class ControlRect {
         this.#moveOffset = Point.fromPoint(PointMath.subtract(this.#centroid, point))
     }
 
-    move(point: PointLike) {
+    move(point: PointLike, options: GridAlignOptions={}) {
         const position = this.#moveOffset?.add(point)
-        this.reposition(this.#gridAligned ? editGuides.gridAlign(position) : position)
+        this.reposition(this.#gridAligned ? editGuides.gridAlign(position, options) : position)
     }
 
     /**

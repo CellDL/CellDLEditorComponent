@@ -527,26 +527,44 @@ export class CellDLCompartment extends CellDLConnectedObject {
     ) {
         super(uri, objectTemplate, celldlDiagram)
     }
+    #associatedComponents: CellDLMoveableObject[] = []
+    #compartmentElement: CompartmentElement|undefined
 
     get isAlignable() {
         return false
     }
 
     assignSvgElement(svgElement: SVGGraphicsElement, align: boolean) {
-        new CompartmentElement(this, svgElement, this.isAlignable, align)
+        this.#compartmentElement = new CompartmentElement(this, svgElement, this.isAlignable, align)
+        if (this.celldlSvgElement) {
+            for (const object of this.celldlDiagram.objectsContainedIn(this.celldlSvgElement.bounds)) {
+                const celldlObject = object.object
+                if (celldlObject.isMoveable) {
+                    this.#associatedComponents.push(celldlObject as CellDLMoveableObject)
+                }
+            }
+        }
     }
 
     startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
         super.startMove(svgPoint, options)
+        for (const component of this.#associatedComponents) {
+            component.startMove(svgPoint, { noAlign: true, snapGrid: false })
+        }
     }
 
     move(svgPoint: PointLike, options: ElementMoveOptions={}) {
         super.move(svgPoint, options)
+        // A move of the compartment moves associated components.
+        for (const component of this.#associatedComponents) {
+            component.move(svgPoint, { noAlign: true, snapGrid: false })
         }
     }
 
     endMove() {
         super.endMove()
+        for (const component of this.#associatedComponents) {
+            component.endMove()
         }
     }
 }
