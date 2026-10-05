@@ -27,11 +27,19 @@ export class CompartmentElement extends BoundedElement {
 
 //==============================================================================
 
-    getStyle(): Styling {
-        return this.#compartment.styling
     }
 
 //==============================================================================
+
+    updateElement() {
+        this.#compartment.update()
+    }
+
+//==============================================================================
+
+    getStyle(): Styling {
+        return this.#compartment.styling
+    }
 
     setStyle(styling: Styling) {
         return this.#compartment.setStyling(styling)

@@ -656,7 +656,13 @@ export class CellDLSVGElement {
     unlimitDirection() {}
 
     /**
-     * Update the image for the element.
+     * Update SVG content of the CellDLSVGElemet.
+     */
+    updateElement() {
+    }
+
+    /**
+     * Update the image of the CellDLSVGElemet.
      *
      * Called when an element's properties have been changed.
      *

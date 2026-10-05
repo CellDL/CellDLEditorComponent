@@ -43,6 +43,13 @@ const DEFAULT_COMPARTMENT_STYLE: CompartmentStyling = {
 
 //==============================================================================
 
+const FONT_PIXEL_SIZE = 24
+const FONT = `bold ${FONT_PIXEL_SIZE}px sans-serif`
+
+const PADDING = 24
+
+//==============================================================================
+
 export function createCompartmentSvgElement(id: string, topLeft: PointLike, bottomRight: PointLike): SVGGElement {
     const styling = DEFAULT_COMPARTMENT_STYLE
     const svgElement = document.createElementNS(SVG_URI, 'g')
@@ -84,15 +91,120 @@ function createRectAsString(topLeft: PointLike, bottomRight: PointLike,
     )
 }
 
+//==============================================================================
+
+type RectDimensions = {
+    x: number
+    y: number
+    width: number
+    height: number
+}
+
+function getRectDimensions(rect: SVGRectElement): RectDimensions {
+    return {
+        x: Number(rect.getAttribute('x')),
+        y: Number(rect.getAttribute('y')),
+        width: Number(rect.getAttribute('width')),
+        height: Number(rect.getAttribute('height'))
+    }
+}
+
 function updateRectDimensions(rect: SVGRectElement, delta: number) {  // -ve `delta` will shrink
-    const x = Number(rect.getAttribute('x'))
-    const y = Number(rect.getAttribute('y'))
-    const width = Number(rect.getAttribute('width'))
-    const height = Number(rect.getAttribute('height'))
-    rect.setAttribute('x', `${x - delta}`)
-    rect.setAttribute('y', `${y - delta}`)
-    rect.setAttribute('width', `${Math.max(0, width + 2*delta)}`)
-    rect.setAttribute('height', `${Math.max(0, height + 2*delta)}`)
+    const dims = getRectDimensions(rect)
+    rect.setAttribute('x', `${dims.x - delta}`)
+    rect.setAttribute('y', `${dims.y - delta}`)
+    rect.setAttribute('width', `${Math.max(0, dims.width + 2*delta)}`)
+    rect.setAttribute('height', `${Math.max(0, dims.height + 2*delta)}`)
+}
+
+//==============================================================================
+
+function escapeHtml(str: string): string {
+  return str.replace(/[&<>'"]/g,
+    tag => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    }[tag] || tag)
+  )
+}
+
+//==============================================================================
+
+class TextElement {
+    #canvas: HTMLCanvasElement
+    #svgTextElement: SVGTextElement
+    #xHeight: number
+    #hAlign: string = 'C'
+    #vAlign: string = 'T'
+    #xPos: number
+    #yPos: number
+
+    constructor(parent: SVGGElement, text: string, containerSize: RectDimensions) {
+        this.#canvas = document.createElement("canvas")
+        const xMetrics = this.#getTextSize('x', FONT)
+        this.#xHeight = xMetrics?.actualBoundingBoxAscent || FONT_PIXEL_SIZE/2
+        this.#xPos = containerSize.x
+        if (this.#hAlign === 'L') {
+            this.#xPos += PADDING
+        } else if (this.#hAlign === 'R') {
+            this.#xPos += containerSize.width - PADDING
+        } else {
+            this.#xPos += containerSize.width/2
+        }
+        this.#yPos = containerSize.y
+        if (this.#vAlign === 'T') {
+            this.#yPos += PADDING
+        } else if (this.#vAlign === 'B') {
+            this.#yPos += containerSize.height - PADDING
+        } else {
+            this.#yPos += containerSize.height/2
+        }
+
+        this.#svgTextElement = document.createElementNS(SVG_URI, 'text') //parent.lastChild as SVGTextElement
+        parent.appendChild(this.#svgTextElement)
+        this.updateText(text)
+    }
+
+    get svgElement() {
+        return this.#svgTextElement
+    }
+
+    resize(_size: PointLike) {
+    }
+
+    updateText(text: string) {
+        const cleanText = escapeHtml(text)
+        this.#svgTextElement.setAttribute('style', `font: ${FONT};`)
+        let xPos = this.#xPos
+        let yPos = this.#yPos
+        const textMetrics = this.#getTextSize(text, FONT)
+        if (textMetrics) {
+            if (this.#hAlign === 'C') {
+                xPos -= textMetrics.width/2
+            } else if (this.#hAlign === 'R') {
+                xPos -= textMetrics.width
+            }
+            if (this.#vAlign === 'T') {
+                yPos += this.#xHeight
+            } else if (this.#vAlign === 'C') {
+                yPos += this.#xHeight/2
+            }
+        }
+        this.#svgTextElement.setAttribute('x', String(xPos))
+        this.#svgTextElement.setAttribute('y', String(yPos))
+        this.#svgTextElement.innerHTML = cleanText
+    }
+
+    #getTextSize(text: string, font: string): TextMetrics|undefined {
+        const context = this.#canvas.getContext("2d")
+        if (context) {
+            context.font = font
+            return context.measureText(text)
+        }
+    }
 }
 
 //==============================================================================
@@ -101,11 +213,14 @@ export class Compartment {
     #boundary0: SVGRectElement
     #boundary1: SVGRectElement|undefined
     #celldlDiagram: CellDLDiagram
+    #celldlObject: CellDLObject
     #objectId: string
     #styling: Styling = {}
     #svgElement: SVGGElement
+    #textElement: TextElement|undefined
 
     constructor(celldlObject: CellDLObject) {
+        this.#celldlObject = celldlObject
         this.#celldlDiagram = celldlObject.celldlDiagram
         this.#objectId = celldlObject.id
         this.#svgElement = celldlObject.svgElement as SVGGElement
@@ -143,6 +258,7 @@ export class Compartment {
             }
         }
         this.#styling.cornerStyle = String(cornerRadius)
+        this.#updateTextElement()
     }
 
     get styling() {
@@ -219,6 +335,25 @@ export class Compartment {
                     this.#boundary1.removeAttribute('rx')
                 }
             }
+        }
+    }
+
+    update() {
+        this.#updateTextElement()
+    }
+
+    #updateTextElement() {
+        const text = this.#celldlObject.label
+        if (text) {
+            if (this.#textElement) {
+                this.#textElement.updateText(text)
+            } else {
+                const dims = getRectDimensions(this.#boundary0)
+                this.#textElement = new TextElement(this.#svgElement, text, dims)
+            }
+        } else if (this.#textElement) {
+            this.#svgElement.removeChild(this.#textElement.svgElement)
+            this.#textElement = undefined
         }
     }
 }

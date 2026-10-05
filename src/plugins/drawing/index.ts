@@ -129,8 +129,9 @@ export class DrawingPlugin implements PluginInterface {
         }
     }
 
-    async updateObjectProperties(_celldlObject: CellDLObject, _panelId: PANEL_ID, _itemId: string, _value: ValueChange,
+    async updateObjectProperties(celldlObject: CellDLObject, panelId: PANEL_ID, itemId: string, value: ValueChange,
                                  _componentProperties: PropertyGroup[]) {
+        celldlObject.celldlSvgElement?.updateElement()
     }
 
     async updatedComponentStyling(celldlObject: CellDLObject, styling: Styling) {
