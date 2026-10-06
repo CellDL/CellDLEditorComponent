@@ -135,6 +135,12 @@ export function updateItemProperty(property: string, value: ValueChange,
             INSERT DATA { ${objectUri} <${property}> """${newValue.replace('\\', '\\\\')}""" }
         `)
     }
+    if (property === RDFS.uri('label').value) {
+        celldlObject.setLabel(newValue || undefined)
+    }
+    if (property === DCT.uri('description').value) {
+        celldlObject.setDescription(newValue || undefined)
+    }
 }
 
 //==============================================================================

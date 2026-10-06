@@ -19,7 +19,7 @@ limitations under the License.
 ******************************************************************************/
 
 import { CELLDL, type MetadataPropertiesMap, type MetadataStore } from '@celldl/metadata'
-import { isLiteral, type Literal, type NamedNode, RDF, RDFS } from '@celldl/rdf'
+import { DCT, isLiteral, type Literal, type NamedNode, RDF, RDFS } from '@celldl/rdf'
 
 //==============================================================================
 
@@ -82,7 +82,8 @@ export class CellDLObject {
     #celldlSvgElement?: CellDLSVGElement
     #celldlTypeName: string
 
-    #label: string | null = null
+    #description: string|undefined
+    #label: string|undefined
     #name: string = ''
     #moveInitialised: boolean = false
 
@@ -139,6 +140,10 @@ export class CellDLObject {
 
     get connections(): CellDLConnection[] {
         return []
+    }
+
+    get description() {
+        return this.#description
     }
 
     get hasEditGuides() {
@@ -323,14 +328,26 @@ export class CellDLObject {
     assignSvgElement(_svgElement: SVGGraphicsElement, _align: boolean) {
     }
 
+    setDescription(description: string|undefined) {
+        this.#description = description
+    }
+
+    setLabel(label: string|undefined) {
+        this.#label = label
+    }
+
     #setMetadataProperties(properties: MetadataPropertiesMap) {
         // Create a new MetadataPropertiesMap rather than storing a reference
         const metadataProperties = properties.copy()
         metadataProperties.setProperty(RDF.uri('type'), CELLDL.uri(this.#celldlTypeName), true)
         this.#metadataProperties = metadataProperties
+        const description = properties.get(DCT.uri('description').value)
+        if (description && isLiteral(description)) {
+            this.setDescription((description as Literal).value)
+        }
         const label = properties.get(RDFS.uri('label').value)
         if (label && isLiteral(label)) {
-            this.#label = (label as Literal).value
+            this.setLabel((label as Literal).value)
         }
     }
 }
