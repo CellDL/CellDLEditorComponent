@@ -355,6 +355,9 @@ export class CellDLObject {
 //==============================================================================
 
 export class CellDLMoveableObject extends CellDLObject {
+
+    #boundedElement: BoundedElement|undefined
+
     startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
         // Finding alignment guides as we move
         editGuides.aligning(this, true)
@@ -382,7 +385,7 @@ export class CellDLMoveableObject extends CellDLObject {
     }
 
     assignSvgElement(svgElement: SVGGraphicsElement, align: boolean) {
-        new BoundedElement(this, svgElement, this.isAlignable, align)
+        this.#boundedElement = new BoundedElement(this, svgElement, this.isAlignable, align)
     }
 }
 
@@ -593,7 +596,7 @@ export class CellDLConnection extends CellDLObject {
     static celldlTypeName = 'Connection'
 
     #connectedObjects: CellDLConnectedObject[] = []
-    #svgConnection: SvgConnection|null = null
+    #svgConnection: SvgConnection|undefined
 
     constructor(
         uri: NamedNode,

@@ -21,7 +21,7 @@ import type {
 
 //==============================================================================
 
-export const PLUGIN_ID = 'core-celldl-components'
+export const PLUGIN_ID = 'drawing-plugin'
 
 const STYLE_GROUP_ID = 'drawing-element-style'
 

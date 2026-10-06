@@ -194,7 +194,7 @@ export class ObjectPropertiesPanel {
                     }
                 }
             }
-            // Get plugin specific component properties
+            // Set plugin specific component properties into `this.#componentPropertiesRef`
 
             componentLibraryPlugin.loadComponentProperties(this.#componentPropertiesRef.value.groups,
                                                            this.#panelId, celldlObject)
@@ -217,7 +217,7 @@ export class ObjectPropertiesPanel {
                     }
                 }
             }
-            // Update plugin specific component properties
+            // Update plugin specific component properties in `this.#componentPropertiesRef`
 
             await componentLibraryPlugin.updateObjectProperties(celldlObject, this.#panelId, itemId, value,
                                                                 this.#componentPropertiesRef.value.groups)

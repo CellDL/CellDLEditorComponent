@@ -58,7 +58,7 @@ import DrawingPopover from '#root/plugins/drawing/drawing.vue'
 // WIP import { ElectricalPlugin } from '#root/plugins/electrical'
 import type { PopoverEventData, ViewState } from '#root/utils/editor-types'
 
-import { TestCellDLEditor, testEditor } from '../../tests/editor'
+//import { TestCellDLEditor, testEditor } from '../../tests/editor'
 
 import PropertiesPanel from './panels/PropertiesPanel.vue'
 import StylingPanel from './panels/StylingPanel.vue'
