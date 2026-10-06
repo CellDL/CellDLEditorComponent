@@ -124,6 +124,8 @@ export function getElementId(element: SVGGraphicsElement): string {
 //==============================================================================
 
 const SVG_PANEL_ID = 'svg-panel'
+type PointerEventHandler = (eventType: string, svgElement: SVGGraphicsElement, svgCoords: PointLike) => boolean
+
 
 export class CellDLEditor {
     static instance: CellDLEditor | null = null
@@ -172,6 +174,7 @@ export class CellDLEditor {
     #boxMaking: boolean = false
 
     #pointerDownTime: number = 0
+    #pointerEventHandlers: Map<string, PointerEventHandler> = new Map()
 
     #openPanel: ObjectPropertiesPanel | undefined = undefined
     #panels: Map<PANEL_ID, ObjectPropertiesPanel> = new Map([
@@ -707,7 +710,29 @@ export class CellDLEditor {
         }
     }
 
+    addPointerEventHandler(handlerId: string, handler: PointerEventHandler) {
+        this.#pointerEventHandlers.set(handlerId, handler)
+    }
+
+    removePointerEventHandler(handlerId: string) {
+        if (this.#pointerEventHandlers.has(handlerId)) {
+            this.#pointerEventHandlers.delete(handlerId)
+        }
+    }
+
+    #handlePointerEvents(event: PointerEvent|MouseEvent): boolean {
+        for (const handler of this.#pointerEventHandlers.values()) {
+            if (handler(event.type, event.target as SVGGraphicsElement, this.#domToSvgCoords(event))) {
+                return true
+            }
+        }
+        return false
+    }
+
     #pointerClickEvent(event: MouseEvent) {
+        if (this.#handlePointerEvents(event)) {
+            return
+        }
         const element = event.target as SVGGraphicsElement
         if (
             this.#celldlDiagram === null ||
@@ -800,7 +825,7 @@ export class CellDLEditor {
     }
 
     #pointerOverEvent(event: PointerEvent) {
-        if (this.#celldlDiagram === null) {
+        if (this.#celldlDiagram === null || this.#handlePointerEvents(event)) {
             return
         }
         const element = event.target as SVGGraphicsElement
@@ -878,6 +903,9 @@ export class CellDLEditor {
     }
 
     #pointerDownEvent(event: PointerEvent) {
+        if (this.#handlePointerEvents(event)) {
+            return
+        }
         this.pointerMoved = false
         this.#pointerDownTime = Date.now()
         const element = event.target as SVGGraphicsElement
@@ -951,6 +979,9 @@ export class CellDLEditor {
     }
 
     #pointerMoveEvent(event: PointerEvent) {
+        if (this.#handlePointerEvents(event)) {
+            return
+        }
         if (this.#panning) {
             this.pointerMoved = this.#panzoom!.pointerMove(event) || this.pointerMoved
             return
@@ -983,7 +1014,7 @@ export class CellDLEditor {
     }
 
     #pointerUpEvent(event: PointerEvent) {
-        if (this.#celldlDiagram === null) {
+        if (this.#celldlDiagram === null || this.#handlePointerEvents(event)) {
             return
         }
         const svgPoint = this.#domToSvgCoords(event)
