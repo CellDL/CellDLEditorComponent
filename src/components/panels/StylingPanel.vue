@@ -16,6 +16,11 @@
                         :cornerStyle="group.styling.cornerStyle"
                         @change="updateCornerStyle"
                     )
+                    TextStyle(
+                        v-if="group.styling.textStyle"
+                        :textStyle="group.styling.textStyle"
+                        @change="updateTextStyle"
+                    )
                     PathStyle(
                         v-if="group.styling.pathStyle"
                         :pathStyle="group.styling.pathStyle"
@@ -39,6 +44,7 @@ import CornerStyle from '../widgets/CornerStyle.vue'
 import FillStyle from '../widgets/FillStyle.vue'
 import GapStyle from '../widgets/GapStyle.vue'
 import PathStyle from '../widgets/PathStyle.vue'
+import TextStyle from '../widgets/TextStyle.vue'
 
 import ToolPanel from './ToolPanel.vue'
 
@@ -94,6 +100,12 @@ function updateGapStyle(gapStyle: string) {
 function updatePathStyle(pathStyle: string) {
     void vue.nextTick().then(() => {
         emit('style-event', props.toolId, { pathStyle })
+    })
+}
+
+function updateTextStyle(textStyle: string) {
+    void vue.nextTick().then(() => {
+        emit('style-event', props.toolId, { textStyle })
     })
 }
 

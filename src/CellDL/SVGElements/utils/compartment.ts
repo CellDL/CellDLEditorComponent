@@ -11,7 +11,8 @@ import {
     MEMBRANE_DASH,
     MEMBRANE_GAP,
     MEMBRANE_STROKE_WIDTH,
-    type Styling
+    type Styling,
+    STYLE_STRING_FIELD_SEPARATOR
 } from '#root/utils/styling'
 import {
     getFillFromString,
@@ -42,6 +43,9 @@ const DEFAULT_COMPARTMENT_STYLE: CompartmentStyling = {
 }
 
 //==============================================================================
+
+// Top, centre
+const DEFAULT_TEXT_STYLE = ['0', '-1'].join(STYLE_STRING_FIELD_SEPARATOR)
 
 const FONT_PIXEL_SIZE = 24
 const FONT = `bold ${FONT_PIXEL_SIZE}px sans-serif`
@@ -135,67 +139,111 @@ function escapeHtml(str: string): string {
 
 class TextElement {
     #canvas: HTMLCanvasElement
+    #containerSize: RectDimensions
     #svgTextElement: SVGTextElement
+    #text: string|undefined
     #xHeight: number
-    #hAlign: string = 'C'
-    #vAlign: string = 'T'
-    #xPos: number
-    #yPos: number
+    #hAlign: string = '0'
+    #vAlign: string = '0'
+    #xPos: number = 0
+    #yPos: number = 0
 
-    constructor(parent: SVGGElement, text: string, containerSize: RectDimensions) {
-        this.#canvas = document.createElement("canvas")
+    constructor(parent: SVGGElement, containerSize: RectDimensions) {
+        this.#containerSize = containerSize
+        this.#canvas = document.createElement('canvas')
+        this.#setStyle(parent.getAttribute('data-text-style') || DEFAULT_TEXT_STYLE)
         const xMetrics = this.#getTextSize('x', FONT)
         this.#xHeight = xMetrics?.actualBoundingBoxAscent || FONT_PIXEL_SIZE/2
-        this.#xPos = containerSize.x
-        if (this.#hAlign === 'L') {
-            this.#xPos += PADDING
-        } else if (this.#hAlign === 'R') {
-            this.#xPos += containerSize.width - PADDING
+        this.#setPosition()
+        const textElement = parent.querySelector('text')
+        if (textElement) {
+            this.#svgTextElement = textElement
+            this.#text = textElement.textContent
         } else {
-            this.#xPos += containerSize.width/2
+            this.#svgTextElement = document.createElementNS(SVG_URI, 'text')
+            parent.appendChild(this.#svgTextElement)
         }
-        this.#yPos = containerSize.y
-        if (this.#vAlign === 'T') {
-            this.#yPos += PADDING
-        } else if (this.#vAlign === 'B') {
-            this.#yPos += containerSize.height - PADDING
-        } else {
-            this.#yPos += containerSize.height/2
-        }
-
-        this.#svgTextElement = document.createElementNS(SVG_URI, 'text') //parent.lastChild as SVGTextElement
-        parent.appendChild(this.#svgTextElement)
-        this.updateText(text)
     }
 
     get svgElement() {
         return this.#svgTextElement
     }
 
+    get text() {
+        return this.#text
+    }
+
+    getStyle(): string {
+        return [
+            this.#hAlign,
+            this.#vAlign
+        ].join(STYLE_STRING_FIELD_SEPARATOR)
+    }
+
+    setStyle(style: string) {
+        this.#setStyle(style)
+        this.#setPosition()
+        this.#updateText()
+    }
+
+    #setPosition() {
+        this.#xPos = this.#containerSize.x
+        if (this.#hAlign === '-1') {
+            this.#xPos += PADDING
+        } else if (this.#hAlign === '1') {
+            this.#xPos += this.#containerSize.width - PADDING
+        } else {
+            this.#xPos += this.#containerSize.width/2
+        }
+        this.#yPos = this.#containerSize.y
+        if (this.#vAlign === '-1') {
+            this.#yPos += PADDING
+        } else if (this.#vAlign === '1') {
+            this.#yPos += this.#containerSize.height - PADDING
+        } else {
+            this.#yPos += this.#containerSize.height/2
+        }
+    }
+
+    #setStyle(style: string) {
+        const fields = style.split(STYLE_STRING_FIELD_SEPARATOR)
+        this.#hAlign = fields.at(0) || '0'
+        this.#vAlign = fields.at(1) || '0'
+    }
+
     resize(_size: PointLike) {
     }
 
-    updateText(text: string) {
-        const cleanText = escapeHtml(text)
+    updateText(text: string|undefined) {
+        this.#text = text
+        this.#updateText()
+    }
+
+    #updateText() {
+        if (!this.#text) {
+            this.#svgTextElement.innerHTML = ''
+            return
+        }
+        const cleanText = escapeHtml(this.#text)
         this.#svgTextElement.setAttribute('style', `font: ${FONT};`)
         let xPos = this.#xPos
         let yPos = this.#yPos
-        const textMetrics = this.#getTextSize(text, FONT)
+        const textMetrics = this.#getTextSize(this.#text, FONT)
         if (textMetrics) {
-            if (this.#hAlign === 'C') {
+            if (this.#hAlign === '0') {
                 xPos -= textMetrics.width/2
-            } else if (this.#hAlign === 'R') {
+            } else if (this.#hAlign === '1') {
                 xPos -= textMetrics.width
             }
-            if (this.#vAlign === 'T') {
+            if (this.#vAlign === '-1') {
                 yPos += this.#xHeight
-            } else if (this.#vAlign === 'C') {
+            } else if (this.#vAlign === '0') {
                 yPos += this.#xHeight/2
             }
         }
         this.#svgTextElement.setAttribute('x', String(xPos))
         this.#svgTextElement.setAttribute('y', String(yPos))
-        this.#svgTextElement.innerHTML = cleanText
+        this.#svgTextElement.textContent = cleanText
     }
 
     #getTextSize(text: string, font: string): TextMetrics|undefined {
@@ -217,7 +265,7 @@ export class Compartment {
     #objectId: string
     #styling: Styling = {}
     #svgElement: SVGGElement
-    #textElement: TextElement|undefined
+    #textElement: TextElement
 
     constructor(celldlObject: CellDLObject) {
         this.#celldlObject = celldlObject
@@ -258,10 +306,13 @@ export class Compartment {
             }
         }
         this.#styling.cornerStyle = String(cornerRadius)
-        this.#updateTextElement()
+        this.#textElement = new TextElement(this.#svgElement, getRectDimensions(this.#boundary0))
     }
 
     get styling() {
+        if (this.#textElement.text) {
+            this.#styling.textStyle = this.#textElement.getStyle()
+        }
         return this.#styling
     }
 
@@ -336,6 +387,11 @@ export class Compartment {
                 }
             }
         }
+
+        if (styling.textStyle) {
+            this.#textElement.setStyle(styling.textStyle)
+            this.#svgElement.setAttribute('data-text-style', styling.textStyle)
+        }
     }
 
     update() {
@@ -343,18 +399,7 @@ export class Compartment {
     }
 
     #updateTextElement() {
-        const text = this.#celldlObject.label
-        if (text) {
-            if (this.#textElement) {
-                this.#textElement.updateText(text)
-            } else {
-                const dims = getRectDimensions(this.#boundary0)
-                this.#textElement = new TextElement(this.#svgElement, text, dims)
-            }
-        } else if (this.#textElement) {
-            this.#svgElement.removeChild(this.#textElement.svgElement)
-            this.#textElement = undefined
-        }
+        this.#textElement.updateText(this.#celldlObject.label)
     }
 }
 
