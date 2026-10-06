@@ -431,7 +431,7 @@ export class CellDLEditor {
         if (detail.type === 'state') {
             if (this.#panels.has(detail.source)) {
                 this.#openPanel = this.#panels.get(detail.source)
-            } else if (detail.source === EDITOR_TOOL_IDS.SelectTool) {
+            } else {
                 this.#changeMode(EDITOR_MODE.Selecting)
             }
         }
