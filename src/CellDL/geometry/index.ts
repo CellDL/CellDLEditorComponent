@@ -67,6 +67,10 @@ export class Bounds {
         return this.#bottom
     }
 
+    get bottomRight(): Point {
+        return new Point(this.#right, this.#bottom)
+    }
+
     static fromPoints(pt0: PointLike, pt1: PointLike): Bounds {
         return new Bounds(pt0.x, pt0.y, pt1.x, pt1.y)
     }
