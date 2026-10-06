@@ -622,10 +622,6 @@ export class CellDLSVGElement {
         this.#setSelectionClass('highlight', highlight)
     }
 
-    pointerEvent(_eventType: string, _svgElement: SVGGraphicsElement, _svgCoords: PointLike): boolean {
-        return false
-    }
-
     redraw() {}
 
     remove() {
