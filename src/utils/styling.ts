@@ -55,6 +55,19 @@ export type Styling = {
      * width.
      */
     pathStyle?: string
+
+    /**
+     * How a block of text is styled.
+     *
+     * The value is a string with two comma-separated sub-fields, which represent
+     * the horizontal and vertical positions of the text block inside its associated
+     * compartment. Positions are given by a signed integer, with `-1` meaning
+     * `left` or `top`, `0` == `centre` and `1`, `right` or
+     * `bottom`.
+     *
+     * FUTURE: this will be extended to include font attributes and side padding.
+     */
+    textStyle?: string
 }
 
 //==============================================================================
