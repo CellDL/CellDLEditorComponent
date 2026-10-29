@@ -11,6 +11,7 @@
 import { useThemeCssVariables } from '#root/utils/themeCssVariables'
 
 useThemeCssVariables('scrollpanel')
+useThemeCssVariables('card')
 </script>
 
 <style scoped>
