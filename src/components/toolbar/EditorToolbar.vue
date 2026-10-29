@@ -125,7 +125,7 @@ function styleEvent(toolId: string, styling: Styling) {
 </script>
 
 <style>
-.p-toolbar.horizontal {
+.editor-pane .p-toolbar.horizontal {
     flex-direction: row !important;
     height: 38px !important;
     padding: 0 !important;
@@ -135,8 +135,8 @@ function styleEvent(toolId: string, styling: Styling) {
     width: 100% !important;
 }
 
-.p-toolbar.horizontal > .p-toolbar-start,
-.p-toolbar.horizontal > .p-toolbar-end {
+.editor-pane .p-toolbar.horizontal > .p-toolbar-start,
+.editor-pane .p-toolbar.horizontal > .p-toolbar-end {
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     padding: 0 !important;
