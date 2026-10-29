@@ -1,5 +1,6 @@
 <template lang="pug">
     div(
+        v-if="type==='panel'"
         ref="panelRef"
         :class="panelClasses"
         :style="panelStyle"
