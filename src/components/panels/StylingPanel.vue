@@ -3,7 +3,7 @@
         template(#title)
             div {{ title }}
         template(#content)
-            div#panel-content
+            #panel-content
                 div(v-if="!properties.objectId") Please select a single element or path.
                 template(v-else)
                     Accordion(multiple=true :value="defaultPanel")

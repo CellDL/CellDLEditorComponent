@@ -14,7 +14,7 @@
             :pt:root:style="{ position: 'absolute' }"
         )
         .h-dvh.flex.flex-col
-            .flex.items-baseline
+            .flex.top-header
                 MainMenu(
                 :id="mainMenuId"
                     :haveFile="haveFile"
