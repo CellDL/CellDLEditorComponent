@@ -80,9 +80,16 @@ const panelClasses = vue.computed(() => {
 const popoverTop = vue.ref<string>()
 const popoverLeft = vue.ref<string>()
 
+const panelTop = vue.ref<string>()
+const panelHeight = vue.ref<string>()
+const panelRight = vue.ref<string>()
+
 const panelStyle = vue.computed(() => {
     if (props.type === 'popover') {
         return { top: popoverTop.value, left: popoverLeft.value }
+    }
+    if (props.type === 'panel') {
+        return { position: 'fixed', top: panelTop.value, height: panelHeight.value, right: panelRight.value }
     }
 })
 
@@ -157,6 +164,19 @@ async function toolButtonClick(e: MouseEvent) {
             target.classList.toggle('active')
             if (panelElement) {
                 panelVisible.value = !panelVisible.value
+                if (panelVisible.value) {
+                    // Use viewport-relative coords (position:fixed) so the result is
+                    // independent of which ancestor happens to be the containing block.
+                    const editorPane = target.closest('.editor-pane')
+                    const editorRect = editorPane?.getBoundingClientRect()
+                    const buttonRect = target.getBoundingClientRect()
+                    const top = buttonRect.bottom
+                    const height = (editorRect?.bottom ?? window.innerHeight) - top
+                    const right = window.innerWidth - (editorRect?.right ?? window.innerWidth)
+                    panelTop.value = `${top}px`
+                    panelHeight.value = `${height}px`
+                    panelRight.value = `${right}px`
+                }
             }
         } else {
             if (!target.classList.contains('active')) {
@@ -250,11 +270,8 @@ async function toolButtonClick(e: MouseEvent) {
     width: 250px;
     border: 2px solid var(--editor-border-color);
     border-top-width: 1px;
-    right: 0;
-    top: 38px; /* toolbar height */
-    bottom: 0;
-    position: absolute;
     z-index: 100;
+    overflow-y: auto;
     background-color: var(--p-surface-0);
 }
 
