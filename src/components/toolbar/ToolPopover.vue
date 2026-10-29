@@ -1,7 +1,7 @@
 <template lang="pug">
-    Card.left-popover(
+    Card.top-popover(
         :class="{ 'no-gap': !hasTitle, showtip: showtip }"
-        :data-tip-top="pointerPos"
+        :data-tip-left="pointerPos"
     )
         template(#title)
             div(v-if="hasTitle")
@@ -34,28 +34,29 @@ showtip.value = true //CSS.supports("x: attr(x type(*))")
 </style>
 
 <style scoped>
-.left-popover {
+.top-popover {
     position: absolute;
-    margin-left: 36px;
+    margin-top: 0;
     z-index: 100;
     border: 1px solid grey;
 }
 
-.left-popover.showtip::before {
+.top-popover.showtip::before {
     display: inline-block;
     position: absolute;
+    height: 16px;
     width: 20px;
-    left: -16px;
-    top: attr(data-tip-top px);
+    top: -16px;
+    left: attr(data-tip-left px);
     z-index: 99;
 }
 
-.left-popover.showtip::before {
-    content: url("./icons/LeftPanelArrowLight.svg");
+.top-popover.showtip::before {
+    content: url("./icons/TopPanelArrowLight.svg");
 }
 
-.celldl-dark-mode .left-popover.showtip::before {
-    content: url("./icons/LeftPanelArrowDark.svg");
+.celldl-dark-mode .top-popover.showtip::before {
+    content: url("./icons/TopPanelArrowDark.svg");
 }
 
 </style>

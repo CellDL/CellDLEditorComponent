@@ -1,9 +1,9 @@
 <template lang="pug">
     .flex.flex-col.h-full
-        main.editor-pane.relative.flex.grow
-            EditorToolbar.editor-bar(
-                :buttons="toolButtons"
-                type="popover"
+        main.editor-pane.relative.flex.flex-col.grow
+            EditorToolbar.editor-bar-h(
+                :leftButtons="toolButtons"
+                :rightButtons="panelButtons"
                 @button-event="buttonEvent"
             )
             div#svg-container(ref="svgContainer")
@@ -11,11 +11,6 @@
                     :contextMenuProps="contextMenuProps"
                 )
                 <!-- context-menu(id="context-menu")  -->
-            EditorToolbar.editor-bar(
-                :buttons="panelButtons"
-                type="panel"
-                @button-event="buttonEvent"
-            )
         footer.status-bar
             span#status-msg
             span#status-pos
@@ -49,11 +44,11 @@ import { type EditorToolButton, PANEL_ID } from '#root/utils/editor-types'
 
 import { componentLibraryPlugin } from '#root/plugins'
 
-import { BondgraphPlugin } from '#root/plugins/bondgraph'
-import BondgraphPopover from '#root/plugins/bondgraph/bondgraph.vue'
+import { BondgraphPlugin, PLUGIN_ID as BG_PLUGIN_ID } from '#root/plugins/bondgraph'
 
-import { DrawingPlugin } from '#root/plugins/drawing'
-import DrawingPopover from '#root/plugins/drawing/drawing.vue'
+import { DrawingPlugin, PLUGIN_ID as DRAWING_PLUGIN_ID } from '#root/plugins/drawing'
+
+import { CONNECTION_STYLE_DEFINITIONS } from '#editor/connections'
 
 // WIP import { ElectricalPlugin } from '#root/plugins/electrical'
 import type { PopoverEventData, ViewState } from '#root/utils/editor-types'
@@ -229,28 +224,51 @@ document.addEventListener('open-context-menu', (event: Event) => {
 //==============================================================================
 //==============================================================================
 
+// Build the left toolbar buttons: SelectTool + BG component templates + BG stroke styles + Drawing tools
+
 const toolButtons = vue.ref<EditorToolButton[]>([
     {
         toolId: EDITOR_TOOL_IDS.SelectTool,
         active: (DEFAULT_EDITOR_TOOL_ID as EDITOR_TOOL_IDS) === EDITOR_TOOL_IDS.SelectTool,
         prompt: 'Selection tool',
         icon: 'lucide-MousePointer'
-    },
-    {
-        toolId: EDITOR_TOOL_IDS.BondgraphTool,
-        active: (DEFAULT_EDITOR_TOOL_ID as EDITOR_TOOL_IDS) === EDITOR_TOOL_IDS.BondgraphTool,
-        prompt: 'Bond graph tools',
-        icon: 'lucide-Network',
-        panel: vue.markRaw(BondgraphPopover)
-    },
-    {
-        toolId: EDITOR_TOOL_IDS.DrawingTool,
-        active: (DEFAULT_EDITOR_TOOL_ID as EDITOR_TOOL_IDS) === EDITOR_TOOL_IDS.DrawingTool,
-        prompt: 'Drawing tools',
-        icon: 'lucide-SquarePen',
-        panel: vue.markRaw(DrawingPopover)
     }
 ])
+
+// Add bond graph component template buttons (images from the plugin library)
+const bgPlugin = componentLibraryPlugin.getPlugin(BG_PLUGIN_ID)
+if (bgPlugin) {
+    for (const template of bgPlugin.componentLibrary.templates) {
+        toolButtons.value.push({
+            toolId: `${BG_PLUGIN_ID}/${template.id}`,
+            prompt: template.name,
+            image: template.imageData
+        })
+    }
+}
+
+// Add bond graph connection style buttons (CSS icon)
+for (const styleDefn of CONNECTION_STYLE_DEFINITIONS) {
+    toolButtons.value.push({
+        toolId: `${BG_PLUGIN_ID}/${styleDefn.id}`,
+        prompt: styleDefn.name,
+        icon: styleDefn.icon
+    })
+}
+
+// Add drawing tool buttons (Lucide icons)
+toolButtons.value.push(
+    {
+        toolId: `${DRAWING_PLUGIN_ID}/draw-closed-compartment`,
+        prompt: 'Closed compartment',
+        icon: 'lucide-SquircleDashed'
+    },
+    {
+        toolId: `${DRAWING_PLUGIN_ID}/draw-background-region`,
+        prompt: 'Background region',
+        icon: 'lucide-SquareDashedKanban'
+    }
+)
 
 //==============================================================================
 
@@ -278,10 +296,10 @@ const panelButtons = vue.ref<EditorToolButton[]>([
 //==============================================================================
 
 function resetToolBars() {
-    // Set the toolbar to its default tool
+    // Set SelectTool as the only active tool button
 
     for (const toolButton of toolButtons.value) {
-        toolButton.active = (DEFAULT_EDITOR_TOOL_ID as EDITOR_TOOL_IDS) === toolButton.toolId
+        toolButton.active = toolButton.toolId === EDITOR_TOOL_IDS.SelectTool
     }
 
     // Hide any open panel
@@ -290,11 +308,48 @@ function resetToolBars() {
 
 //==============================================================================
 
-function buttonEvent(toolId: PANEL_ID, active: boolean) {
+async function buttonEvent(toolId: PANEL_ID, active: boolean) {
 
-    // Tell the editor that a tool has changed
+    if (toolId.startsWith(`${BG_PLUGIN_ID}/`)) {
+        const componentId = toolId.slice(BG_PLUGIN_ID.length + 1)
 
-    despatchToolbarEvent('state', toolId, active)
+        // Check if this is a component template
+        const template = bgPlugin?.componentLibrary.templates.find(t => t.id === componentId)
+        if (template) {
+            // Async-load the image to obtain its natural dimensions for placement
+            const dims = await new Promise<{ width: number; height: number }>(resolve => {
+                const img = new Image()
+                img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight })
+                img.src = template.imageData
+            })
+            document.dispatchEvent(
+                new CustomEvent('component-selected', {
+                    detail: {
+                        id: toolId,
+                        centre: { x: dims.width / 2, y: dims.height / 2 },
+                        offset: { x: 0, y: 0 }
+                    }
+                })
+            )
+        } else {
+            // Bond graph connection style
+            document.dispatchEvent(
+                new CustomEvent('connection-style', {
+                    detail: { style: componentId }
+                })
+            )
+        }
+    } else if (toolId.startsWith(`${DRAWING_PLUGIN_ID}/`)) {
+        const drawingToolId = toolId.slice(DRAWING_PLUGIN_ID.length + 1)
+        document.dispatchEvent(
+            new CustomEvent('celldl-drawing', {
+                detail: { tool: drawingToolId }
+            })
+        )
+    } else {
+        // Standard toolbar event (SelectTool, panel open/close)
+        despatchToolbarEvent('state', toolId, active)
+    }
 }
 
 //==============================================================================
@@ -376,13 +431,15 @@ vue.onMounted(async () => {
 .editor-pane {
     min-height: calc(100% - 1.6em);
 }
-.editor-bar {
-    width: 40px;
-    overflow: auto;
+.editor-bar-h {
+    height: 40px;
+    width: 100%;
+    overflow: visible;
 }
 #svg-container {
     margin:  0;
     border: 2px solid var(--editor-border-color);
+    border-top-width: 0;
     flex: 1;
     overflow: hidden;
 }

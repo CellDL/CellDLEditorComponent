@@ -9,9 +9,11 @@
         :id="toolId"
         :class="buttonClasses"
         :style="buttonStyle"
-        v-tippy="{ content: prompt, placement: 'right' }"
+        v-tippy="{ content: prompt, placement: 'bottom' }"
         :aria-label="prompt"
+        :draggable="!!image"
         @click="toolButtonClick"
+        @dragstart="dragStartEvent"
     )
         component(
             :is="buttonIcon"
@@ -72,15 +74,16 @@ const buttonStyle = vue.computed(() => {
 const panelVisible = vue.ref(false)
 
 const panelClasses = vue.computed(() => {
-    return [props.type==='panel' ? 'panel' : 'popover', { hidden: !panelVisible.value }]
+    return [props.type === 'panel' ? 'panel' : 'popover', { hidden: !panelVisible.value }]
 })
 
-const popoverTop = vue.ref()
+const popoverTop = vue.ref<string>()
+const popoverLeft = vue.ref<string>()
 
 const panelStyle = vue.computed(() => {
-    if (props.type==='popover') {
-       return { top: popoverTop.value }
-   }
+    if (props.type === 'popover') {
+        return { top: popoverTop.value, left: popoverLeft.value }
+    }
 })
 
 const pointerPos = vue.ref<number>()
@@ -105,6 +108,36 @@ vue.watch(
     }
 )
 
+// Preload natural image dimensions for drag-and-drop (dragstart must be synchronous)
+const naturalDims = vue.ref<{ width: number; height: number } | null>(null)
+
+vue.watchEffect(() => {
+    if (props.image) {
+        const img = new Image()
+        img.onload = () => { naturalDims.value = { width: img.naturalWidth, height: img.naturalHeight } }
+        img.src = props.image
+    } else {
+        naturalDims.value = null
+    }
+})
+
+function dragStartEvent(e: DragEvent) {
+    if (!props.image || !e.dataTransfer) return
+    const dims = naturalDims.value ?? { width: 72, height: 72 }
+    const target = e.currentTarget as HTMLElement
+    const details = {
+        id: props.toolId,
+        centre: { x: dims.width / 2, y: dims.height / 2 },
+        offset: { x: e.offsetX - target.scrollWidth / 2, y: e.offsetY - target.scrollHeight / 2 }
+    }
+    e.dataTransfer.items.add(JSON.stringify(details), 'text/plain')
+    document.dispatchEvent(
+        new CustomEvent('component-drag', {
+            detail: { type: 'dragstart', source: props.toolId, value: props.toolId }
+        })
+    )
+}
+
 const emit = defineEmits<{
     'button-event': [
         toolId: string,
@@ -123,11 +156,7 @@ async function toolButtonClick(e: MouseEvent) {
         if (props.type === 'panel') {
             target.classList.toggle('active')
             if (panelElement) {
-                if (panelVisible.value) {
-                    panelVisible.value = false
-                } else {
-                    panelVisible.value = true
-                }
+                panelVisible.value = !panelVisible.value
             }
         } else {
             if (!target.classList.contains('active')) {
@@ -136,20 +165,32 @@ async function toolButtonClick(e: MouseEvent) {
                     if (!panelVisible.value) {
                         panelVisible.value = true
 
-                        // Wait for panel to be rendered before getting its height
+                        // Wait for panel to be rendered before getting its dimensions
                         await vue.nextTick()
 
-                        const popoverHeight = panelElement?.clientHeight
-                        let top = target.offsetTop + (target.clientWidth - popoverHeight) / 2
-                        pointerPos.value = popoverHeight / 2 - 10 // 10 is half of pointer's height
+                        const popoverWidth = panelElement?.clientWidth
 
-                        if (top < (20 + window.scrollY)) {
-                            // Make sure our top is at least 20px below top containing element
-                            const adjustment = (20 + window.scrollY) - top
-                            top = (20 + window.scrollY)
-                            pointerPos.value -= adjustment
+                        // Get positions relative to the editor-pane (position: relative container)
+                        const editorPane = target.closest('.editor-pane')
+                        const editorRect = editorPane?.getBoundingClientRect()
+                        const buttonRect = target.getBoundingClientRect()
+                        const toolbarHeight = target.closest('.editor-bar-h')?.clientHeight ?? 38
+
+                        // Center popover horizontally under the button
+                        let left = (buttonRect.left - (editorRect?.left ?? 0)) + (target.clientWidth - popoverWidth) / 2
+
+                        // Keep within editor bounds
+                        if (left < 0) left = 0
+                        if (editorRect && left + popoverWidth > editorRect.width) {
+                            left = editorRect.width - popoverWidth
                         }
-                        popoverTop.value = `${top}px`
+
+                        // Arrow points to center of button from top of popover
+                        const buttonCenterX = (buttonRect.left - (editorRect?.left ?? 0)) + target.clientWidth / 2
+                        pointerPos.value = buttonCenterX - left - 10 // 10 is half of pointer's width
+
+                        popoverTop.value = `${toolbarHeight}px`
+                        popoverLeft.value = `${left}px`
                     }
                 }
             }
@@ -163,7 +204,7 @@ async function toolButtonClick(e: MouseEvent) {
 .tool-button {
     border-style: solid;
     border-color: var(--editor-border-color);
-    border-width: 0 1px 2px;
+    border-width: 0 1px 0 0;
     display: grid;
     place-items: center;
 }
@@ -208,14 +249,18 @@ async function toolButtonClick(e: MouseEvent) {
 .panel {
     width: 250px;
     border: 2px solid var(--editor-border-color);
-    border-left-width: 1px;
-    right: 38px; /* This depends on panel bar width... */
-    top: 1.8em;
-    bottom: 1.6em;
+    border-top-width: 1px;
+    right: 0;
+    top: 38px; /* toolbar height */
+    bottom: 0;
     position: absolute;
+    z-index: 100;
+    background-color: var(--p-surface-0);
 }
+
 .popover {
     position: absolute;
+    z-index: 100;
 }
 
 .active {
