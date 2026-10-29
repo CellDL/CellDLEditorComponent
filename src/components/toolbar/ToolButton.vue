@@ -224,12 +224,12 @@ async function toolButtonClick(e: MouseEvent) {
 .tool-button {
     border-style: solid;
     border-color: var(--editor-border-color);
-    border-width: 0 1px 0 0;
+    border-width: 0 1px;
     display: grid;
     place-items: center;
 }
 .tool-button:hover {
-    background-color: lightgrey;
+    background-color: var(--editor-button-hover);
 }
 
 .tool-button.ci {
@@ -241,7 +241,11 @@ async function toolButtonClick(e: MouseEvent) {
 }
 
 .tool-button.image {
-    background-size: 100% 100% !important;
+    background-size: 80% 80% !important;
+    background-position: center !important;
+}
+.tool-button.image:hover {
+    background-color: var(--editor-button-hover) !important;
 }
 
 .tool-button.modal::before {
@@ -256,6 +260,10 @@ async function toolButtonClick(e: MouseEvent) {
 
 .tool-button.modal::before {
     content: url("./icons/ModalButtonLight.svg");
+}
+
+.p-toolbar-end .tool-button {
+    border-width: 0 0 0 2px;
 }
 
 .celldl-dark-mode .tool-button.modal::before {

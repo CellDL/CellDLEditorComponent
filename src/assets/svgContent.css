@@ -4,11 +4,12 @@
 }
 
 :root {
-    --editor-canvas-background: #eee;
+    --editor-canvas-background: #f8f8f8;
     --editor-statusbar-background: #ececec;
 }
 
 :root {
+    --editor-button-hover: #ccc;
     --editor-compartment-fill: #ccc;
     --editor-membrane-colour: brown;
     --editor-membrane-gap: 4;

@@ -146,7 +146,6 @@ function styleEvent(toolId: string, styling: Styling) {
     flex-direction: row !important;
     height: 38px !important;
     padding: 0 !important;
-    border-bottom: 1px solid grey;
     flex-wrap: nowrap !important;
     border-radius: 0 !important;
     width: 100% !important;

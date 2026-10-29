@@ -422,6 +422,8 @@ vue.onMounted(async () => {
     height: 40px;
     width: 100%;
     overflow: visible;
+    border: 2px solid var(--editor-border-color);
+    background-color: var(--editor-statusbar-background);
 }
 #svg-container {
     margin:  0;
