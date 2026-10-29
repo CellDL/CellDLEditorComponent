@@ -235,40 +235,21 @@ const toolButtons = vue.ref<EditorToolButton[]>([
     }
 ])
 
-// Add bond graph component template buttons (images from the plugin library)
+// Add bond graph tool buttons
 const bgPlugin = componentLibraryPlugin.getPlugin(BG_PLUGIN_ID)
 if (bgPlugin) {
-    for (const template of bgPlugin.componentLibrary.templates) {
-        toolButtons.value.push({
-            toolId: `${BG_PLUGIN_ID}/${template.id}`,
-            prompt: template.name,
-            image: template.imageData
-        })
+    for (const buttonGroup of bgPlugin.toolButtons()) {
+        toolButtons.value.push(...buttonGroup)
     }
 }
 
-// Add bond graph connection style buttons (CSS icon)
-for (const styleDefn of CONNECTION_STYLE_DEFINITIONS) {
-    toolButtons.value.push({
-        toolId: `${BG_PLUGIN_ID}/${styleDefn.id}`,
-        prompt: styleDefn.name,
-        icon: styleDefn.icon
-    })
-}
-
-// Add drawing tool buttons (Lucide icons)
-toolButtons.value.push(
-    {
-        toolId: `${DRAWING_PLUGIN_ID}/draw-closed-compartment`,
-        prompt: 'Closed compartment',
-        icon: 'lucide-SquircleDashed'
-    },
-    {
-        toolId: `${DRAWING_PLUGIN_ID}/draw-background-region`,
-        prompt: 'Background region',
-        icon: 'lucide-SquareDashedKanban'
+// Add drawing tool buttons
+const drawingPlugin = componentLibraryPlugin.getPlugin(DRAWING_PLUGIN_ID)
+if (drawingPlugin) {
+    for (const buttonGroup of drawingPlugin.toolButtons()) {
+        toolButtons.value.push(...buttonGroup)
     }
-)
+}
 
 //==============================================================================
 

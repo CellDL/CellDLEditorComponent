@@ -47,6 +47,7 @@ import type {
 } from '#editor/components'
 
 import type {
+    EditorToolButton,
     PANEL_ID,
     PropertyGroup,
     ValueChange
@@ -81,6 +82,11 @@ export interface PluginInterface {
      * Get SVG <defs> elements used by the plugin.
      */
     svgDefinitions: () => string
+
+    /**
+     * Get groups of tool buttons for the editor's toolbar.
+     */
+    toolButtons: () => EditorToolButton[][]
 
     /**
      * A CellDL diagram has been opened.

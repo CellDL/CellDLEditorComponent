@@ -43,6 +43,7 @@ import type {
 } from '#root/libopencor/locUIJsonApi'
 
 import {
+    type EditorToolButton,
     type ItemDetails,
     PANEL_ID,
     type PropertyGroup,
@@ -68,6 +69,7 @@ import type {
     ElementTypeName,
     ObjectTemplate
 } from '#editor/components'
+import { CONNECTION_STYLE_DEFINITIONS } from '#editor/connections'
 import {
     getItemProperty,
     updateItemProperty
@@ -1085,6 +1087,28 @@ export class BondgraphPlugin implements PluginInterface {
 
     svgDefinitions(): string {
         return arrowMarkerDefinition('connection-end-arrow-bondgraph', 'bondgraph')
+    }
+
+    toolButtons(): EditorToolButton[][] {
+        return [
+            [
+                ...this.componentLibrary.templates.map(template => {
+                    return {
+                        toolId: `${PLUGIN_ID}/${template.id}`,
+                        prompt: template.name,
+                        image: template.imageData
+                    }
+                })
+            ],[
+                ...CONNECTION_STYLE_DEFINITIONS.map(styleDefn => {
+                    return {
+                        toolId: `${PLUGIN_ID}/${styleDefn.id}`,
+                        prompt: `${styleDefn.name} bond`,
+                        icon: styleDefn.icon
+                    }
+                })
+            ]
+        ]
     }
 
     //==========================================================================
