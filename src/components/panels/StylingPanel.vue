@@ -3,45 +3,46 @@
         template(#title)
             div {{ title }}
         template(#content)
-            div(v-if="!properties.objectId") Please select a single element or path.
-            template(v-else)
-                Accordion(multiple=true :value="defaultPanel")
-                    .group(v-for="(group, groupIndex) in properties.groups")
-                        AccordionPanel(v-if="group.styling.fillStyle" value="fill")
-                            AccordionHeader(:pt="{ root: { class: 'left-icon' } }") Fill
-                            AccordionContent
-                                FillStyle(
-                                    :fillStyle="group.styling.fillStyle"
-                                    @change="(fillStyle) => updateFillStyle(fillStyle, groupIndex)"
-                                )
-                        AccordionPanel(v-if="group.styling.cornerStyle" value="corner")
-                            AccordionHeader(:pt="{ root: { class: 'left-icon' } }") Corner
-                            AccordionContent
-                                CornerStyle(
-                                    :cornerStyle="group.styling.cornerStyle"
-                                    @change="(cornerStyle) => updateCornerStyle(cornerStyle, groupIndex)"
-                                )
-                        AccordionPanel(v-if="group.styling.textStyle" value="text")
-                            AccordionHeader(:pt="{ root: { class: 'left-icon' } }") Text
-                            AccordionContent
-                                TextStyle(
-                                    :textStyle="group.styling.textStyle"
-                                    @change="(textStyle) => updateTextStyle(textStyle, groupIndex)"
-                                )
-                        AccordionPanel(v-if="group.styling.strokeStyle" value="stroke")
-                            AccordionHeader(:pt="{ root: { class: 'left-icon' } }") Stroke
-                            AccordionContent
-                                StrokeStyle(
-                                    :strokeStyle="group.styling.strokeStyle"
-                                    @change="(strokeStyle) => updateStrokeStyle(strokeStyle, groupIndex)"
-                                )
-                        AccordionPanel(v-if="group.styling.gapStyle" value="membrane")
-                            AccordionHeader(:pt="{ root: { class: 'left-icon' } }") Membrane
-                            AccordionContent
-                                GapStyle(
-                                    :gapStyle="group.styling.gapStyle"
-                                    @change="(gapStyle) => updateGapStyle(gapStyle, groupIndex)"
-                                )
+            div#panel-content
+                div(v-if="!properties.objectId") Please select a single element or path.
+                template(v-else)
+                    Accordion(multiple=true :value="defaultPanel")
+                        .group(v-for="(group, groupIndex) in properties.groups")
+                            AccordionPanel(v-if="group.styling.fillStyle" value="fill")
+                                AccordionHeader(:pt="{ root: { class: 'left-icon' } }") Fill
+                                AccordionContent
+                                    FillStyle(
+                                        :fillStyle="group.styling.fillStyle"
+                                        @change="(fillStyle) => updateFillStyle(fillStyle, groupIndex)"
+                                    )
+                            AccordionPanel(v-if="group.styling.cornerStyle" value="corner")
+                                AccordionHeader(:pt="{ root: { class: 'left-icon' } }") Corner
+                                AccordionContent
+                                    CornerStyle(
+                                        :cornerStyle="group.styling.cornerStyle"
+                                        @change="(cornerStyle) => updateCornerStyle(cornerStyle, groupIndex)"
+                                    )
+                            AccordionPanel(v-if="group.styling.textStyle" value="text")
+                                AccordionHeader(:pt="{ root: { class: 'left-icon' } }") Text
+                                AccordionContent
+                                    TextStyle(
+                                        :textStyle="group.styling.textStyle"
+                                        @change="(textStyle) => updateTextStyle(textStyle, groupIndex)"
+                                    )
+                            AccordionPanel(v-if="group.styling.strokeStyle" value="stroke")
+                                AccordionHeader(:pt="{ root: { class: 'left-icon' } }") Stroke
+                                AccordionContent
+                                    StrokeStyle(
+                                        :strokeStyle="group.styling.strokeStyle"
+                                        @change="(strokeStyle) => updateStrokeStyle(strokeStyle, groupIndex)"
+                                    )
+                            AccordionPanel(v-if="group.styling.gapStyle" value="membrane")
+                                AccordionHeader(:pt="{ root: { class: 'left-icon' } }") Membrane
+                                AccordionContent
+                                    GapStyle(
+                                        :gapStyle="group.styling.gapStyle"
+                                        @change="(gapStyle) => updateGapStyle(gapStyle, groupIndex)"
+                                    )
 </template>
 
 <script setup lang="ts">
@@ -153,6 +154,10 @@ function updateTextStyle(textStyle: string, groupIndex: number) {
 </script>
 
 <style scoped>
+#panel-content {
+    margin-top: 20px;
+}
+
 /* Move the toggle icon to the left */
 :deep(.left-icon) {
     display: flex;
