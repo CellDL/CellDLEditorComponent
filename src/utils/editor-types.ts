@@ -118,6 +118,7 @@ export type EditorToolButton = {
     image?: string
     panel?: vue.Raw<vue.Component>
     props?: vue.Ref<PropertyGroup[]>
+    separator?: boolean  // If true, renders as a visual group separator instead of a button
 }
 
 //==============================================================================

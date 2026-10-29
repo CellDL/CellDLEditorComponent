@@ -235,11 +235,15 @@ const toolButtons = vue.ref<EditorToolButton[]>([
     }
 ])
 
+let buttonGroupId = 1
+
 // Add bond graph tool buttons
 const bgPlugin = componentLibraryPlugin.getPlugin(BG_PLUGIN_ID)
 if (bgPlugin) {
     for (const buttonGroup of bgPlugin.toolButtons()) {
+        toolButtons.value.push({ toolId: `separator-${buttonGroupId}`, prompt: '', separator: true })
         toolButtons.value.push(...buttonGroup)
+        buttonGroupId += 1
     }
 }
 
@@ -247,7 +251,9 @@ if (bgPlugin) {
 const drawingPlugin = componentLibraryPlugin.getPlugin(DRAWING_PLUGIN_ID)
 if (drawingPlugin) {
     for (const buttonGroup of drawingPlugin.toolButtons()) {
+        toolButtons.value.push({ toolId: `separator-${buttonGroupId}`, prompt: '', separator: true })
         toolButtons.value.push(...buttonGroup)
+        buttonGroupId += 1
     }
 }
 
