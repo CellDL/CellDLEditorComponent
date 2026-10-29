@@ -99,7 +99,7 @@ export abstract class CellDLObject {
         public readonly uri: NamedNode,
         objectTemplate: ObjectTemplate,
         celldlDiagram: CellDLDiagram,
-        updateStore: boolean=true
+        updateStore: boolean=false
     ) {
         this.#celldlDiagram = celldlDiagram
         // @ts-expect-error: celldlStyleClass is a member of the object's constructor
@@ -427,7 +427,7 @@ export class CellDLConnectedObject extends CellDLMoveableObject {
         uri: NamedNode,
         objectTemplate: ObjectTemplate,
         celldlDiagram: CellDLDiagram,
-        updateStore: boolean=true
+        updateStore: boolean=false
     ) {
         super(uri, objectTemplate, celldlDiagram, updateStore)
         this.#maxConnections = componentLibraryPlugin.getMaxConnections(this)
@@ -509,7 +509,7 @@ export class CellDLComponent extends CellDLConnectedObject {
         uri: NamedNode,
         objectTemplate: ObjectTemplate,
         celldlDiagram: CellDLDiagram,
-        updateStore: boolean=true
+        updateStore: boolean=false
     ) {
         super(uri, objectTemplate, celldlDiagram, updateStore)
         this.#interfacePorts = objectTemplate.metadataProperties
@@ -624,7 +624,7 @@ export class CellDLConnection extends CellDLObject {
         uri: NamedNode,
         objectTemplate: ObjectTemplate,
         celldlDiagram: CellDLDiagram,
-        updateStore: boolean=true
+        updateStore: boolean=false
     ) {
         super(uri, objectTemplate, celldlDiagram, updateStore)
         const metadata = objectTemplate.metadataProperties
