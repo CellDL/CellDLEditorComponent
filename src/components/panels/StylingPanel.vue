@@ -178,3 +178,10 @@ function updateTextStyle(textStyle: string, groupIndex: number) {
 }
 
 </style>
+
+<style>
+/* Allow for FloatLabel text of InputWidget */
+.editor-pane .p-accordioncontent-content {
+    padding-top: 8px !important;
+}
+</style>
