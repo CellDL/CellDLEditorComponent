@@ -36,6 +36,7 @@ import { round } from '#editor/utils'
 import { isMacOs } from '#root/utils/common'
 import { PANEL_ID } from '#root/utils/editor-types'
 import { type Point, type PointLike, PointMath } from '#root/utils/points'
+import { loadImages } from '#root/utils/svgUtils'
 import type { StringProperties } from '#root/utils/types'
 import { componentLibraryPlugin } from '#root/plugins'
 
@@ -350,6 +351,10 @@ export class CellDLEditor {
 
         // Initialise alignment guides and grid
         editGuides.newDiagram(celldlDiagram, DEFAULT_VIEW_STATE)
+
+        // Images without explicit dimensions have no size until they have been decoded
+        // and `finishSetup()` needs element bounds
+        await loadImages(this.#svgDiagram!)
 
         // Show the diagram in the editor's window
         if (this.#container) {

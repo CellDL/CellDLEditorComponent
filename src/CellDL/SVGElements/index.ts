@@ -24,7 +24,7 @@ import { Point, type PointLike, PointMath } from '#root/utils/points'
 import { CONNECTION_SPLAY_PADDING, MAX_CONNECTION_SPLAY_PADDING, SVG_ICON_HEIGHT } from '#root/utils/styling'
 import { CONNECTION_WIDTH, SELECTION_STROKE_WIDTH } from '#root/utils/styling'
 import type { Styling } from '#root/utils/styling'
-import { svgCircle, type RectDimensions, getRectDimensions, modifyRectDimensions, svgRectElement } from '#root/utils/svgUtils'
+import { svgCircle, type RectDimensions, getRectDimensions, loadImages, modifyRectDimensions, svgRectElement } from '#root/utils/svgUtils'
 
 import { CELLDL_STYLE_CLASS, type CellDLObject } from '#editor/celldlObjects'
 import { Bounds, type PointMoveOptions, type RestrictedValue } from '#editor/geometry'
@@ -741,6 +741,7 @@ export abstract class CellDLSVGElement {
      * @param imageData A depiction of the element as a data URL.
      */
     async updateImageElement(imageData: string) {
+        await loadImages([imageData])   // So the new image has a size when it's rendered
         this.svgElement.innerHTML = `<image href="${imageData}" height="${SVG_ICON_HEIGHT}"/>`
         await vue.nextTick()            // Wait for image to render
         this.#updatedSvgElement()
