@@ -28,7 +28,7 @@ import { Point, type PointLike } from '#root/utils/points'
 import type { Styling } from '#root/utils/styling'
 import { getFillString } from '#root/utils/svgUtils'
 
-import { CellDLSVGElement, type ElementMoveOptions, type SvgElementOptions } from '.'
+import { CellDLSVGElement, type ElementMoveOptions, getElementTransform, type SvgElementOptions } from '.'
 import type { PathElement } from './utils/pathelement'
 
 //==============================================================================
@@ -51,7 +51,7 @@ export class BoundedElement extends CellDLSVGElement {
     constructor(object: CellDLObject, svgElement: SVGGraphicsElement, options: SvgElementOptions) {
         super(object, svgElement, options)
         // local transform on the element
-        this.#localTransform = Transform.fromString(getComputedStyle(svgElement).transform)
+        this.#localTransform = getElementTransform(svgElement)
         this.#controlRect = new ControlRect(
             RestrictedPoint.fromPoint(this.topLeft),
             RestrictedPoint.fromPoint(this.topLeft.add(this.size)),

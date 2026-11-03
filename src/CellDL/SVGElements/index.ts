@@ -84,6 +84,21 @@ export function setInternalIds(svgElement: SVGGraphicsElement, previousId: strin
     }
 }
 
+export function getElementTransform(svgElement: SVGGraphicsElement): Transform {
+    // NB. An `SVGTransform`'s `matrix` is a *live* object tied to the element's `transform`
+    // attribute. Firefox and Safari update it in place when the attribute is later set (e.g.
+    // in `BoundedElement.redraw()`), so we must take a snapshot of its values rather than
+    // keep a reference to it. We also combine all transforms in the list, not just the first.
+    let transform = Transform.Identity()
+    const elementTransforms = svgElement.transform.baseVal
+    for (let index = 0; index < elementTransforms.length; ++index) {
+        // biome-ignore lint/style/noNonNullAssertion: index is in range
+        const { a, b, c, d, e, f } = elementTransforms[index]!.matrix
+        transform = new Transform({ a, b, c, d, e, f }).leftMultiply(transform)
+    }
+    return transform
+}
+
 //==============================================================================
 
 export abstract class CellDLSVGElement {
@@ -114,10 +129,8 @@ export abstract class CellDLSVGElement {
         // get all transformations that are being applied to the SVG element
         let element = svgElement.parentNode as SVGGraphicsElement
         while (element !== this.#svgDiagramElement) {
-            const transform = getComputedStyle(element).transform
-            if (transform !== 'none') {
-                this.#globalTransform = this.#globalTransform.leftMultiply(Transform.fromString(transform))
-            }
+            const transform = getElementTransform(element)
+            this.#globalTransform = this.#globalTransform.leftMultiply(transform)
             element = element.parentNode as SVGGraphicsElement
         }
         celldlObject.setCelldlSvgElement(this)
@@ -183,7 +196,7 @@ export abstract class CellDLSVGElement {
         const bbox = svgElement.getBBox()
         let topLeft = new Point(bbox.x, bbox.y)
         let bottomRight = new Point(bbox.x + bbox.width, bbox.y + bbox.height)
-        const localTransform = Transform.fromString(getComputedStyle(svgElement).transform)
+        const localTransform = getElementTransform(svgElement)
         const transform = this.#globalTransform.leftMultiply(localTransform)
         topLeft = transform.transformPoint(topLeft)
         bottomRight = transform.transformPoint(bottomRight)
