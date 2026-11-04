@@ -183,6 +183,13 @@ function updateTextStyle(textStyle: string, groupIndex: number) {
     padding-bottom: 10px;
 }
 
+/* Text inputs (above sliders) otherwise default to a 20 character width, which is
+   wider than the panel and so widens their group, misaligning its colour boxes */
+:deep(.p-accordioncontent-content .p-inputtext) {
+    width: 100%;
+    min-width: 0;
+}
+
 </style>
 
 <style>

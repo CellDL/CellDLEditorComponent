@@ -108,9 +108,10 @@ function emitChange() {
 }
 /* Based on https://rebeccamdeprey.com/blog/styling-the-html-color-input */
 
+/* Same size as in `FillStyle` so colour boxes in different groups line up */
 input[type="color" i] {
-  inline-size: 24px;
-  block-size: 24px;
+  inline-size: 20px;
+  block-size: 20px;
 }
 
 /* Affects area between outer circle and color swatch. Firefox doesn't have an equivalent. */
