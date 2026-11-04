@@ -359,8 +359,6 @@ export abstract class CellDLObject {
 
 export class CellDLMoveableObject extends CellDLObject {
 
-    #boundedElement: BoundedElement|undefined
-
     get isMoveable() {
         return true
     }
@@ -388,7 +386,8 @@ export class CellDLMoveableObject extends CellDLObject {
     }
 
     assignSvgElement(svgElement: SVGGraphicsElement, align: boolean) {
-        this.#boundedElement = new BoundedElement(this, svgElement, {
+        // This sets `this.celldlSvgElement` as part of constructor
+        new BoundedElement(this, svgElement, {
             align,
             gridAligned: this.isAlignable
         })
@@ -621,7 +620,6 @@ export class CellDLConnection extends CellDLObject {
     static celldlTypeName = 'Connection'
 
     #connectedObjects: CellDLConnectedObject[] = []
-    #svgConnection: SvgConnection|undefined
 
     constructor(
         uri: NamedNode,
@@ -675,12 +673,13 @@ export class CellDLConnection extends CellDLObject {
     }
 
     assignSvgElement(svgElement: SVGGraphicsElement, _align: boolean) {
-        this.#svgConnection = new SvgConnection(this, svgElement)
+        // This sets `this.celldlSvgElement` as part of constructor
+        new SvgConnection(this, svgElement)
     }
 
     setSelectedHandles(enable: boolean) {
-        if (this.#svgConnection) {
-            this.#svgConnection.setSelectedHandles(enable)
+        if (this.celldlSvgElement) {
+            this.celldlSvgElement.setSelectedHandles(enable)
         }
     }
 }
