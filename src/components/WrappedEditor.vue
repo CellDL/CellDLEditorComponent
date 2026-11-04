@@ -1,5 +1,5 @@
 <template lang="pug">
-    .flex.flex-col.h-full
+    .flex.flex-col
         main.editor-pane.relative.flex.flex-col.grow
             EditorToolbar.editor-bar-h(
                 :leftButtons="toolButtons"
