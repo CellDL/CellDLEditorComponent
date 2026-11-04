@@ -443,7 +443,9 @@ vue.onMounted(async () => {
     border: 2px solid var(--editor-border-color);
     border-top-width: 0;
     flex: 1;
+    min-height: 0;
     overflow: hidden;
+    position: relative;     /* The diagram's (absolutely positioned) host fills us */
 }
 .hidden {
     display: none;

@@ -134,28 +134,32 @@ export class PanZoom {
     }
 
     #resizeObservation(entries: ResizeObserverEntry[]) {
-        if (this.#svgDiagram) {
-            for (const entry of entries) {
-                if (entry.target === this.#container) {
-                    const containerSize = new Point(entry.contentRect.width, entry.contentRect.height)
-                    // Don't do anything if the container has no size...
-                    if (containerSize.x === 0 ||containerSize.y === 0) {
-                        return
-                    }
+        for (const entry of entries) {
+            if (entry.target === this.#container) {
+                const containerSize = new Point(entry.contentRect.width, entry.contentRect.height)
+                // Don't do anything if the container has no size...
+                if (containerSize.x === 0 || containerSize.y === 0) {
+                    return
+                }
+                if (this.#svgDiagram) {
                     const viewbox = this.#currentViewbox()
+                    // Scale so the view keeps the same extent in the direction that changed most...
                     const delta = containerSize.subtract(this.#containerSize)
                     if (Math.abs(delta.x * viewbox[3]) >= Math.abs(delta.y * viewbox[2])) {
                         this.#scale = containerSize.x / viewbox[2]
-                        viewbox[1] -= (this.#containerSize.y / this.#scale - viewbox[3]) / 2
-                        viewbox[3] = containerSize.y / this.#scale
                     } else {
                         this.#scale = containerSize.y / viewbox[3]
-                        viewbox[0] -= (this.#containerSize.x / this.#scale - viewbox[2]) / 2
-                        viewbox[2] = containerSize.x / this.#scale
                     }
-                    this.#containerSize = containerSize
+                    // ... and keep the view's centre where it was, so the diagram doesn't drift
+                    const centre = new Point(viewbox[0] + viewbox[2]/2, viewbox[1] + viewbox[3]/2)
+                    viewbox[2] = containerSize.x / this.#scale
+                    viewbox[3] = containerSize.y / this.#scale
+                    viewbox[0] = centre.x - viewbox[2]/2
+                    viewbox[1] = centre.y - viewbox[3]/2
                     this.#setViewbox(viewbox)
                 }
+                // Always track our size, so it's right when a diagram is next enabled
+                this.#containerSize = containerSize
             }
         }
     }
