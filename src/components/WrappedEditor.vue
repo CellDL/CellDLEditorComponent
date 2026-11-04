@@ -172,6 +172,7 @@ const props = defineProps<CellDLEditorProps>()
 
 const emit = defineEmits<{
     'editor-data': [data: EditorData],
+    'editor-ready': [],
     'editor-state': [state: {
         error: string
     }]
@@ -406,6 +407,7 @@ vue.onMounted(async () => {
             await celldlDiagram.edit()
 
 //            testEditor(celldlEditor)
+            emit('editor-ready')
         })
     }
 })
