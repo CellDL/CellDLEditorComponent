@@ -1,6 +1,7 @@
 //==============================================================================
 
 import type { CellDLEditor } from "#editor/editor"
+import { EditGuides } from "#editor/editor/editguides"
 import { EditorFrame } from "#editor/editor/editorframe"
 import { ComponentLibraryPlugin } from "#root/plugins"
 import type { CellDLDiagram } from "."
@@ -52,6 +53,7 @@ export class DiagramContext {
     #alert: Alert
     #componentLibraryPlugin: ComponentLibraryPlugin
     #editor: CellDLEditor
+    #editGuides = new EditGuides()
     #editorFrame: EditorFrame
     #undoRedo = new UndoRedo()
 
@@ -76,6 +78,10 @@ export class DiagramContext {
 
     get editor() {
         return this.#editor
+    }
+
+    get editGuides() {
+        return this.#editGuides
     }
 
     get editorFrame() {

@@ -2,7 +2,7 @@
 //==============================================================================
 
 import type { CellDLDiagram } from '#editor/diagram'
-import { editGuides, type GridAlignOptions } from '#editor/editor/editguides'
+import type { GridAlignOptions } from '#editor/editor/editguides'
 import { Bounds, ComputedValue, RestrictedValue } from '#editor/geometry'
 import { ControlPoint } from '#editor/geometry/controls'
 import type { CellDLSVGElement } from '#editor/SVGElements'
@@ -125,7 +125,7 @@ export class Resizer {
         if (this.#activeControlPoint) {
             if (eventType === 'pointermove') {
                 if (this.#activeControlPoint !== null) {
-                    this.#activeControlPoint.point = editGuides.gridAlign(svgCoords)
+                    this.#activeControlPoint.point = this.#celldlDiagram.context.editGuides.gridAlign(svgCoords)
                 }
                 // only if change??
                 this.#updateResizerRect(true)

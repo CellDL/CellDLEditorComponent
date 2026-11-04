@@ -103,7 +103,7 @@ export class LinearPath extends PathElement {
     protected movePathPoint(position: PointLike) {
         const firstElement = this.pathPoints.at(0)?.component?.celldlSvgElement
         const lastElement = this.pathPoints.at(-1)?.component?.celldlSvgElement
-        this.movePoint?.move(position)
+        this.movePoint?.move(position, { editGuides: this.connection.context.editGuides })
         if ([1, 2].includes(this.moveIndex)) {
             // Index is for either the first or second point after the start point, so
             // update the boundary intersection for the start point (move of second point may

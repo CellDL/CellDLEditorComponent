@@ -19,7 +19,6 @@ limitations under the License.
 ******************************************************************************/
 
 import { CELLDL_STYLE_CLASS, type CellDLConnectedObject, type CellDLObject } from '#editor/celldlObjects'
-import { editGuides } from '#editor/editor/editguides'
 import { RestrictedPoint, type RestrictedValue } from '#editor/geometry'
 import { ControlRect } from '#editor/geometry/controls'
 import { Transform } from '#editor/geometry/transforms'
@@ -62,7 +61,7 @@ export class BoundedElement extends CellDLSVGElement {
         this.#topLeftCorner = this.#controlRect.topLeftPoint
         this.#controlRect.gridAligned = !!options.gridAligned
         if (options.align && !options.edgeAligned && options.gridAligned) {
-            const gridAlignedCentroid = editGuides.gridAlign(this.centroid, { fullSnap: true })
+            const gridAlignedCentroid = object.context.editGuides.gridAlign(this.centroid, { fullSnap: true })
             this.setCentroid(gridAlignedCentroid)
             this.#controlRect.reposition(gridAlignedCentroid)
             if (this.#controlRect.dirty) {
@@ -101,7 +100,7 @@ export class BoundedElement extends CellDLSVGElement {
         const savedCentroid = this.centroid
         // This sets the control rect's attributes but doesn't paint anything
 
-        if (this.#controlRect.move(svgPoint, options)) {
+        if (this.#controlRect.move(svgPoint, { ...options, editGuides: this.celldlObject.context.editGuides })) {
             this.setCentroid(this.#controlRect.centroid.point)
             const centroidDelta = this.centroid.subtract(savedCentroid)
             // Reset any restrictions for `elementBoundingBoxBoxMoved()`

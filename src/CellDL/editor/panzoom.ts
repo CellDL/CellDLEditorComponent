@@ -23,7 +23,7 @@ import type { Extent } from '#editor/geometry'
 import { getViewbox } from '#root/utils/svgUtils'
 import { Point } from '#root/utils/points'
 
-import { editGuides } from './editguides'
+import type { EditGuides } from './editguides'
 
 //==============================================================================
 
@@ -34,6 +34,7 @@ export class PanZoom {
     #svgDiagram: SVGSVGElement | null = null
     #containerId: string
     #containerOrigin: Point = new Point()
+    #editGuides: EditGuides | null = null
     #containerSize: Point = new Point()
     #resizeObserver: ResizeObserver
 
@@ -68,11 +69,12 @@ export class PanZoom {
     }
 
     #setViewbox(viewbox: Extent) {
-        editGuides.viewboxUpdated(viewbox)
+        this.#editGuides?.viewboxUpdated(viewbox)
         this.#svgDiagram?.setAttribute('viewBox', viewbox.map((n) => String(n)).join(' '))
     }
 
-    enable(svgDiagram: SVGSVGElement) {
+    enable(svgDiagram: SVGSVGElement, editGuides: EditGuides) {
+        this.#editGuides = editGuides
         // Scale large diagrams down to fit container
         let viewbox = getViewbox(svgDiagram)
         if (viewbox[2] * this.#containerSize.y >= viewbox[3] * this.#containerSize.x) {
@@ -108,6 +110,7 @@ export class PanZoom {
 
     disable() {
         this.#svgDiagram = null
+        this.#editGuides = null
         this.#panning = false
         this.#scale = 1.0
     }

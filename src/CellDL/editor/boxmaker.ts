@@ -32,7 +32,6 @@ import { MEMBRANE_GAP } from '#root/utils/styling'
 import { svgRect } from '#root/utils/svgUtils'
 
 import { type CellDLEditor, CONTEXT_MENU } from '.'
-import { editGuides } from './editguides'
 
 //==============================================================================
 
@@ -56,7 +55,7 @@ export class BoxMaker {
     constructor(editor: CellDLEditor, startPoint: DOMPoint, doubleWalled: boolean=false) {
         this.#editor = editor
         this.#context = editor.celldlDiagram?.context as DiagramContext
-        this.#startPoint = Point.fromPoint(editGuides.gridAlign(startPoint))
+        this.#startPoint = Point.fromPoint(this.#context.editGuides.gridAlign(startPoint))
         this.#topLeft = ControlPoint.fromPoint(this.#startPoint)
         this.#bottomRight = ControlPoint.fromPoint(this.#startPoint)
         this.#size = new Point(0, 0)
@@ -77,7 +76,7 @@ export class BoxMaker {
     }
 
     #drawTo(domPoint: DOMPoint) {
-        const point = editGuides.gridAlign(domPoint)
+        const point = this.#context.editGuides.gridAlign(domPoint)
         this.#topLeft = ControlPoint.fromPoint({
             x: Math.min(this.#startPoint.x, point.x),
             y: Math.min(this.#startPoint.y, point.y)

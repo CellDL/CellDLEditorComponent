@@ -69,7 +69,6 @@ import { createCompartmentSvgElement } from '#editor/SVGElements/utils/compartme
 import type { SvgConnection } from '#editor/SVGElements/svgconnection'
 
 import { type CellDLEditor, notifyChanges, type PointerEventHandler } from '#editor/editor'
-import { editGuides } from '#editor/editor/editguides'
 import type { UndoState } from '#editor/diagram/undoredo'
 
 import type { ObjectTemplate } from '#editor/components'
@@ -642,7 +641,7 @@ export class CellDLDiagram {
         this.#objects.set(object.id, object)
         this.#spatialIndex.add(object)
         if (object.isMoveable) {
-            editGuides.addGuide(<CellDLComponent>object)
+            this.#context.editGuides.addGuide(<CellDLComponent>object)
         }
         this.#context.componentLibraryPlugin.addComponent(object)
     }
@@ -1039,7 +1038,7 @@ export class CellDLDiagram {
             storedObject.restoreSvgElement() // adds SVG element to DOM
             const celldlObject = storedObject.celldlObject
             if (celldlObject.isMoveable) {
-                editGuides.addGuide(<CellDLComponent>celldlObject)
+                this.#context.editGuides.addGuide(<CellDLComponent>celldlObject)
             }
             this.#objects.set(celldlObject.id, celldlObject)
             this.#kb.addStatementList(storedObject.knowledge)
@@ -1084,7 +1083,7 @@ export class CellDLDiagram {
             undoState.storeObject(celldlObject)
         }
         if (celldlObject.isMoveable) {
-            editGuides.removeGuide(<CellDLComponent>celldlObject)
+            this.#context.editGuides.removeGuide(<CellDLComponent>celldlObject)
         }
         celldlObject.celldlSvgElement?.remove() // Will remove SVG element from DOM
         this.#kb.removeStatementsForSubject(celldlObject.uri)

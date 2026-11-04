@@ -26,7 +26,6 @@ import { DCT, isLiteral, type Literal, type NamedNode, RDF, RDFS } from '@celldl
 
 import type { ObjectTemplate } from '#editor/components'
 import type { CellDLDiagram } from '#editor/diagram'
-import { editGuides } from '#editor/editor/editguides'
 import type { CellDLSVGElement, ElementMoveOptions } from '#editor/SVGElements'
 import { BoundedElement } from '#editor/SVGElements/boundedelement'
 import { CompartmentElement } from '#editor/SVGElements/compartmentelement'
@@ -368,20 +367,20 @@ export class CellDLMoveableObject extends CellDLObject {
 
     startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
         // We are finding alignment guides as we move and don't want to find ours
-        editGuides.aligning(this, true)
+        this.context.editGuides.aligning(this, true)
         super.startMove(svgPoint, options)
     }
 
     move(svgPoint: PointLike, options: ElementMoveOptions={}) {
         super.move(svgPoint, options)
         // Highliglight guides of objects that our centroid's aligned with
-        editGuides.matchGuide(this)
+        this.context.editGuides.matchGuide(this)
     }
 
     endMove() {
         super.endMove()
         // We've stopped moving and want our alignment guides available
-        editGuides.aligning(this, false)
+        this.context.editGuides.aligning(this, false)
     }
 
     redraw() {

@@ -23,6 +23,8 @@ import * as vue from 'vue'
 import { useTippy } from "vue-tippy"
 
 import '#root/assets/svgContent.css'
+// Also needed inside each editor's shadow root, where diagram content is styled via `:host` rules
+import svgContentCss from '#root/assets/svgContent.css?inline'
 
 import type { CellDLObject } from '#editor/celldlObjects'
 import { PathMaker, type PathNode } from '#editor/connections/pathmaker'
@@ -44,7 +46,7 @@ import type { ComponentLibraryPlugin } from '#root/plugins'
 
 import { DEFAULT_VIEW_STATE } from './defaults'
 import type { EditorFrame } from './editorframe'
-import { editGuides, EDITOR_GRID_CLASS } from './editguides'
+import { EDITOR_GRID_CLASS } from './editguides'
 import { PanZoom } from './panzoom'
 import { BoxMaker } from './boxmaker'
 
@@ -351,7 +353,7 @@ export class CellDLEditor {
         this.#svgDiagram = celldlDiagram.svgDiagram
 
         // Initialise alignment guides and grid
-        editGuides.newDiagram(celldlDiagram, DEFAULT_VIEW_STATE)
+        celldlDiagram.context.editGuides.newDiagram(celldlDiagram, DEFAULT_VIEW_STATE)
 
         // Images without explicit dimensions have no size until they have been decoded
         // and `finishSetup()` needs element bounds
@@ -373,7 +375,7 @@ export class CellDLEditor {
         celldlDiagram.finishSetup()
 
         // Enable pan/zoom and toolBars
-        this.#panzoom!.enable(this.#svgDiagram!)
+        this.#panzoom!.enable(this.#svgDiagram!, celldlDiagram.context.editGuides)
 
         // Set initial mode
         this.#editorMode = DEFAULT_EDITOR_MODE

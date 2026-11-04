@@ -56,6 +56,8 @@ const EPSILON = 0.1
 //==============================================================================
 
 export type GridAlignOptions = {
+    // Guides to align with. Points and control rectangles aren't aligned without them.
+    editGuides?: EditGuides
     fullSnap?: boolean
     noAlign?: boolean
     noAlignX?: boolean
@@ -419,26 +421,12 @@ class ComponentGuides {
 
 //==============================================================================
 
-class EditGuides {
-    static #instance: EditGuides | null = null
+// Each diagram has its own alignment grid and guides, held in its `DiagramContext`
 
+export class EditGuides {
     #alignmentGrid: AlignmentGrid | null = null
     #componentGuides: ComponentGuides | null = null
     #guidesEnabled: boolean = true
-
-    private constructor() {
-        if (EditGuides.#instance) {
-            throw new Error('Use EditGuides.instance instead of `new`')
-        }
-        EditGuides.#instance = this
-    }
-
-    static get instance(): EditGuides {
-        if (!EditGuides.#instance) {
-            EditGuides.#instance = new EditGuides()
-        }
-        return EditGuides.#instance
-    }
 
     addGuide(component: CellDLMoveableObject) {
         if (this.#componentGuides) {
@@ -504,8 +492,5 @@ class EditGuides {
     }
 }
 
-//==============================================================================
-
-export const editGuides = EditGuides.instance
 
 //==============================================================================

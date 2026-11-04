@@ -37,7 +37,6 @@ import * as vueCommon from '#root/utils/vueCommon'
 import { CellDLDiagram } from '#editor/diagram'
 import { CellDLEditor } from '#editor/editor'
 import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS } from '#editor/editor'
-import { editGuides } from '#editor/editor/editguides'
 
 import { type EditorToolButton, PANEL_ID } from '#root/utils/editor-types'
 
@@ -390,7 +389,7 @@ vue.watch(
             }
         } else if (props.editorCommand?.command === 'view') {
             const command = props.editorCommand as EditorViewCommand
-            editGuides.setState(command.options)
+            celldlDiagram?.context.editGuides.setState(command.options)
         }
     }
 )
