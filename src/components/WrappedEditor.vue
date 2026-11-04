@@ -1,5 +1,5 @@
 <template lang="pug">
-    .flex.flex-col
+    .celldl-editor.flex.flex-col
         main.editor-pane.relative.flex.flex-col.grow
             EditorToolbar.editor-bar-h(
                 :leftButtons="toolButtons"
@@ -38,7 +38,7 @@ import { CellDLDiagram } from '#editor/diagram'
 import { CellDLEditor } from '#editor/editor'
 import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS } from '#editor/editor'
 
-import { type EditorToolButton, PANEL_ID } from '#root/utils/editor-types'
+import { EDITOR_EVENTS_KEY, type EditorToolButton, PANEL_ID } from '#root/utils/editor-types'
 
 import { ComponentLibraryPlugin } from '#root/plugins'
 
@@ -168,6 +168,9 @@ const celldlEditor: CellDLEditor = new CellDLEditor(componentLibraryPlugin)
 
 //const celldlEditor: TestCellDLEditor = new TestCellDLEditor()
 
+// Our child components send their events to our editor
+vue.provide(EDITOR_EVENTS_KEY, celldlEditor.events)
+
 
 //==============================================================================
 
@@ -176,10 +179,15 @@ const props = defineProps<CellDLEditorProps>()
 const emit = defineEmits<{
     'editor-data': [data: EditorData],
     'editor-ready': [],
+    'file-edited': [],
     'editor-state': [state: {
         error: string
     }]
 }>()
+
+// Let our host know when the diagram has been changed
+
+celldlEditor.events.addEventListener('file-edited', () => emit('file-edited'))
 
 //==============================================================================
 
@@ -202,7 +210,7 @@ const defaultComponent = componentLibraryPlugin.getSelectedTemplate()!
 //==============================================================================
 
 function despatchToolbarEvent(type: string, source: string, value: boolean|string) {
-    document.dispatchEvent(
+    celldlEditor.events.dispatchEvent(
         new CustomEvent('toolbar-event', {
             detail: {
                 type,
@@ -221,7 +229,7 @@ const contextMenuProps = vue.ref<ContextMenuProps>({
     state: new Set()
 })
 
-document.addEventListener('open-context-menu', (event: Event) => {
+celldlEditor.events.addEventListener('open-context-menu', (event: Event) => {
     contextMenuProps.value = (<CustomEvent>event).detail
 })
 
@@ -313,7 +321,7 @@ async function buttonEvent(toolId: PANEL_ID, active: boolean) {
                 img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight })
                 img.src = template.imageData
             })
-            document.dispatchEvent(
+            celldlEditor.events.dispatchEvent(
                 new CustomEvent('component-selected', {
                     detail: {
                         id: toolId,
@@ -324,7 +332,7 @@ async function buttonEvent(toolId: PANEL_ID, active: boolean) {
             )
         } else {
             // Bond graph connection style
-            document.dispatchEvent(
+            celldlEditor.events.dispatchEvent(
                 new CustomEvent('connection-style', {
                     detail: { style: componentId }
                 })
@@ -332,7 +340,7 @@ async function buttonEvent(toolId: PANEL_ID, active: boolean) {
         }
     } else if (toolId.startsWith(`${DRAWING_PLUGIN_ID}/`)) {
         const drawingToolId = toolId.slice(DRAWING_PLUGIN_ID.length + 1)
-        document.dispatchEvent(
+        celldlEditor.events.dispatchEvent(
             new CustomEvent('celldl-drawing', {
                 detail: { tool: drawingToolId }
             })

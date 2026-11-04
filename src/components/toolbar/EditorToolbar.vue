@@ -53,7 +53,7 @@ useThemeCssVariables('toolbar')
 
 //==============================================================================
 
-import type { EditorToolButton, PopoverEventData } from '#root/utils/editor-types'
+import { EDITOR_EVENTS_KEY, type EditorToolButton, type PopoverEventData } from '#root/utils/editor-types'
 import type { Styling } from '#root/utils/styling'
 
 import ToolButton from './ToolButton.vue'
@@ -64,6 +64,9 @@ const props = defineProps<{
     leftButtons: EditorToolButton[]
     rightButtons: EditorToolButton[]
 }>()
+
+// Events go to the editor this component is part of
+const editorEvents = vue.inject(EDITOR_EVENTS_KEY, document)
 
 const emit = defineEmits<{
     'button-event': [
@@ -110,7 +113,7 @@ function rightButtonEvent(toolId: string, active: boolean, panel: vue.Raw<vue.Co
 }
 
 function panelEvent(toolId: string, itemId: string, oldValue: string, newValue: string) {
-    document.dispatchEvent(
+    editorEvents.dispatchEvent(
         new CustomEvent('panel-event', {
             detail: {
                 type: 'value',
@@ -126,7 +129,7 @@ function panelEvent(toolId: string, itemId: string, oldValue: string, newValue: 
 }
 
 function styleEvent(toolId: string, styling: Styling) {
-    document.dispatchEvent(
+    editorEvents.dispatchEvent(
         new CustomEvent('style-event', {
             detail: {
                 type: 'value',

@@ -19,7 +19,7 @@ limitations under the License.
 ******************************************************************************/
 
 import type { CellDLConnection, CellDLObject } from "#editor/celldlObjects"
-import { type CellDLEditor, notifyChanges } from "#editor/editor"
+import type { CellDLEditor } from "#editor/editor"
 import { Point, type PointLike } from "#root/utils/points"
 
 //==============================================================================
@@ -178,7 +178,7 @@ export class SelectionSet {
             connection.move(newPosn, { moveEntireConnection: true, noAlign: true } )
             connection.redraw()
         }
-        notifyChanges()
+        this.#editor.notifyChanges()
     }
 
     endMove() {

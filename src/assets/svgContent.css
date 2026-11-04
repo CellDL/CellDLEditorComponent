@@ -22,7 +22,7 @@
     --editor-statusbar-background: var(--p-surface-700);
 }
 
-.svg-container svg {
+:host svg {
     background-color: var(--editor-canvas-background);
     user-select: none;
     /* Element states while editing */
@@ -33,17 +33,17 @@
     --connection-selected: #f00;
     --connection-highlighted: #0f8;
 }
-.svg-container .celldl-background {
+:host .celldl-background {
     pointer-events: none;
 }
-.svg-container .selection-element {
+:host .selection-element {
     fill: none;
     pointer-events: all;
     stroke-opacity: 0.8;
     stroke-width: 3;
     rx: 8px;
 }
-.svg-container .control-rectangle.selected {
+:host .control-rectangle.selected {
     fill: #f00;
     opacity: 0.4;
     stroke: #f0f;
@@ -52,38 +52,38 @@
 }
 
 /* Alignment guides */
-.svg-container .alignment-grid {
+:host .alignment-grid {
     stroke: #08f;
     stroke-width: 0.4;
     stroke-opacity: 0.3;
 }
-.svg-container .alignment-guide {
+:host .alignment-guide {
     stroke: none;
 }
-.svg-container .alignment-guide.visible {
+:host .alignment-guide.visible {
     stroke: #08f;
     stroke-width: 1;
     stroke-opacity: 0.8;
 }
-.svg-container .axis-guide {
+:host .axis-guide {
     stroke: #080;
     stroke-width: 0.7;
     stroke-opacity: 0.8;
 }
-.svg-container .axis-guide.visible {
+:host .axis-guide.visible {
     stroke: #08f;
     stroke-width: 1;
     stroke-opacity: 0.8;
 }
 
 /* Control points */
-.svg-container .control-point {
+:host .control-point {
     fill: #00c;
     opacity: 0.8;
     stroke: #00c;
     stroke-width: 2;
 }
-.svg-container .control-point.fixed {
+:host .control-point.fixed {
     fill: white;
 }
 #celldl-editor-selection-frame.highlight .control-point {
@@ -95,34 +95,34 @@
 }
 
 /* Active, highlighted, and selected objects */
-.svg-container .active:not(.celldl-Connection) {
+:host .active:not(.celldl-Connection) {
     stroke: var(--active) !important;
 }
-.svg-container .active.gripper {
+:host .active.gripper {
     stroke: none !important;
 }
-.svg-container .selected:not(.celldl-Connection) {
+:host .selected:not(.celldl-Connection) {
     stroke: var(--selected) !important;
 }
-.svg-container .highlight:not(.celldl-Connection) {
+:host .highlight:not(.celldl-Connection) {
     stroke: var(--highlighted) !important;
 }
-.svg-container .active.selected:not(.celldl-Connection) {
+:host .active.selected:not(.celldl-Connection) {
     stroke: var(--active-selected) !important;
 }
-.svg-container .draw-box-rect {
+:host .draw-box-rect {
     fill: #ccc;
     fill-opacity: 0.4;
     stroke: var(--p-surface-0);
     stroke-width: 0.3;
 }
-.svg-container .draw-compartment-outer {
+:host .draw-compartment-outer {
     fill: none;
     stroke: var(--editor-membrane-colour);
     stroke-width: var(--editor-membrane-width);
     rx: calc(var(--editor-membrane-radius) + var(--editor-membrane-gap)/2)
 }
-.svg-container .draw-compartment-inner {
+:host .draw-compartment-inner {
     fill: var(--editor-compartment-fill);
     opacity: 0.2;
     stroke: var(--editor-membrane-colour);
@@ -130,60 +130,60 @@
     rx: calc(var(--editor-membrane-radius) - var(--editor-membrane-gap)/2) /* See DOUBLE_BOUNDARY_OFFSET */
 }
 
-.svg-container .editor-resizer-box {
+:host .editor-resizer-box {
     fill: none;
 }
 
 /* Components */
-.svg-container .celldl-Component.editor {
+:host .celldl-Component.editor {
     pointer-events: all;
 }
 
 /* Conduits */
-.svg-container .selection-element.conduit {
+:host .selection-element.conduit {
     opacity: 0.5;
 }
-.svg-container .active + .conduit {
+:host .active + .conduit {
     fill: var(--active);
 }
-.svg-container .highlight + .conduit {
+:host .highlight + .conduit {
     fill: var(--highlighted);
 }
-.svg-container .active.selected + .conduit {
+:host .active.selected + .conduit {
     fill: var(--active-selected) !important;
 }
 
 /* Interfaces */
-.svg-container .celldl-InterfacePort .selection-element.selected {
+:host .celldl-InterfacePort .selection-element.selected {
     stroke: var(--connection-selected);
 }
-.svg-container .celldl-InterfacePort.highlight {
+:host .celldl-InterfacePort.highlight {
     fill: var(--highlighted) !important;
 }
 
 /* Connections */
-.svg-container .celldl-Connection .selection-element.highlight {
+:host .celldl-Connection .selection-element.highlight {
     stroke: var(--connection-highlighted) !important; /* versus highlighted?? */
 }
-.svg-container .shadow {
+:host .shadow {
     fill: none;
     stroke: #ccc;
     stroke-width: 8;
     opacity: 0.001;
 }
-.svg-container .shadow.active {
+:host .shadow.active {
     stroke: var(--active);
     opacity: 0.4;
 }
-.svg-container .shadow.active.selected {
+:host .shadow.active.selected {
     stroke: var(--active-selected);
     opacity: 0.4;
 }
-.svg-container .shadow.highlight {
+:host .shadow.highlight {
     stroke: var(--highlighted);
     opacity: 0.4;
 }
-.svg-container .shadow.selected {
+:host .shadow.selected {
     stroke: var(--selected);
     opacity: 0.4;
 }

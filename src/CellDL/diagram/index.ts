@@ -68,7 +68,7 @@ import type { BoundedElement } from '#editor/SVGElements/boundedelement'
 import { createCompartmentSvgElement } from '#editor/SVGElements/utils/compartment'
 import type { SvgConnection } from '#editor/SVGElements/svgconnection'
 
-import { type CellDLEditor, notifyChanges, type PointerEventHandler } from '#editor/editor'
+import type { CellDLEditor, PointerEventHandler } from '#editor/editor'
 import type { UndoState } from '#editor/diagram/undoredo'
 
 import type { ObjectTemplate } from '#editor/components'
@@ -184,7 +184,7 @@ export class CellDLDiagram {
         this.#loadAnnotations()
         if (this.#imported) {
             // We want the file to be flagged as modified
-            notifyChanges()
+            this.#celldlEditor.notifyChanges()
         }
     }
 
@@ -208,7 +208,7 @@ export class CellDLDiagram {
                 // @ts-expect-error: `key` is a valid key for `data`
                 this.#diagramProperties[key] = data[key]
             })
-        notifyChanges()
+        this.#celldlEditor.notifyChanges()
     }
 
     get rdfStore() {
@@ -653,7 +653,7 @@ export class CellDLDiagram {
     addConnectedObject(svgElement: SVGGraphicsElement, template: ObjectTemplate): CellDLConnectedObject | null {
         const object = this.#addNewObject(svgElement, template)
         this.#addMoveableObject(object)
-        notifyChanges()
+        this.#celldlEditor.notifyChanges()
         return object as CellDLConnectedObject
     }
 
@@ -661,7 +661,7 @@ export class CellDLDiagram {
         const connection = this.#addNewObject(svgElement, template) as CellDLConnection
         // let the plugins know
         this.#context.componentLibraryPlugin.addConnection(connection)
-        notifyChanges()
+        this.#celldlEditor.notifyChanges()
         return connection
     }
 
@@ -683,7 +683,7 @@ export class CellDLDiagram {
         if (object) {
             this.#addMoveableObject(object)
         }
-        notifyChanges()
+        this.#celldlEditor.notifyChanges()
         return object
     }
 
@@ -730,7 +730,7 @@ export class CellDLDiagram {
         if (component) {
             this.#addMoveableObject(component)
         }
-        notifyChanges()
+        this.#celldlEditor.notifyChanges()
         return component
     }
 
@@ -1029,7 +1029,7 @@ export class CellDLDiagram {
 
     objectMoved(celldlObject: CellDLObject) {
         this.#spatialIndex.update(celldlObject)
-        notifyChanges()
+        this.#celldlEditor.notifyChanges()
     }
 
     undoDelete(undoState: UndoState) {
@@ -1074,7 +1074,7 @@ export class CellDLDiagram {
     removeObject(celldlObject: CellDLObject, undoState: UndoState|null=null) {
         if (this.#objects.has(celldlObject.id)) {
             this.#removeObject(celldlObject, undoState)
-            notifyChanges()
+            this.#celldlEditor.notifyChanges()
         }
     }
 

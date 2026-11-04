@@ -27,6 +27,13 @@ import type { Styling } from './styling'
 
 //==============================================================================
 
+// Components inside an editor send their events to the editor via this injected target
+// (a page may have several editors, so `document` can't be used)
+
+export const EDITOR_EVENTS_KEY: vue.InjectionKey<EventTarget> = Symbol('celldl-editor-events')
+
+//==============================================================================
+
 export enum PANEL_ID {
     METADATA_PANEL = 'metadata-property-panel',
     PROPERTIES_PANEL = 'properties-property-panel',

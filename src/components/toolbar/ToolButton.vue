@@ -28,7 +28,7 @@
 import * as vue from 'vue'
 import * as LucideIcons from '@lucide/vue'
 
-import type { PropertyGroup } from '#root/utils/editor-types'
+import { EDITOR_EVENTS_KEY, type PropertyGroup } from '#root/utils/editor-types'
 
 const props = defineProps<{
     toolId: string
@@ -40,6 +40,9 @@ const props = defineProps<{
     type?: string
     panel?: vue.Raw<vue.Component>
 }>()
+
+// Events go to the editor this component is part of
+const editorEvents = vue.inject(EDITOR_EVENTS_KEY, document)
 
 const buttonClasses = vue.computed(() => {
     const classes = []
@@ -139,7 +142,7 @@ function dragStartEvent(e: DragEvent) {
         offset: { x: e.offsetX - target.scrollWidth / 2, y: e.offsetY - target.scrollHeight / 2 }
     }
     e.dataTransfer.items.add(JSON.stringify(details), 'text/plain')
-    document.dispatchEvent(
+    editorEvents.dispatchEvent(
         new CustomEvent('component-drag', {
             detail: { type: 'dragstart', source: props.toolId, value: props.toolId }
         })

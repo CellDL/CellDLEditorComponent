@@ -113,9 +113,9 @@ export enum CONTEXT_MENU {
 
 //==============================================================================
 
-export function notifyChanges() {
-    document.dispatchEvent(new CustomEvent('file-edited'))
-}
+// The editor most recently interacted with. Keyboard input is only handled by this editor.
+
+let activeEditor: CellDLEditor | null = null
 
 //==============================================================================
 
@@ -137,6 +137,7 @@ const SVG_PANEL_ID = 'svg-panel'
 
 export class CellDLEditor {
     #container: HTMLElement | null = null
+    #shadowRoot: ShadowRoot | null = null
     #statusMsg: HTMLElement | null = null
     #statusPos: HTMLElement | null = null
     #statusStyle: string = ''
@@ -191,20 +192,24 @@ export class CellDLEditor {
     #tooltipElement: HTMLElement|undefined
     #tooltipStyle: string = ''
 
+    // Events between this editor and its UI (toolbars, panels, context menu) are sent
+    // via this target rather than `document` as there may be several editors on a page
+    readonly events = new EventTarget()
+
     constructor(componentLibraryPlugin: ComponentLibraryPlugin) {
         // Add a handler for events from toolbar buttons and popovers
-        document.addEventListener('toolbar-event', this.#toolBarEvent.bind(this))
-        document.addEventListener('component-selected', this.#componentTemplateSelectedEvent.bind(this))
-        document.addEventListener('component-drag', this.#componentTemplateDragEvent.bind(this))
-        document.addEventListener('connection-style', this.#connectionStyleEvent.bind(this))
-        document.addEventListener('celldl-drawing', this.#celldlDrawingEvent.bind(this))
+        this.events.addEventListener('toolbar-event', this.#toolBarEvent.bind(this))
+        this.events.addEventListener('component-selected', this.#componentTemplateSelectedEvent.bind(this))
+        this.events.addEventListener('component-drag', this.#componentTemplateDragEvent.bind(this))
+        this.events.addEventListener('connection-style', this.#connectionStyleEvent.bind(this))
+        this.events.addEventListener('celldl-drawing', this.#celldlDrawingEvent.bind(this))
 
         // Add handler for events from panels
-        document.addEventListener('panel-event', this.#panelEvent.bind(this))
-        document.addEventListener('style-event', this.#styleEvent.bind(this))
+        this.events.addEventListener('panel-event', this.#panelEvent.bind(this))
+        this.events.addEventListener('style-event', this.#styleEvent.bind(this))
 
         // Handle click events on control points
-        document.addEventListener('select-object', this.#objectClickEvent.bind(this))
+        this.events.addEventListener('select-object', this.#objectClickEvent.bind(this))
 
         this.#componentLibraryPlugin = componentLibraryPlugin
         this.#panels = new Map([
@@ -233,27 +238,63 @@ export class CellDLEditor {
         this.#statusMsg = statusMsg
         this.#statusPos = statusPos
 
+        // The diagram is shown in a shadow tree so that its stylesheet and element ids
+        // (`<defs>`, `url(#...)` references, object ids) don't affect, and aren't
+        // affected by, the page or any other editor on the page.
+        const shadowHost = document.createElement('div')
+        shadowHost.classList.add('celldl-diagram-host')
+        // The host must not size itself from the diagram: the diagram's viewBox is set from the
+        // container's size, so a content-sized host would feed back into a resize loop.
+        shadowHost.style.cssText = 'width: 100%; height: 100%; overflow: hidden;'
+        this.#container.prepend(shadowHost)
+        this.#shadowRoot = shadowHost.attachShadow({ mode: 'open' })
+        const shadowStyle = document.createElement('style')
+        // `display: block` so no space is added below the (otherwise inline) diagram
+        shadowStyle.textContent = `${svgContentCss}\n:host > svg { display: block; }`
+        this.#shadowRoot.append(shadowStyle)
+
         // Create a panzoom handler
         this.#panzoom = new PanZoom(this.#container)
 
-        // Set up event handlers
-        this.#container.addEventListener('click', this.#pointerClickEvent.bind(this))
-        this.#container.addEventListener('dblclick', this.#pointerDoubleClickEvent.bind(this))
+        // Set up event handlers. These are on the shadow root so that `event.target`
+        // is the actual diagram element, not the shadow host. (`pointerover` and
+        // `pointerout` between elements in the diagram don't propagate out of the
+        // shadow tree at all.)
+        this.#shadowRoot.addEventListener('click', this.#pointerClickEvent.bind(this) as EventListener)
+        this.#shadowRoot.addEventListener('dblclick', this.#pointerDoubleClickEvent.bind(this) as EventListener)
 
-        this.#container.addEventListener('pointerover', this.#pointerOverEvent.bind(this))
-        this.#container.addEventListener('pointerout', this.#pointerOutEvent.bind(this))
+        this.#shadowRoot.addEventListener('pointerover', this.#pointerOverEvent.bind(this) as EventListener)
+        this.#shadowRoot.addEventListener('pointerout', this.#pointerOutEvent.bind(this) as EventListener)
 
-        this.#container.addEventListener('pointerdown', this.#pointerDownEvent.bind(this))
-        this.#container.addEventListener('pointermove', this.#pointerMoveEvent.bind(this))
-        this.#container.addEventListener('pointerup', this.#pointerUpEvent.bind(this))
+        this.#shadowRoot.addEventListener('pointerdown', this.#pointerDownEvent.bind(this) as EventListener)
+        this.#shadowRoot.addEventListener('pointermove', this.#pointerMoveEvent.bind(this) as EventListener)
+        this.#shadowRoot.addEventListener('pointerup', this.#pointerUpEvent.bind(this) as EventListener)
 
         // Editor content focus handlers
         document.addEventListener('focusin', this.#focusEvent.bind(this))
         document.addEventListener('focusout', this.#focusEvent.bind(this))
 
-        // Keyboard handlers
-        window.addEventListener('keydown', this.#keyDownEvent.bind(this))
-        window.addEventListener('keyup', this.#keyUpEvent.bind(this))
+        // Keyboard handlers. Keys are only acted on by the active editor, which is the
+        // editor that was last clicked in (or the first editor mounted).
+        const editorRoot = svgContainer.closest('.celldl-editor') ?? svgContainer
+        if (activeEditor === null) {
+            activeEditor = this
+        }
+        document.addEventListener('pointerdown', (event: PointerEvent) => {
+            if (event.composedPath().includes(editorRoot)) {
+                activeEditor = this
+            }
+        }, { capture: true })
+        window.addEventListener('keydown', (event: KeyboardEvent) => {
+            if (activeEditor === this) {
+                this.#keyDownEvent(event)
+            }
+        })
+        window.addEventListener('keyup', (event: KeyboardEvent) => {
+            if (activeEditor === this) {
+                this.#keyUpEvent(event)
+            }
+        })
 
         // Add handlers for dropping components on the canvas
         this.#container.addEventListener('dragover', this.#appDragOverEvent.bind(this))
@@ -276,21 +317,21 @@ export class CellDLEditor {
             this.#tooltipElement = this.#tooltip.value.popper
         }
         // Handle context menu events
-        this.#container.addEventListener('contextmenu', (event) => {
+        this.#shadowRoot.addEventListener('contextmenu', (event) => {
             const element = event.target as SVGGraphicsElement
             const clickedObject = this.#celldlDiagram!.objectById(getElementId(element))
             if (clickedObject && clickedObject === this.currentObject) {
                 // This is to select the object that's had a right click
                 this.setSelectedObject(clickedObject)
             }
-            document.dispatchEvent(new CustomEvent('open-context-menu', {
+            this.events.dispatchEvent(new CustomEvent('open-context-menu', {
                 detail: {
                     state: this.#contextMenuActiveItems,
                     event: event
                 }
             }))
         })
-        document.addEventListener('context-menu-click', (event: Event) => {
+        this.events.addEventListener('context-menu-click', (event: Event) => {
             const targetId = (<CustomEvent>event).detail.id
             if (targetId === CONTEXT_MENU.DELETE) {
                 this.#deleteSelectedObjects()
@@ -360,8 +401,8 @@ export class CellDLEditor {
         await loadImages(this.#svgDiagram!)
 
         // Show the diagram in the editor's window
-        if (this.#container) {
-            this.#container.appendChild(this.#svgDiagram!)
+        if (this.#shadowRoot) {
+            this.#shadowRoot.appendChild(this.#svgDiagram!)
         }
 
         // Allow for the diagram to render
@@ -390,8 +431,8 @@ export class CellDLEditor {
             this.#editorFrame!.clear()
             //            this.#toolBar.enable(false)
             this.#panzoom!.disable()
-            if (this.#container) {
-                this.#container.removeChild(this.#svgDiagram as Node)
+            if (this.#shadowRoot) {
+                this.#shadowRoot.removeChild(this.#svgDiagram as Node)
             }
             this.#svgDiagram = null
             this.#celldlDiagram = null
@@ -456,7 +497,7 @@ export class CellDLEditor {
                 const values = detail.value
                 if (values.oldValue !== values.newValue) {
                     await this.#openPanel.updateObjectProperties(this.selectionSet.objects[0]!, detail.itemId, detail.value)
-                    notifyChanges()
+                    this.notifyChanges()
                 }
             }
         }
@@ -467,7 +508,7 @@ export class CellDLEditor {
         if (detail.source === this.#openPanel?.panelId) {
             if (this.#openPanel && this.selectionSet.size === 1) {
                 await this.#openPanel.updateObjectStyling(this.selectionSet.objects[0]!, detail.styling)
-                notifyChanges()
+                this.notifyChanges()
             }
         }
     }
@@ -1090,6 +1131,13 @@ export class CellDLEditor {
     #focusEvent(event: FocusEvent) {
         // Detect when no input fields have focus
         this.#haveFocus = event.type === 'focusout'
+    }
+
+    /**
+     * Let the editor's host know that the diagram has been changed.
+     */
+    notifyChanges() {
+        this.events.dispatchEvent(new CustomEvent('file-edited'))
     }
 
     #keyDownEvent(event: KeyboardEvent) {

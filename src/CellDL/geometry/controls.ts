@@ -116,7 +116,7 @@ export class ControlPoint extends RestrictedPoint {
     #pointerClickEvent(event: MouseEvent) {
         if (this.#celldlObject) {
             event.stopPropagation()
-            document.dispatchEvent(
+            this.#celldlObject.context.editor.events.dispatchEvent(
                 new CustomEvent('select-object', {
                     detail: {
                         event: event,
