@@ -55,6 +55,7 @@
                 :editorCommand="editorCommand"
                 :theme="editorTheme"
                 @editorData="onEditorData"
+                @editorReady="onEditorReady"
                 @error="onError"
             )
             AboutDialog(
@@ -94,6 +95,15 @@
 .update-link:hover {
     background-color: var(--p-content-hover-background);
     border-color: var(--p-content-border-color);
+}
+
+/* Disable Message enter and leave animations */
+.p-message-enter-active,
+.p-message-leave-active {
+  animation: none !important;
+  transition: none !important;
+  animation-duration: 0s !important;
+  transition-duration: 0s !important;
 }
 </style>
 
@@ -140,21 +150,16 @@ const props = defineProps<IEditorAppProps>()
 
 // Wait for the editor component to become ready
 
-const loadingMessage = vue.ref<string>('Loading CellDL editor');
+const loadingMessage = vue.ref<string>('Loading CellDL editor')
 
-(function checkInitialised() {
-  setTimeout(() => {
-    if (editorInitialised()) {
-        loadingMessage.value = ''
-        console.log('Editor ready...')
+async function onEditorReady() {
+    loadingMessage.value = ''
 
-        // Now start checking for a newer version of the editor
-        version.startCheck()
-    } else {
-        checkInitialised()
-    }
-  }, 50)
-})()
+    console.log('Editor ready...')
+
+    // Now start checking for a newer version of the editor
+    version.startCheck()
+}
 
 //==============================================================================
 //==============================================================================
