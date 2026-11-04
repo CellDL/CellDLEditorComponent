@@ -3,7 +3,7 @@
         template(#title)
             div {{ title }}
         template(#content)
-            #panel-content
+            .panel-content
                 div(v-if="!properties.objectId") Please select a single element or path.
                 template(v-else)
                     Accordion(multiple=true :value="defaultPanel")
@@ -154,7 +154,7 @@ function updateTextStyle(textStyle: string, groupIndex: number) {
 </script>
 
 <style scoped>
-#panel-content {
+.panel-content {
     margin-top: 20px;
 }
 

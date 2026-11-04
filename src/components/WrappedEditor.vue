@@ -6,14 +6,14 @@
                 :rightButtons="panelButtons"
                 @button-event="buttonEvent"
             )
-            div#svg-container(ref="svgContainer")
+            div.svg-container(ref="svgContainer")
                 EditorContextMenu(
                     :contextMenuProps="contextMenuProps"
                 )
                 <!-- context-menu(id="context-menu")  -->
         footer.status-bar
-            span#status-msg
-            span#status-pos
+            span.status-msg(ref="statusMsg")
+            span.status-pos(ref="statusPos")
 </template>
 
 <script setup lang="ts">
@@ -158,6 +158,8 @@ if (crtInstance) {
 //==============================================================================
 
 const svgContainer = vue.ref(null)
+const statusMsg = vue.useTemplateRef<HTMLElement>('statusMsg')
+const statusPos = vue.useTemplateRef<HTMLElement>('statusPos')
 
 let celldlDiagram: CellDLDiagram|undefined
 
@@ -402,7 +404,7 @@ vue.onMounted(async () => {
             if (svgContainerElement.clientWidth === 0 || svgContainerElement.clientHeight === 0) {
                 console.error('zero sized container!!')
             }
-            celldlEditor.mount(svgContainerElement)
+            celldlEditor.mount(svgContainerElement, statusMsg.value, statusPos.value)
 
             // Create a new diagram in the editor's window
             celldlDiagram = new CellDLDiagram('', '', celldlEditor)
@@ -429,7 +431,7 @@ vue.onMounted(async () => {
     border: 2px solid var(--editor-border-color);
     background-color: var(--editor-statusbar-background);
 }
-#svg-container {
+.svg-container {
     margin:  0;
     border: 2px solid var(--editor-border-color);
     border-top-width: 0;
@@ -446,13 +448,13 @@ vue.onMounted(async () => {
     padding-right: 16px;
     background-color: var(--editor-statusbar-background);
 }
-#status-msg.error {
+.status-msg.error {
     color: red;
 }
-#status-msg.warn {
+.status-msg.warn {
    color: blue;
 }
-#status-pos {
+.status-pos {
     float: right;
 }
 </style>

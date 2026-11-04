@@ -225,10 +225,11 @@ export class CellDLEditor {
         ])
     }
 
-    mount(svgContainer: HTMLElement) {
+    mount(svgContainer: HTMLElement, statusMsg: HTMLElement|null = null, statusPos: HTMLElement|null = null) {
+        // Elements are passed in, not looked up by id, as a page may have several editors
         this.#container = svgContainer
-        this.#statusMsg = document.getElementById('status-msg')
-        this.#statusPos = document.getElementById('status-pos')
+        this.#statusMsg = statusMsg
+        this.#statusPos = statusPos
 
         // Create a panzoom handler
         this.#panzoom = new PanZoom(this.#container)

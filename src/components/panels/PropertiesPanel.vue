@@ -3,7 +3,7 @@
         template(#title)
             div {{ title }}
         template(#content)
-            #panel-content
+            .panel-content
                 div(
                     v-if="!properties.objectId"
                 ) Please select a single element or path.
@@ -65,7 +65,7 @@ function updateProperties(itemId: string, oldValue: number|string, newValue: num
 </script>
 
 <style scoped>
-#panel-content {
+.panel-content {
     margin-top: 20px;
 }
 </style>
