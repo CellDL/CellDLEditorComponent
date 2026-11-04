@@ -38,11 +38,10 @@ import { CellDLDiagram } from '#editor/diagram'
 import { CellDLEditor } from '#editor/editor'
 import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS } from '#editor/editor'
 import { editGuides } from '#editor/editor/editguides'
-import { undoRedo } from '#editor/diagram/undoredo'
 
 import { type EditorToolButton, PANEL_ID } from '#root/utils/editor-types'
 
-import { componentLibraryPlugin } from '#root/plugins'
+import { ComponentLibraryPlugin } from '#root/plugins'
 
 import { BondgraphPlugin, PLUGIN_ID as BG_PLUGIN_ID } from '#root/plugins/bondgraph'
 
@@ -129,6 +128,8 @@ export type EditorData = {
 
 const crtInstance = vue.getCurrentInstance();
 
+const componentLibraryPlugin = new ComponentLibraryPlugin()
+
 if (crtInstance) {
     const app = crtInstance.appContext.app
 
@@ -145,11 +146,11 @@ if (crtInstance) {
 
     app.use(vueTippy)
 
-    // Install our component library manager with the Bondgraph plugin
+    // Register our Bondgraph and Drawing plugins with the component library manager
 
-    componentLibraryPlugin.install(app)
     componentLibraryPlugin.registerPlugin(new BondgraphPlugin())
     componentLibraryPlugin.registerPlugin(new DrawingPlugin())
+
 // WIP    componentLibraryPlugin.registerPlugin(new ElectricalPlugin())
 }
 
@@ -162,7 +163,8 @@ let celldlDiagram: CellDLDiagram|undefined
 
 // Plugins need to be initialised before creating the editor
 
-const celldlEditor: CellDLEditor = new CellDLEditor()
+const celldlEditor: CellDLEditor = new CellDLEditor(componentLibraryPlugin)
+
 //const celldlEditor: TestCellDLEditor = new TestCellDLEditor()
 
 
@@ -376,7 +378,7 @@ vue.watch(
             const command = props.editorCommand as EditorEditCommand
             const options = command.options
             if (options.action === 'clean') {
-                undoRedo.clean()
+                celldlDiagram!.context.undoRedo.clean()
             }
         } else if (props.editorCommand?.command === 'set-state') {
             const command = props.editorCommand as EditorSetStateCommand
@@ -404,7 +406,7 @@ vue.onMounted(async () => {
 
             // Create a new diagram in the editor's window
             celldlDiagram = new CellDLDiagram('', '', celldlEditor)
-            await celldlDiagram.edit()
+            await celldlEditor.editDiagram(celldlDiagram)
 
 //            testEditor(celldlEditor)
             emit('editor-ready')

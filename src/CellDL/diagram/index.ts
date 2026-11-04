@@ -70,11 +70,11 @@ import type { SvgConnection } from '#editor/SVGElements/svgconnection'
 
 import { type CellDLEditor, notifyChanges, type PointerEventHandler } from '#editor/editor'
 import { editGuides } from '#editor/editor/editguides'
-import { undoRedo, type UndoState } from '#editor/diagram/undoredo'
+import type { UndoState } from '#editor/diagram/undoredo'
 
 import type { ObjectTemplate } from '#editor/components'
 
-import { componentLibraryPlugin } from '#root/plugins'
+import { DiagramContext } from './context'
 
 //==============================================================================
 
@@ -124,12 +124,12 @@ export class CellDLDiagram {
     #defsElement: SVGDefsElement|null|undefined
 
     #kb = new MetadataStore()
-    #celldlEditor: CellDLEditor
-
     #documentNode: NamedNode
     #documentNS: $rdf.NamespacedUri
     #filePath: string
 
+    #context: DiagramContext
+    #celldlEditor: CellDLEditor
     #diagramMetadata: Record<string, NamedNode>
     #diagramProperties: StringProperties = {}
 
@@ -169,10 +169,11 @@ export class CellDLDiagram {
             }
             this.#initaliseMetadata()
         }
+        this.#context = new DiagramContext(this, celldlEditor)  // has to be after `svgDiagram` has been  assigned
         this.#setLastIdentifier()
         this.#setupDefines()
         this.#setStylesheet()
-        componentLibraryPlugin.openDiagram(this.#documentNode.uri, this.#kb)
+        this.#context.componentLibraryPlugin.openDiagram(this.#documentNode.uri, this.#kb)
     }
 
     finishSetup() {
@@ -188,12 +189,8 @@ export class CellDLDiagram {
         }
     }
 
-    async edit() {
-        await this.#celldlEditor.editDiagram(this)
-    }
-
-    get editorFrame() {
-        return this.#celldlEditor.editorFrame
+    get context() {
+        return this.#context
     }
 
     get metadata(): StringProperties {
@@ -320,12 +317,12 @@ export class CellDLDiagram {
             this.#svgDiagram.insertAdjacentHTML('afterbegin', `<defs></defs>`)
             this.#defsElement = this.#svgDiagram.firstChild as SVGDefsElement
             this.#defsElement.id = CELLDL_DEFINITIONS_ID
-            this.#defsElement.insertAdjacentHTML('afterbegin', componentLibraryPlugin.svgDefinitions())
+            this.#defsElement.insertAdjacentHTML('afterbegin', this.#context.componentLibraryPlugin.svgDefinitions())
         }
     }
 
     #setStylesheet() {
-        const css = `${CellDLStylesheet}${componentLibraryPlugin.styleRules()}`
+        const css = `${CellDLStylesheet}${this.#context.componentLibraryPlugin.styleRules()}`
         let styleElement = this.#svgDiagram.querySelector(
             `defs#${CELLDL_DEFINITIONS_ID} > style#${CELLDL_STYLESHEET_ID}`
         )
@@ -567,7 +564,7 @@ export class CellDLDiagram {
             }
 
             // Add statements about the document from plugins
-            componentLibraryPlugin.addPluginMetadataToStore(this.rdfStore)
+            this.#context.componentLibraryPlugin.addPluginMetadataToStore(this.rdfStore)
 
             // Make sure metadata is up-to-date
             this.#saveDiagramProperties()
@@ -647,7 +644,7 @@ export class CellDLDiagram {
         if (object.isMoveable) {
             editGuides.addGuide(<CellDLComponent>object)
         }
-        componentLibraryPlugin.addComponent(object)
+        this.#context.componentLibraryPlugin.addComponent(object)
     }
 
     #addConnection(connection: CellDLConnection) {
@@ -664,7 +661,7 @@ export class CellDLDiagram {
     addNewConnection(svgElement: SVGGraphicsElement, template: ObjectTemplate): CellDLConnection {
         const connection = this.#addNewObject(svgElement, template) as CellDLConnection
         // let the plugins know
-        componentLibraryPlugin.addConnection(connection)
+        this.#context.componentLibraryPlugin.addConnection(connection)
         notifyChanges()
         return connection
     }
@@ -775,7 +772,7 @@ export class CellDLDiagram {
         ) as CellDLConnection
         this.#addConnection(connection)
         // let the plugins know
-        componentLibraryPlugin.addConnection(connection)
+        this.#context.componentLibraryPlugin.addConnection(connection)
         return connection
     }
 
@@ -956,7 +953,7 @@ export class CellDLDiagram {
             this.#addConnection(<CellDLConnection>celldlObject)
         }
         celldlObject.assignSvgElement(svgElement, true)
-        undoRedo.setInsertUndoState(celldlObject)
+        this.#context.undoRedo.setInsertUndoState(celldlObject)
         return celldlObject
     }
 
@@ -976,7 +973,7 @@ export class CellDLDiagram {
 
     #celldlObjectFromRdf<T extends CellDLObject>(CellDLClass: Constructor<T>, subject: $rdf.SubjectType): T {
         const metadata = this.#kb.metadataPropertiesForSubject(subject)
-        const objectTemplate = componentLibraryPlugin.getObjectTemplate(subject, metadata, this.#kb)
+        const objectTemplate = this.#context.componentLibraryPlugin.getObjectTemplate(subject, metadata, this.#kb)
         return new CellDLClass(subject, objectTemplate, this)
     }
 
@@ -1052,7 +1049,7 @@ export class CellDLDiagram {
                 for (const connection of connections) {
                     component.addConnection(connection)
                 }
-                componentLibraryPlugin.addComponent(celldlObject)
+                this.#context.componentLibraryPlugin.addComponent(celldlObject)
             } else if (celldlObject.isConnection) {
                 connections.push(celldlObject as CellDLConnection)
             }
@@ -1062,7 +1059,7 @@ export class CellDLDiagram {
             this.#spatialIndex.add(celldlObject)
         }
         for (const connection of connections) {
-            componentLibraryPlugin.addConnection(connection)
+            this.#context.componentLibraryPlugin.addConnection(connection)
             for (const component of connection.connectedObjects) {
                 component.addConnection(connection)
             }
@@ -1099,14 +1096,14 @@ export class CellDLDiagram {
                 this.#removeObject(connection, undoState)
                 component.deleteConnection(connection)
             }
-            componentLibraryPlugin.componentDeleted(component)
+            this.#context.componentLibraryPlugin.componentDeleted(component)
         }
         if (celldlObject.isConnection) {
             const connection = <CellDLConnection>celldlObject
             for (const connector of connection.connectedObjects) {
                 connector.deleteConnection(connection)
             }
-            componentLibraryPlugin.connectionDeleted(connection)
+            this.#context.componentLibraryPlugin.connectionDeleted(connection)
         }
     }
 }

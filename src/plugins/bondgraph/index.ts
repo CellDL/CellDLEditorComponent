@@ -58,7 +58,6 @@ import {
     getFillString
 } from '#root/utils/svgUtils'
 
-import { alert } from '#editor/editor/alerts'
 import {
     CellDLComponent,
     type CellDLConnection,
@@ -632,7 +631,7 @@ export class BondgraphPlugin implements PluginInterface {
     //==========================================================================
 
     loadComponentProperties(componentProperties: PropertyGroup[], panelId: PANEL_ID, celldlObject: CellDLObject) {
-        alert.clear()
+        celldlObject.context.alert.clear()
         if (panelId === PANEL_ID.PROPERTIES_PANEL) {
             if (!celldlObject.isConnection) {
                 const pluginData = (<PluginData>celldlObject.pluginData(this.id))
@@ -937,7 +936,7 @@ export class BondgraphPlugin implements PluginInterface {
         if (groupTemplate.groupId === BG_PROPERTY_GROUP_ID.ElementProperties) {
             for (const item of groupTemplate.items) {
                 if (itemId === item.itemId) {
-                    alert.clear()
+                    celldlObject.context.alert.clear()
                     if (itemId === BG_ELEMENT_TYPE_ITEM) {
                         await this.#updateElementType(item, value, celldlObject)
                     } else if (itemId === BG_ELEMENT_SPECIES_ITEM) {
@@ -946,7 +945,7 @@ export class BondgraphPlugin implements PluginInterface {
                             updateItemProperty(item.property, value, celldlObject)
                             pluginData.species = value.newValue
                         } else {
-                            alert.error(errorMsg)
+                            celldlObject.context.alert.error(errorMsg)
                         }
                     } else if (itemId === BG_ELEMENT_LOCATION_ITEM) {
                         //pluginData.location = value.newValue
@@ -955,7 +954,7 @@ export class BondgraphPlugin implements PluginInterface {
                             updateItemProperty(item.property, value, celldlObject)
                             pluginData.location = value.newValue
                         } else {
-                            alert.error(errorMsg)
+                            celldlObject.context.alert.error(errorMsg)
                         }
                     }
                     break
@@ -963,7 +962,7 @@ export class BondgraphPlugin implements PluginInterface {
             }
         } else if (groupTemplate.groupId === BG_PROPERTY_GROUP_ID.ElementInitialValue) {
             if (itemId === BG_ELEMENT_VALUE_ITEM) {
-                alert.clear()
+                celldlObject.context.alert.clear()
                 this.#updateElementValue(value, celldlObject)
             }
         } else if (groupTemplate.groupId === BG_PROPERTY_GROUP_ID.ElementParameters

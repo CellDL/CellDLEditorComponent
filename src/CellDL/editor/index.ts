@@ -30,7 +30,7 @@ import type { TemplateEventDetails } from '#editor/components'
 import { objectMetadataTemplate, ObjectPropertiesPanel } from '#editor/components/properties'
 import type { CellDLDiagram } from '#editor/diagram'
 import { SelectionSet } from '#editor/diagram/selectionset'
-import { type MoveUndoState, undoRedo } from '#editor/diagram/undoredo'
+import type { MoveUndoState, UndoRedo } from '#editor/diagram/undoredo'
 import { round } from '#editor/utils'
 
 import { isMacOs } from '#root/utils/common'
@@ -38,12 +38,12 @@ import { PANEL_ID } from '#root/utils/editor-types'
 import { type Point, type PointLike, PointMath } from '#root/utils/points'
 import { loadImages } from '#root/utils/svgUtils'
 import type { StringProperties } from '#root/utils/types'
-import { componentLibraryPlugin } from '#root/plugins'
+import type { ComponentLibraryPlugin } from '#root/plugins'
 
 //==============================================================================
 
 import { DEFAULT_VIEW_STATE } from './defaults'
-import { EditorFrame } from './editorframe'
+import type { EditorFrame } from './editorframe'
 import { editGuides, EDITOR_GRID_CLASS } from './editguides'
 import PanZoom from './panzoom'
 import { BoxMaker } from './boxmaker'
@@ -133,8 +133,6 @@ export type PointerEventHandler = (eventType: string, svgElement: SVGGraphicsEle
 const SVG_PANEL_ID = 'svg-panel'
 
 export class CellDLEditor {
-    static instance: CellDLEditor | null = null
-
     #container: HTMLElement | null = null
     #statusMsg: HTMLElement | null = null
     #statusPos: HTMLElement | null = null
@@ -144,6 +142,7 @@ export class CellDLEditor {
     #svgDiagram: SVGSVGElement | null = null
     #editorFrame: EditorFrame | null = null
     #moveUndoState: MoveUndoState | null = null
+    #undoRedo: UndoRedo | null = null
 
     #panning: boolean = false
     #panzoom: PanZoom | null = null
@@ -181,33 +180,15 @@ export class CellDLEditor {
     #pointerDownTime: number = 0
     #pointerEventHandlers: Map<string, PointerEventHandler> = new Map()
 
-    #openPanel: ObjectPropertiesPanel | undefined = undefined
-    #panels: Map<PANEL_ID, ObjectPropertiesPanel> = new Map([
-        [
-            PANEL_ID.METADATA_PANEL, new ObjectPropertiesPanel(PANEL_ID.METADATA_PANEL, [
-                objectMetadataTemplate(),
-                ...componentLibraryPlugin.getPanelTemplates(PANEL_ID.METADATA_PANEL)
-            ])
-        ],
-        [
-            PANEL_ID.PROPERTIES_PANEL, new ObjectPropertiesPanel(PANEL_ID.PROPERTIES_PANEL,
-                componentLibraryPlugin.getPanelTemplates(PANEL_ID.PROPERTIES_PANEL)
-            )
-        ],
-        [
-            PANEL_ID.STYLE_PANEL, new ObjectPropertiesPanel(PANEL_ID.STYLE_PANEL,
-                componentLibraryPlugin.getPanelTemplates(PANEL_ID.STYLE_PANEL)
-            )
-        ]
-    ])
+    #componentLibraryPlugin: ComponentLibraryPlugin
 
+    #openPanel: ObjectPropertiesPanel | undefined = undefined
+    #panels: Map<PANEL_ID, ObjectPropertiesPanel>
     #tooltip: vue.Ref|undefined
     #tooltipElement: HTMLElement|undefined
     #tooltipStyle: string = ''
 
-    constructor() {
-        CellDLEditor.instance = this
-
+    constructor(componentLibraryPlugin: ComponentLibraryPlugin) {
         // Add a handler for events from toolbar buttons and popovers
         document.addEventListener('toolbar-event', this.#toolBarEvent.bind(this))
         document.addEventListener('component-selected', this.#componentTemplateSelectedEvent.bind(this))
@@ -221,6 +202,26 @@ export class CellDLEditor {
 
         // Handle click events on control points
         document.addEventListener('select-object', this.#objectClickEvent.bind(this))
+
+        this.#componentLibraryPlugin = componentLibraryPlugin
+        this.#panels = new Map([
+            [
+                PANEL_ID.METADATA_PANEL, new ObjectPropertiesPanel(PANEL_ID.METADATA_PANEL, [
+                    objectMetadataTemplate(),
+                    ...componentLibraryPlugin.getPanelTemplates(PANEL_ID.METADATA_PANEL)
+                ])
+            ],
+            [
+                PANEL_ID.PROPERTIES_PANEL, new ObjectPropertiesPanel(PANEL_ID.PROPERTIES_PANEL,
+                    componentLibraryPlugin.getPanelTemplates(PANEL_ID.PROPERTIES_PANEL)
+                )
+            ],
+            [
+                PANEL_ID.STYLE_PANEL, new ObjectPropertiesPanel(PANEL_ID.STYLE_PANEL,
+                    componentLibraryPlugin.getPanelTemplates(PANEL_ID.STYLE_PANEL)
+                )
+            ]
+        ])
     }
 
     mount(svgContainer: HTMLElement) {
@@ -308,15 +309,15 @@ export class CellDLEditor {
         return this.#dirty
     }
 
-    get editorFrame() {
-        return this.#editorFrame
-    }
-
     get status(): string {
         return this.#statusMsg ? this.#statusMsg.innerText : ''
     }
     set status(text: string) {
         this.showMessage(text)
+    }
+
+    get undoRedo(): UndoRedo {
+        return this.#undoRedo as UndoRedo
     }
 
     get windowSize(): [number, number] {
@@ -343,11 +344,9 @@ export class CellDLEditor {
             this.closeDiagram()
         }
         this.#celldlDiagram = celldlDiagram
+        this.#editorFrame = celldlDiagram.context.editorFrame
+        this.#undoRedo = celldlDiagram.context.undoRedo
         this.#svgDiagram = celldlDiagram.svgDiagram
-
-        // Make sure we have a group in which to put selection related objects
-        // This MUST remain as the last group in the diagram when new layer groups are added...
-        this.#editorFrame = new EditorFrame(celldlDiagram)
 
         // Initialise alignment guides and grid
         editGuides.newDiagram(celldlDiagram, DEFAULT_VIEW_STATE)
@@ -366,7 +365,7 @@ export class CellDLEditor {
 
         // Rewriting metadata during diagram finishSetup might dirty
         this.markClean()
-        undoRedo.clean()
+        this.#undoRedo.clean()
 
         // Finish setting up the diagram as we now have SVG elements
         celldlDiagram.finishSetup()
@@ -385,7 +384,6 @@ export class CellDLEditor {
     closeDiagram() {
         if (this.#celldlDiagram !== null) {
             this.#editorFrame!.clear()
-            this.#editorFrame = null
             //            this.#toolBar.enable(false)
             this.#panzoom!.disable()
             if (this.#container) {
@@ -503,7 +501,7 @@ export class CellDLEditor {
                 currentObject = this.currentObject
             }
             if (currentObject) {
-                let pluginText = componentLibraryPlugin.statusText(currentObject)
+                let pluginText = this.#componentLibraryPlugin.statusText(currentObject)
                 if (pluginText !== '') {
                     pluginText = ` (${pluginText})`
                 }
@@ -671,7 +669,7 @@ export class CellDLEditor {
         if (dragged) {
             topLeft = topLeft.subtract(PointMath.scalarScale(details.offset, zoomScale))
         }
-        const template = componentLibraryPlugin.getObjectTemplateById(details.id)
+        const template = this.#componentLibraryPlugin.getObjectTemplateById(details.id)
         if (!template) {
             console.error(`Drop of unknown component template '${details.id}'`)
             return
@@ -807,7 +805,7 @@ export class CellDLEditor {
                 this.#nextPathNode = PathMaker.startPartialPath(this.#domToSvgCoords(event), this.#celldlDiagram!)
                 if (this.#nextPathNode != null) {
                     const settings = this.#drawConnectionSettings // settings.type is to come from object's domain...
-                    this.#pathMaker = new PathMaker(this.#editorFrame!, this.#nextPathNode, settings.style)
+                    this.#pathMaker = new PathMaker(this.#celldlDiagram!.context, this.#nextPathNode, settings.style)
                 }
             }
         }
@@ -854,7 +852,12 @@ export class CellDLEditor {
                 this.currentObject = currentObject
                 // Set object active regardless of whether it's valid for the path
                 if (this.#pathMaker === null) {
-                    this.#nextPathNode = PathMaker.validStartObject(currentObject)
+                    const nodeOrAlert = PathMaker.validStartObject(currentObject)
+                    if (nodeOrAlert.alert) {
+                        this.showTooltip(nodeOrAlert.alert, 'error')
+                    } else if (nodeOrAlert.node) {
+                        this.#nextPathNode = nodeOrAlert.node
+                    }
                 } else {
                     this.#nextPathNode = this.#pathMaker.validPathNode(currentObject)
                 }
@@ -927,7 +930,7 @@ export class CellDLEditor {
             if (this.currentObject && this.#nextPathNode) {
                 if (this.#pathMaker === null) {
                     const settings = this.#drawConnectionSettings // settings.type is to come from object's domain...
-                    this.#pathMaker = new PathMaker(this.#editorFrame!, this.#nextPathNode, settings.style)
+                    this.#pathMaker = new PathMaker(this.#celldlDiagram!.context, this.#nextPathNode, settings.style)
                 } else if (!this.#pathMaker.empty) {
                     if (this.currentObject.isConduit) {
                         this.#pathMaker.addIntermediate(this.#nextPathNode, event.shiftKey)
@@ -942,11 +945,11 @@ export class CellDLEditor {
             this.#moveSelection = !this.currentObject?.isConnection && this.selectionSet.has(this.currentObject)
             if (this.#moveSelection) {
                 // Moving a set of selected components
-                this.#moveUndoState = undoRedo.setMoveUndoState(this.currentObject, svgPoint, this.selectionSet)
+                this.#moveUndoState = this.#undoRedo!.setMoveUndoState(this.currentObject, svgPoint, this.selectionSet)
                 this.selectionSet.startMove(svgPoint, this.currentObject)
             } else {
                 // Either moving a control point or an active component
-                this.#moveUndoState = undoRedo.setMoveUndoState(this.currentObject, svgPoint)
+                this.#moveUndoState = this.#undoRedo!.setMoveUndoState(this.currentObject, svgPoint)
                 this.currentObject.startMove(svgPoint)
             }
             this.moving = true
@@ -960,7 +963,7 @@ export class CellDLEditor {
                 this.#boxMaking = true
             } else if (this.currentObject?.isConnection) {
                 // Check if a linear path and if so, insert a control point and initialise moving it
-                this.#moveUndoState = undoRedo.setMoveUndoState(this.currentObject, svgPoint)
+                this.#moveUndoState = this.#undoRedo!.setMoveUndoState(this.currentObject, svgPoint)
                 const controlElement = this.currentObject.addControlHandle(svgPoint)
                 if (controlElement) {
                     this.currentObject.initialiseMove(controlElement)
@@ -1050,7 +1053,7 @@ export class CellDLEditor {
                         this.currentObject.finaliseMove()
                     }
                 } else if (this.#moveUndoState) {
-                    undoRedo.resetActiveUndoState()
+                    this.#undoRedo!.resetActiveUndoState()
                     this.#moveUndoState.reposition('backwards')
                     this.#moveUndoState = null
                 }
@@ -1104,9 +1107,9 @@ export class CellDLEditor {
             && (isMacOs() && event.metaKey
             || !isMacOs() && event.ctrlKey)) {
             if (event.key === 'z' && !event.shiftKey) {
-                undoRedo.undo(this.#celldlDiagram!)
+                this.#undoRedo!.undo(this.#celldlDiagram!)
             } else if (event.key === 'Z' || event.key === 'z' && event.shiftKey) {
-                undoRedo.redo(this.#celldlDiagram!)
+                this.#undoRedo!.redo(this.#celldlDiagram!)
             }
         }
     }

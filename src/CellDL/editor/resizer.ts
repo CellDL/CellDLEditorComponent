@@ -2,15 +2,13 @@
 //==============================================================================
 
 import type { CellDLDiagram } from '#editor/diagram'
-import type { GridAlignOptions } from '#editor/editor/editguides'
+import { editGuides, type GridAlignOptions } from '#editor/editor/editguides'
 import { Bounds, ComputedValue, RestrictedValue } from '#editor/geometry'
 import { ControlPoint } from '#editor/geometry/controls'
 import type { CellDLSVGElement } from '#editor/SVGElements'
 import { Point, type PointLike } from '#root/utils/points'
 import { svgRect } from '#root/utils/svgUtils'
 
-import { getElementId } from '.'
-import { editGuides } from './editguides'
 import { EDITOR_FRAME_ID, type EditorFrame } from './editorframe'
 
 //==============================================================================
@@ -48,8 +46,7 @@ export class Resizer {
         this.#celldlSvgElement = celldlSvgElement
         this.#celldlDiagram = celldlSvgElement.celldlObject.celldlDiagram
         this.#objectId = celldlSvgElement.celldlObject.id
-        // biome-ignore lint/style/noNonNullAssertion: the diagram has an editor frame layer
-        this.#editorFrame = this.#celldlDiagram.editorFrame!
+        this.#editorFrame = this.#celldlDiagram.context.editorFrame
         this.#celldlDiagram.addPointerEventHandler(this.#id, this.#pointerEvent.bind(this))
 
         this.#topLeft = ControlPoint.fromPoint(topLeft)

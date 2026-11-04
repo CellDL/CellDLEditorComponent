@@ -106,8 +106,7 @@ export class PathElement {
         lastElement: BoundedElement
     ) {
         this.#connection = connection
-        // biome-ignore lint/style/noNonNullAssertion: the diagram has an editor frame
-        this.#editorFrame = connection.celldlDiagram.editorFrame!
+        this.#editorFrame = connection.celldlDiagram.context.editorFrame
         this.#svgElement = svgElement
         this.#svgParentId = id.split(ID_PART_SEPARATOR).slice(0, -1).join(ID_PART_SEPARATOR)
         this.#svgShadow = this.#editorFrame.addElementAsString('<path class="shadow"/>', true) as SVGPathElement

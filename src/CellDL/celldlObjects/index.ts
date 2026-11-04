@@ -25,7 +25,6 @@ import { DCT, isLiteral, type Literal, type NamedNode, RDF, RDFS } from '@celldl
 
 import { Point, type PointLike } from '#root/utils/points'
 
-import { alert } from '#editor/editor/alerts'
 import { editGuides } from '#editor/editor/editguides'
 
 import { BoundedElement } from '#editor/SVGElements/boundedelement'
@@ -35,7 +34,7 @@ import type { CellDLDiagram } from '#editor/diagram'
 import { SvgConnection } from '#editor/SVGElements/svgconnection'
 import type { CellDLSVGElement, ElementMoveOptions } from '#editor/SVGElements'
 
-import { componentLibraryPlugin } from '#root/plugins'
+import type { DiagramContext } from '#editor/diagram/context'
 
 //==============================================================================
 
@@ -79,6 +78,7 @@ export abstract class CellDLObject {
 
     #celldlStyleClass: CELLDL_STYLE_CLASS
     #celldlDiagram: CellDLDiagram
+    #context: DiagramContext
     #celldlSvgElement?: CellDLSVGElement
     #celldlTypeName: string
 
@@ -102,6 +102,7 @@ export abstract class CellDLObject {
         updateStore: boolean=false
     ) {
         this.#celldlDiagram = celldlDiagram
+        this.#context = celldlDiagram.context
         // @ts-expect-error: celldlStyleClass is a member of the object's constructor
         this.#celldlStyleClass = this.constructor.celldlStyleClass
         // @ts-expect-error: celldlType is a member of the object's constructor
@@ -116,7 +117,7 @@ export abstract class CellDLObject {
         }
 
         // Get data that plugins need to associate with the object
-        this.#pluginData = componentLibraryPlugin.getPluginData(this)
+        this.#pluginData = this.#context.componentLibraryPlugin.getPluginData(this)
     }
 
     toString(): string {
@@ -140,6 +141,10 @@ export abstract class CellDLObject {
 
     get connections(): CellDLConnection[] {
         return []
+    }
+
+    get context(): DiagramContext {
+        return this.#context
     }
 
     get description() {
@@ -430,7 +435,7 @@ export class CellDLConnectedObject extends CellDLMoveableObject {
         updateStore: boolean=false
     ) {
         super(uri, objectTemplate, celldlDiagram, updateStore)
-        this.#maxConnections = componentLibraryPlugin.getMaxConnections(this)
+        this.#maxConnections = this.context.componentLibraryPlugin.getMaxConnections(this)
     }
 
     toString(): string {
@@ -461,7 +466,7 @@ export class CellDLConnectedObject extends CellDLMoveableObject {
         if (this.numConnections < this.maxConnections) {
             this.#connections.set(connection.id, connection)
         } else {
-            alert.elementError(
+            this.context.alert.elementError(
                 `${this.id}: Cannot add ${connection.id} --  connection limit reached`,
                 this.celldlSvgElement ? this.celldlSvgElement.svgElement : undefined
             )
@@ -640,7 +645,7 @@ export class CellDLConnection extends CellDLObject {
                 connector.addConnection(this)
             }
         } else {
-            alert.elementError(
+            this.context.alert.elementError(
                 `Connection ${this.id} has no source and/or target...`,
                 this.celldlSvgElement ? this.celldlSvgElement.svgElement : undefined
             )

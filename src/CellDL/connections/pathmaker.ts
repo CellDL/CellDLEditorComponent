@@ -26,17 +26,15 @@ import { RDF } from '@celldl/rdf'
 
 import { type CellDLConnectedObject, CellDLConnection, type CellDLObject } from '#editor/celldlObjects'
 import type { CellDLDiagram } from '#editor/diagram'
-import { alert } from '#editor/editor/alerts'
-import type { EditorFrame } from '#editor/editor/editorframe'
 import type { CellDLSVGElement } from '#editor/SVGElements'
 import { round } from '#editor/utils'
 
-import { componentLibraryPlugin } from '#root/plugins'
 import { Point, type PointLike, PointMath } from '#root/utils/points'
 import { CONNECTION_COLOUR, CONNECTION_WIDTH } from '#root/utils/styling'
 import { SVG_URI, svgPath, svgPathDescription } from '#root/utils/svgUtils'
 
 import { ConnectionStyle } from '.'
+import type { DiagramContext } from '#editor/diagram/context'
 
 //==============================================================================
 
@@ -131,7 +129,8 @@ export class PathNode {
 export class PathMaker {
     #currentSvgPath: SVGPathElement | null = null
     #edges: PathEdge[] = []
-    #editorFrame: EditorFrame
+    #context: DiagramContext
+
     #lastNode: PathNode
     #lastNodeElement: CellDLSVGElement
     #pointBeforeNode: Point | null = null
@@ -142,8 +141,8 @@ export class PathMaker {
     #startObject: CellDLObject
     #style: string
 
-    constructor(editorFrame: EditorFrame, startNode: PathNode, style: string = 'rectilinear') {
-        this.#editorFrame = editorFrame
+    constructor(context: DiagramContext, startNode: PathNode, style: string = 'rectilinear') {
+        this.#context = context
         this.#nodes.push(startNode)
         this.#objectIds.push(startNode.id)
         this.#lastNode = startNode
@@ -161,33 +160,40 @@ export class PathMaker {
         return this.#edges.length === 0 && this.#currentSvgPath === null
     }
 
-    static #checkMaxConnections(celldlObject: CellDLConnectedObject): boolean {
+    static #checkMaxConnections(celldlObject: CellDLConnectedObject): boolean|string {
         if (celldlObject.numConnections < celldlObject.maxConnections) {
             return true
         } else if (celldlObject.maxConnections >= 0) {
-            alert.tooltip('Component has maximum number of connections')
+            return 'Component has maximum number of connections'
         }
         return false
     }
 
-    static validStartObject(celldlObject: CellDLObject): PathNode | null {
+    static validStartObject(celldlObject: CellDLObject): { node?: PathNode, alert?: string } {
         if (celldlObject.isUnconnectedPort) {
             const connection = celldlObject.connections[0]
             // An UnconnectedPort is only valid if it is the target of a connection
             if (connection) {
                 if (connection.connectedObjects[1]?.id !== celldlObject.id) {
-                    return null
+                    return { }
                 }
             }
         }
         if (celldlObject.isConnectable && !celldlObject.isConduit) {
-            if (PathMaker.#checkMaxConnections(<CellDLConnectedObject>celldlObject)) {
-                return new PathNode(<CellDLConnectedObject>celldlObject)
+            const connectionOkOrAlert = PathMaker.#checkMaxConnections(<CellDLConnectedObject>celldlObject)
+            if (connectionOkOrAlert === true) {
+                return {
+                    node: new PathNode(<CellDLConnectedObject>celldlObject)
+                }
+            } else if (connectionOkOrAlert === false) {
+                return { }
+            } else {
+                return { alert: connectionOkOrAlert }
             }
         } else if (!celldlObject.isConnection) {
-            alert.tooltip('Component cannot start a path')
+            return { alert: 'Component cannot start a path' }
         }
-        return null
+        return { }
     }
 
     static startPartialPath(point: PointLike, celldlDiagram: CellDLDiagram): PathNode {
@@ -211,27 +217,31 @@ export class PathMaker {
         }
         if (!celldlObject.isConnectable) {
             if (!celldlObject.isConnection) {
-                alert.tooltip('Component does not allow connections')
+                this.#context.alert.tooltip('Component does not allow connections')
             }
             return null
         } else if (this.#currentSvgPath === null) {
             return null
         } else if (celldlObject.id === this.#startObject.id) {
             if (this.#nodes.length < 2) {
-                alert.tooltip('Path cannot directly loop to start component')
+                this.#context.alert.tooltip('Path cannot directly loop to start component')
                 return null
             }
         } else if (this.#objectIds.includes(celldlObject.id)) {
-            alert.tooltip('Component is already on the path')
+            this.#context.alert.tooltip('Component is already on the path')
             return null
         }
         // Check with plugins that (source --> object) would be valid.
-        const connectionStatus = componentLibraryPlugin.checkConnectionValid(this.#startObject, celldlObject)
+        const connectionStatus = this.#context.componentLibraryPlugin.checkConnectionValid(this.#startObject, celldlObject)
         if (connectionStatus?.alert) {
-            alert.tooltip(connectionStatus.alert)
+            this.#context.alert.tooltip(connectionStatus.alert)
             return null
         }
-        if (!PathMaker.#checkMaxConnections(<CellDLConnectedObject>celldlObject)) {
+        const connectionOkOrAlert = PathMaker.#checkMaxConnections(<CellDLConnectedObject>celldlObject)
+        if (connectionOkOrAlert !== true) {
+            if (connectionOkOrAlert !== false) {
+                this.#context.alert.tooltip(connectionOkOrAlert)
+            }
             return null
         }
         const pathNode = new PathNode(<CellDLConnectedObject>celldlObject)
@@ -558,7 +568,7 @@ export class PathMaker {
     #removeSvgPath() {
         for (const edge of this.#edges) {
             if (edge.svgPath) {
-                this.#editorFrame.removeElement(edge.svgPath)
+                this.#context.editorFrame.removeElement(edge.svgPath)
                 edge.clearSvgPath()
             }
         }
@@ -567,7 +577,7 @@ export class PathMaker {
 
     #removeCurrentSvgPath() {
         if (this.#currentSvgPath) {
-            this.#editorFrame.removeElement(this.#currentSvgPath)
+            this.#context.editorFrame.removeElement(this.#currentSvgPath)
             this.#currentSvgPath = null
         }
     }
@@ -578,7 +588,7 @@ export class PathMaker {
             this.#removeCurrentSvgPath()
         } else if (this.#currentSvgPath === null) {
             this.#currentSvgPath = <SVGPathElement>(
-                this.#editorFrame.addElementAsString(
+                this.#context.editorFrame.addElementAsString(
                     svgPath(points, {
                         class: `celldl-Connection bondgraph ${this.#style}`,
                         stroke: CONNECTION_COLOUR,

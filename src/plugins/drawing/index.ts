@@ -8,7 +8,6 @@ import type {
     CellDLConnection,
     CellDLObject
 } from '#editor/celldlObjects'
-import { alert } from '#editor/editor/alerts'
 
 import type { PluginInterface } from '#root/plugins'
 import {
@@ -116,7 +115,7 @@ export class DrawingPlugin implements PluginInterface {
     //==========================================================================
 
     loadComponentProperties(properties: PropertyGroup[], panelId: PANEL_ID, celldlObject: CellDLObject) {
-        alert.clear()
+        celldlObject.context.alert.clear()
         if (panelId === PANEL_ID.STYLE_PANEL
          && celldlObject.celldlSvgElement
          && (<PluginData>celldlObject.pluginData(this.id)).managed) {

@@ -181,26 +181,10 @@ export class MoveUndoState extends UndoState {
 
 //==============================================================================
 
-class UndoRedo {
-    static #instance: UndoRedo | null = null
-
+export class UndoRedo {
     #activeUndoState: UndoState|null = null
     #redoStack: UndoState[] = []
     #undoStack: UndoState[] = []
-
-    private constructor() {
-        if (UndoRedo.#instance) {
-            throw new Error('Use UndoRedo.instance instead of `new`')
-        }
-        UndoRedo.#instance = this
-    }
-
-    static get instance() {
-        if (!UndoRedo.#instance) {
-            UndoRedo.#instance = new UndoRedo()
-        }
-        return UndoRedo.#instance
-    }
 
     get activeUndoState() {
         return this.#activeUndoState
@@ -313,7 +297,4 @@ class UndoRedo {
 }
 
 //==============================================================================
-
-export const undoRedo = UndoRedo.instance
-
 //==============================================================================

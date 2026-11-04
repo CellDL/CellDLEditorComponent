@@ -24,6 +24,7 @@ import type {
     CellDLConnectedObject,
     CellDLObject
 } from '#editor/celldlObjects'
+import type { DiagramContext } from '#editor/diagram/context'
 import { Bounds } from '#editor/geometry'
 import { ControlPoint } from '#editor/geometry/controls'
 import { Point } from '#root/utils/points'
@@ -32,7 +33,6 @@ import { svgRect } from '#root/utils/svgUtils'
 
 import { type CellDLEditor, CONTEXT_MENU } from '.'
 import { editGuides } from './editguides'
-import type { EditorFrame } from './editorframe'
 
 //==============================================================================
 
@@ -42,11 +42,11 @@ const SELECTION_BOX_ID = 'editor-selection-box'
 
 export class BoxMaker {
     #bottomRight: ControlPoint
+    #context: DiagramContext
     #doubleBoundary: [SVGRectElement | null, SVGRectElement | null] = [null, null]
     #doubleWalled: boolean
     #drawing: boolean = false
     #editor: CellDLEditor
-    #editorFrame: EditorFrame
     #selectedObjects: Map<string, CellDLObject> = new Map()
     #selectionRect: SVGRectElement | null = null
     #size: Point
@@ -55,8 +55,7 @@ export class BoxMaker {
 
     constructor(editor: CellDLEditor, startPoint: DOMPoint, doubleWalled: boolean=false) {
         this.#editor = editor
-        // biome-ignore lint/style/noNonNullAssertion: the editor has a frame layer
-        this.#editorFrame = editor.editorFrame!
+        this.#context = editor.celldlDiagram?.context as DiagramContext
         this.#startPoint = Point.fromPoint(editGuides.gridAlign(startPoint))
         this.#topLeft = ControlPoint.fromPoint(this.#startPoint)
         this.#bottomRight = ControlPoint.fromPoint(this.#startPoint)
@@ -91,7 +90,7 @@ export class BoxMaker {
     }
 
     #createRect(cls: string, offset: number=0): SVGRectElement {
-        return this.#editorFrame.addElementAsString(svgRect(
+        return this.#context.editorFrame.addElementAsString(svgRect(
             { x: this.#topLeft.x - offset, y: this.#topLeft.y - offset },
             { x: this.#bottomRight.x + offset, y: this.#bottomRight.y + offset },
             { class: cls }
@@ -166,12 +165,12 @@ export class BoxMaker {
             if (clearSelected) {
                 this.#unsetSelectedObjects()
             }
-            this.#editorFrame.removeElement(this.#selectionRect)
+            this.#context.editorFrame.removeElement(this.#selectionRect)
             this.#selectionRect = null
 
             if (this.#doubleWalled) {
-                this.#editorFrame.removeElement(this.#doubleBoundary[0])
-                this.#editorFrame.removeElement(this.#doubleBoundary[1])
+                this.#context.editorFrame.removeElement(this.#doubleBoundary[0])
+                this.#context.editorFrame.removeElement(this.#doubleBoundary[1])
                 this.#doubleBoundary = [null, null]
             }
         }
