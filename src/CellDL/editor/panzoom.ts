@@ -27,7 +27,7 @@ import { editGuides } from './editguides'
 
 //==============================================================================
 
-export default class PanZoom {
+export class PanZoom {
     #panning: boolean = false
     #pointerDownPosition: Point = new Point()
 

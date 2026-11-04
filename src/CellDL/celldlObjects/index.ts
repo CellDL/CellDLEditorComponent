@@ -23,17 +23,16 @@ import { DCT, isLiteral, type Literal, type NamedNode, RDF, RDFS } from '@celldl
 
 //==============================================================================
 
-import { Point, type PointLike } from '#root/utils/points'
 
-import { editGuides } from '#editor/editor/editguides'
-
-import { BoundedElement } from '#editor/SVGElements/boundedelement'
-import { CompartmentElement } from '#editor/SVGElements/compartmentelement'
 import type { ObjectTemplate } from '#editor/components'
 import type { CellDLDiagram } from '#editor/diagram'
-import { SvgConnection } from '#editor/SVGElements/svgconnection'
+import { editGuides } from '#editor/editor/editguides'
 import type { CellDLSVGElement, ElementMoveOptions } from '#editor/SVGElements'
+import { BoundedElement } from '#editor/SVGElements/boundedelement'
+import { CompartmentElement } from '#editor/SVGElements/compartmentelement'
+import { SvgConnection } from '#editor/SVGElements/svgconnection'
 
+import { Point, type PointLike } from '#root/utils/points'
 import type { DiagramContext } from '#editor/diagram/context'
 
 //==============================================================================

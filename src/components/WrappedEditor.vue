@@ -126,7 +126,7 @@ export type EditorData = {
 
 // Setup PrimeVue's theme, vue-tippy, and our plugins
 
-const crtInstance = vue.getCurrentInstance();
+const crtInstance = vue.getCurrentInstance()
 
 const componentLibraryPlugin = new ComponentLibraryPlugin()
 

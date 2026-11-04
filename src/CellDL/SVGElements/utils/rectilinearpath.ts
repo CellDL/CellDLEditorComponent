@@ -30,7 +30,7 @@ import { editGuides } from '#editor/editor/editguides'
 import { FixedValue, RestrictedValue } from '#editor/geometry'
 import { roundEqual } from '#editor/utils'
 
-import type { BoundedElement } from './boundedelement'
+import type { BoundedElement } from '../boundedelement'
 import { FixedPathPoint, PathElement, PathPoint } from './pathelement'
 
 //==============================================================================

@@ -93,7 +93,7 @@ function setConnectionPathArray(connection: CellDLConnection, connectionPathArra
     const pathArrays = connectionPathArrays.get(connection.id)
     if (pathArrays) {
         connection.clearControlHandles()
-        const pathElements = (connection.celldlSvgElement as SvgConnection)?.pathElements
+        const pathElements = (connection.celldlSvgElement as unknown as SvgConnection)?.pathElements
         pathElements.forEach((pathElement, index) => {
             // biome-ignore lint/style/noNonNullAssertion: index is in range
             pathElement.setPathPoints(pathArrays[index]!)
@@ -126,13 +126,13 @@ export class MoveUndoState extends UndoState {
         if (this.undoObject.isConnectable) {
             const component = <CellDLConnectedObject>this.undoObject
             for (const connection of component.connections) {
-                const pathElements = (connection.celldlSvgElement as SvgConnection)?.pathElements
+                const pathElements = (connection.celldlSvgElement as unknown as SvgConnection)?.pathElements
                 const pathArrays = pathElements.map(pathElement => pathElement.pathArray)
                 connectionPathArrays.set(connection.id, pathArrays)
             }
         } else if (this.undoObject.isConnection) {
             const connection = <CellDLConnection>this.undoObject
-            const pathElements = (connection.celldlSvgElement as SvgConnection)?.pathElements
+            const pathElements = (connection.celldlSvgElement as unknown as SvgConnection)?.pathElements
             const pathArrays = pathElements.map(pathElement => pathElement.pathArray)
             connectionPathArrays.set(connection.id, pathArrays)
         }

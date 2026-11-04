@@ -45,7 +45,7 @@ import type { ComponentLibraryPlugin } from '#root/plugins'
 import { DEFAULT_VIEW_STATE } from './defaults'
 import type { EditorFrame } from './editorframe'
 import { editGuides, EDITOR_GRID_CLASS } from './editguides'
-import PanZoom from './panzoom'
+import { PanZoom } from './panzoom'
 import { BoxMaker } from './boxmaker'
 
 //==============================================================================
@@ -59,6 +59,7 @@ import {
     MEMBRANE_GAP,
     MEMBRANE_STROKE_WIDTH
 } from '#root/utils/styling'
+
 document.documentElement.style.setProperty('--editor-compartment-fill', COMPARTMENT_BACKGROUND)
 document.documentElement.style.setProperty('--editor-membrane-colour', MEMBRANE_COLOUR)
 document.documentElement.style.setProperty('--editor-membrane-gap', String(MEMBRANE_GAP))

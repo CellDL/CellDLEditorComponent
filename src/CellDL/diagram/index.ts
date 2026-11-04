@@ -835,7 +835,7 @@ export class CellDLDiagram {
         //
         const interfacePorts: CellDLInterface[] = []
         const connectors = connection.connectedObjects
-        const pathElements = (<SvgConnection>connection.celldlSvgElement).pathElements
+        const pathElements = (<SvgConnection><unknown>connection.celldlSvgElement).pathElements
         const pathStart = connectors[0] as CellDLConnectedObject
         const newConnectors: CellDLConnectedObject[] = []
         newConnectors.push(pathStart)
