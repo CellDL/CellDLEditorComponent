@@ -143,14 +143,8 @@ export class PanZoom {
                 }
                 if (this.#svgDiagram) {
                     const viewbox = this.#currentViewbox()
-                    // Scale so the view keeps the same extent in the direction that changed most...
-                    const delta = containerSize.subtract(this.#containerSize)
-                    if (Math.abs(delta.x * viewbox[3]) >= Math.abs(delta.y * viewbox[2])) {
-                        this.#scale = containerSize.x / viewbox[2]
-                    } else {
-                        this.#scale = containerSize.y / viewbox[3]
-                    }
-                    // ... and keep the view's centre where it was, so the diagram doesn't drift
+                    // Keep the zoom level (`#scale`) unchanged, so the window shows more or less
+                    // of the diagram, and keep the view's centre where it was
                     const centre = new Point(viewbox[0] + viewbox[2]/2, viewbox[1] + viewbox[3]/2)
                     viewbox[2] = containerSize.x / this.#scale
                     viewbox[3] = containerSize.y / this.#scale

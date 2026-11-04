@@ -243,14 +243,16 @@ export class CellDLEditor {
         // affected by, the page or any other editor on the page.
         const shadowHost = document.createElement('div')
         shadowHost.classList.add('celldl-diagram-host')
-        // The host must not size itself from the diagram: the diagram's viewBox is set from the
-        // container's size, so a content-sized host would feed back into a resize loop.
-        shadowHost.style.cssText = 'width: 100%; height: 100%; overflow: hidden;'
+        // The diagram must not affect the container's size: the container is sized by the
+        // editor's layout and the diagram's viewBox is then set from the container's size.
+        // (A content-sized host feeds back into a resize loop and pushes the status bar
+        // out of view.) The container is `position: relative` (see `WrappedEditor.vue`).
+        shadowHost.style.cssText = 'position: absolute; inset: 0; overflow: hidden;'
         this.#container.prepend(shadowHost)
         this.#shadowRoot = shadowHost.attachShadow({ mode: 'open' })
         const shadowStyle = document.createElement('style')
-        // `display: block` so no space is added below the (otherwise inline) diagram
-        shadowStyle.textContent = `${svgContentCss}\n:host > svg { display: block; }`
+        // The diagram fills the host (`display: block` so no space is added below it)
+        shadowStyle.textContent = `${svgContentCss}\n:host > svg { display: block; width: 100%; height: 100%; }`
         this.#shadowRoot.append(shadowStyle)
 
         // Create a panzoom handler
