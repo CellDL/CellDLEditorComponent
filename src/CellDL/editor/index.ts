@@ -348,6 +348,10 @@ export class CellDLEditor {
         })
     }
 
+    get componentLibraryPlugin() {
+        return this.#componentLibraryPlugin
+    }
+
     get celldlDiagram() {
         return this.#celldlDiagram
     }

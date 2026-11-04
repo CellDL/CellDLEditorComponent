@@ -3,7 +3,7 @@
 import type { CellDLEditor } from "#editor/editor"
 import { EditGuides } from "#editor/editor/editguides"
 import { EditorFrame } from "#editor/editor/editorframe"
-import { ComponentLibraryPlugin } from "#root/plugins"
+import type { ComponentLibraryPlugin } from "#root/plugins"
 import type { CellDLDiagram } from "."
 import { UndoRedo } from "./undoredo"
 
@@ -58,7 +58,9 @@ export class DiagramContext {
     #undoRedo = new UndoRedo()
 
     constructor(diagram: CellDLDiagram, editor: CellDLEditor) {
-        this.#componentLibraryPlugin = new ComponentLibraryPlugin()
+        // The editor's plugin library, which has the plugins registered (a new
+        // `ComponentLibraryPlugin` would have none)
+        this.#componentLibraryPlugin = editor.componentLibraryPlugin
         this.#editor = editor
         this.#alert = new Alert(editor)
 
