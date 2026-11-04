@@ -6,7 +6,7 @@
             .panel-content
                 div(v-if="!properties.objectId") Please select a single element or path.
                 template(v-else)
-                    Accordion(multiple=true :value="defaultPanel")
+                    Accordion(multiple=true :value="openAccordions")
                         .group(v-for="(group, groupIndex) in properties.groups")
                             AccordionPanel(v-if="group.styling.fillStyle" value="fill")
                                 AccordionHeader(:pt="{ root: { class: 'left-icon' } }") Fill
@@ -74,46 +74,52 @@ const emit = defineEmits(['style-event'])
 
 //==============================================================================
 
-const defaultPanel = vue.computed<string[]>(() => {
+const openAccordions = vue.computed(() => {
     let defaultPanel: string|undefined
+    let panels = 0
     for (const group of properties.value.groups) {
         if (group.styling?.fillStyle) {
+            panels += 1
             if (!defaultPanel) {
                 defaultPanel = 'fill'
             } else if (defaultPanel !== 'fill') {
-                return []
+                break
             }
         }
         if (group.styling?.cornerStyle) {
+            panels += 1
             if (!defaultPanel) {
                 defaultPanel = 'corner'
             } else if (defaultPanel !== 'corner') {
-                return []
+                break
             }
         }
         if (group.styling?.textStyle) {
+            panels += 1
             if (!defaultPanel) {
                 defaultPanel = 'text'
             } else if (defaultPanel !== 'text') {
-                return []
+                break
             }
         }
         if (group.styling?.strokeStyle) {
+            panels += 1
             if (!defaultPanel) {
                 defaultPanel = 'stroke'
             } else if (defaultPanel !== 'stroke') {
-                return []
+                break
             }
         }
         if (group.styling?.gapStyle) {
+            panels += 1
             if (!defaultPanel) {
                 defaultPanel = 'membrane'
             } else if (defaultPanel !== 'membrane') {
-                return []
+                break
             }
         }
     }
-    return defaultPanel ? [defaultPanel] : []
+    return panels === 1 && defaultPanel ? [defaultPanel] : []
 })
 
 //==============================================================================
