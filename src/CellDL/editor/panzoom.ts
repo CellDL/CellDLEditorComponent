@@ -32,9 +32,8 @@ export class PanZoom {
     #pointerDownPosition: Point = new Point()
 
     #svgDiagram: SVGSVGElement | null = null
-    #containerId: string
-    #containerOrigin: Point = new Point()
     #editGuides: EditGuides | null = null
+    #container: HTMLElement
     #containerSize: Point = new Point()
     #resizeObserver: ResizeObserver
 
@@ -44,13 +43,8 @@ export class PanZoom {
     #step: number = 0.05
 
     constructor(container: HTMLElement) {
-        // options
         container.addEventListener('wheel', this.#wheelEvent.bind(this), { passive: true })
-        this.#containerId = container.id
-        this.#containerOrigin = new Point(
-            container.offsetLeft + container.clientLeft,
-            container.offsetTop + container.clientTop
-        )
+        this.#container = container
         this.#containerSize = new Point(container.clientWidth, container.clientHeight)
         this.#resizeObserver = new ResizeObserver(this.#resizeObservation.bind(this))
         this.#resizeObserver.observe(container)
@@ -142,7 +136,7 @@ export class PanZoom {
     #resizeObservation(entries: ResizeObserverEntry[]) {
         if (this.#svgDiagram) {
             for (const entry of entries) {
-                if (entry.target.id === this.#containerId) {
+                if (entry.target === this.#container) {
                     const containerSize = new Point(entry.contentRect.width, entry.contentRect.height)
                     // Don't do anything if the container has no size...
                     if (containerSize.x === 0 ||containerSize.y === 0) {
@@ -175,10 +169,18 @@ export class PanZoom {
             this.#scale = Math.min(Math.max(toScale, this.#minScale), this.#maxScale)
             const viewSize = this.#containerSize.scalarScale(1.0 / this.#scale)
             const viewbox = this.#currentViewbox()
+            // The pointer's position is in viewport coordinates, so we need the container's origin
+            // in the viewport now (`offsetLeft/Top` are relative to the container's offset parent,
+            // which isn't the page when there are several editors, and the page may have scrolled)
+            const containerRect = this.#container.getBoundingClientRect()
+            const containerOrigin = new Point(
+                containerRect.left + this.#container.clientLeft,
+                containerRect.top + this.#container.clientTop
+            )
             viewbox[0] +=
-                ((viewbox[2] - viewSize.x) * (event.clientX - this.#containerOrigin.x)) / this.#containerSize.x
+                ((viewbox[2] - viewSize.x) * (event.clientX - containerOrigin.x)) / this.#containerSize.x
             viewbox[1] +=
-                ((viewbox[3] - viewSize.y) * (event.clientY - this.#containerOrigin.y)) / this.#containerSize.y
+                ((viewbox[3] - viewSize.y) * (event.clientY - containerOrigin.y)) / this.#containerSize.y
             viewbox[2] = viewSize.x
             viewbox[3] = viewSize.y
             this.#setViewbox(viewbox)
