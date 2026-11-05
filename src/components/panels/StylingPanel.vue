@@ -6,7 +6,7 @@
             .panel-content
                 div(v-if="!properties.objectId") Please select a single element or path.
                 template(v-else)
-                    Accordion(multiple=true :value="openAccordions")
+                    Accordion(multiple=true v-model:value="openAccordions")
                         .group(v-for="(group, groupIndex) in properties.groups")
                             AccordionPanel(v-if="group.styling.fillStyle" value="fill")
                                 AccordionHeader(:pt="{ root: { class: 'left-icon' } }") Fill
@@ -74,7 +74,10 @@ const emit = defineEmits(['style-event'])
 
 //==============================================================================
 
-const openAccordions = vue.computed(() => {
+// Which accordion groups are open by default for the selected object: its only group,
+// if it has just one, otherwise none
+
+function defaultOpenAccordions(): string[] {
     let defaultPanel: string|undefined
     let panels = 0
     for (const group of properties.value.groups) {
@@ -120,7 +123,19 @@ const openAccordions = vue.computed(() => {
         }
     }
     return panels === 1 && defaultPanel ? [defaultPanel] : []
-})
+}
+
+// The groups that are open. This is state rather than computed from the object's styling,
+// so that groups stay open while their values are being changed, and is only reset to the
+// default when a different object is selected.
+
+const openAccordions = vue.ref<string[]>([])
+
+vue.watch(
+    () => properties.value.objectId,
+    () => { openAccordions.value = defaultOpenAccordions() },
+    { immediate: true }
+)
 
 //==============================================================================
 
