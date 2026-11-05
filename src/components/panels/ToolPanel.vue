@@ -33,4 +33,10 @@ useThemeCssVariables('card')
 .panel-content {
     flex: 1;
 }
+
+/* Always show the scrollbar (PrimeVue only shows it on hover) so it's obvious there's more
+   content. It's still hidden (via `.p-scrollpanel-hidden`) when the content fits. */
+:deep(.p-scrollpanel-bar) {
+    opacity: 1;
+}
 </style>
