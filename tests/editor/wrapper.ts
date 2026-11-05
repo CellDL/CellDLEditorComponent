@@ -1,13 +1,12 @@
 //==========================================================================
 
-import type { CellDLConnectedObject, CellDLObject } from "#editor/celldlObjects"
+import type { CellDLObject } from "#editor/celldlObjects"
 import { getTemplateEventDetails } from "#editor/components"
 import { PathMaker } from "#editor/connections/pathmaker"
 import type { CellDLDiagram } from "#editor/diagram"
-import { undoRedo } from "#editor/diagram/undoredo"
-import { CellDLEditor, EDITOR_STATE } from "#editor/editor"
-import type { EditorFrame } from "#editor/editor/editorframe"
-import { type PointLike, Point } from "#root/utils/points"
+import { CellDLEditor } from "#editor/editor"
+
+import { Point, type PointLike } from "#root/utils/points"
 
 //==========================================================================
 
@@ -41,8 +40,9 @@ export class TestCellDLEditor extends CellDLEditor {
             const startBoundary = source.celldlSvgElement?.boundaryIntersections(firstPoint as PointLike)[0]
             const lastPoint = pathPoints.length ? pathPoints.at(-1) : source.celldlSvgElement?.centroid
             const targetBoundary = target.celldlSvgElement?.boundaryIntersections(lastPoint as PointLike)[0]
-            if (startNode && startBoundary && targetBoundary) {
-                const pathMaker = new PathMaker(this.editorFrame as EditorFrame, startNode, style)
+            if (startNode.node && startBoundary && targetBoundary) {
+                // biome-ignore lint/style/noNonNullAssertion: celldlDiagram is defined
+                const pathMaker = new PathMaker(this.celldlDiagram!.context, startNode.node, style)
                 pathMaker.addPoint(startBoundary)
                 for (const point of pathPoints) {
                     pathMaker.drawTo(point)
@@ -59,7 +59,7 @@ export class TestCellDLEditor extends CellDLEditor {
 
     moveComponent(component: CellDLObject|undefined, offset: PointLike, debug: boolean=false) {
         if (component) {
-            this.editorState = EDITOR_STATE.Selecting      // toolbar needs to change active button...
+//            this.editorMode = EDITOR_MODE.Selecting      // toolbar needs to change active button...
             // pointer over
             const element = component.celldlSvgElement?.svgElement as SVGGraphicsElement
             component.initialiseMove(element)  // will set moveable
@@ -67,7 +67,7 @@ export class TestCellDLEditor extends CellDLEditor {
             // mouse down
             const startPosn = Point.fromPoint(component.celldlSvgElement?.centroid as PointLike)
 
-            const moveUndoState = undoRedo.setMoveUndoState(component, startPosn)
+            const moveUndoState = this.undoRedo.setMoveUndoState(component, startPosn)
             component.startMove(startPosn)
             const movePosn = startPosn.add(offset)
             if (debug) {
@@ -92,7 +92,7 @@ export class TestCellDLEditor extends CellDLEditor {
     }
 
     moveComponents(components: Array<CellDLObject|undefined>, offset: PointLike) {
-        this.editorState = EDITOR_STATE.Selecting      // toolbar needs to change active button...
+//        this.editorMode = EDITOR_MODE.Selecting      // toolbar needs to change active button...
         this.unsetSelectedObjects()
         if (components.length) {
             const currentObject = components[0]
