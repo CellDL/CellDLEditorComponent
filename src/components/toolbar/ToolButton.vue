@@ -7,6 +7,7 @@
     )
         slot
     .ci.tool-button(
+        ref="buttonRef"
         :id="toolId"
         :class="buttonClasses"
         :style="buttonStyle"
@@ -109,6 +110,58 @@ vue.onMounted(() => {
     }
 })
 
+//==============================================================================
+
+// A panel fills its editor's area below the button. It's positioned with viewport-relative
+// coords (`position: fixed`) so the result is independent of which ancestor happens to be
+// the containing block, which means it has to be repositioned whenever its editor's
+// position or size changes while it's open.
+
+const buttonRef = vue.ref<HTMLElement | null>(null)
+
+function positionPanel() {
+    const button = buttonRef.value
+    if (!button || !panelVisible.value) {
+        return
+    }
+    const editorRect = button.closest('.editor-pane')?.getBoundingClientRect()
+    const buttonRect = button.getBoundingClientRect()
+    const top = buttonRect.bottom
+    const height = (editorRect?.bottom ?? window.innerHeight) - top
+    const right = window.innerWidth - (editorRect?.right ?? window.innerWidth)
+    panelTop.value = `${top}px`
+    panelHeight.value = `${height}px`
+    panelRight.value = `${right}px`
+}
+
+const panelResizeObserver = new ResizeObserver(positionPanel)
+
+function trackPanelPosition(track: boolean) {
+    const editorPane = buttonRef.value?.closest('.editor-pane')
+    if (track) {
+        positionPanel()
+        if (editorPane) {
+            panelResizeObserver.observe(editorPane)
+        }
+        window.addEventListener('resize', positionPanel)
+        window.addEventListener('scroll', positionPanel)
+    } else {
+        panelResizeObserver.disconnect()
+        window.removeEventListener('resize', positionPanel)
+        window.removeEventListener('scroll', positionPanel)
+    }
+}
+
+vue.watch(panelVisible, (visible) => {
+    if (props.type === 'panel') {
+        trackPanelPosition(visible)
+    }
+})
+
+vue.onBeforeUnmount(() => trackPanelPosition(false))
+
+//==============================================================================
+
 // Make sure popover is closed when button is deactivated
 vue.watch(
     () => props.active,
@@ -167,20 +220,8 @@ async function toolButtonClick(e: MouseEvent) {
         if (props.type === 'panel') {
             target.classList.toggle('active')
             if (panelElement) {
+                // Showing the panel positions it (see `trackPanelPosition()`)
                 panelVisible.value = !panelVisible.value
-                if (panelVisible.value) {
-                    // Use viewport-relative coords (position:fixed) so the result is
-                    // independent of which ancestor happens to be the containing block.
-                    const editorPane = target.closest('.editor-pane')
-                    const editorRect = editorPane?.getBoundingClientRect()
-                    const buttonRect = target.getBoundingClientRect()
-                    const top = buttonRect.bottom
-                    const height = (editorRect?.bottom ?? window.innerHeight) - top
-                    const right = window.innerWidth - (editorRect?.right ?? window.innerWidth)
-                    panelTop.value = `${top}px`
-                    panelHeight.value = `${height}px`
-                    panelRight.value = `${right}px`
-                }
             }
         } else {
             if (!target.classList.contains('active')) {
