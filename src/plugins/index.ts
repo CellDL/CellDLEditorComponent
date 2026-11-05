@@ -19,10 +19,6 @@ limitations under the License.
 ******************************************************************************/
 /** biome-ignore-all lint/style/noNonNullAssertion: <keys exist in Map> */
 
-import * as vue from 'vue'
-
-//==============================================================================
-
 import {
     CELLDL_URI,
     fragment,
@@ -47,6 +43,7 @@ import type {
 } from '#editor/components'
 
 import type {
+    EditorToolButton,
     PANEL_ID,
     PropertyGroup,
     ValueChange
@@ -81,6 +78,11 @@ export interface PluginInterface {
      * Get SVG <defs> elements used by the plugin.
      */
     svgDefinitions: () => string
+
+    /**
+     * Get groups of tool buttons for the editor's toolbar.
+     */
+    toolButtons: () => EditorToolButton[][]
 
     /**
      * A CellDL diagram has been opened.
@@ -210,36 +212,13 @@ export interface PluginInterface {
 //==============================================================================
 
 export class ComponentLibraryPlugin {
-    static #instance: ComponentLibraryPlugin | null = null
-
-    #app: vue.App|undefined = undefined
     #registeredPlugins: Map<string, PluginInterface> = new Map()
 
     #componentLibraries: ComponentLibrary[] = []
     #currentDocumentUri: string = ''
 
-    private constructor() {
-        if (ComponentLibraryPlugin.#instance) {
-            throw new Error('Use ComponentLibraryPlugin.instance instead of `new`')
-        }
-        ComponentLibraryPlugin.#instance = this
-    }
-
-    static get instance() {
-        if (!ComponentLibraryPlugin.#instance) {
-            ComponentLibraryPlugin.#instance = new ComponentLibraryPlugin()
-        }
-        return ComponentLibraryPlugin.#instance
-    }
-
     getPlugin(pluginId: string): PluginInterface|undefined {
         return this.#registeredPlugins.get(pluginId)
-    }
-
-    install(app: vue.App, _options: object|undefined=undefined)  {
-        if (!this.#app) {
-            this.#app = app
-        }
     }
 
     registerPlugin(plugin: PluginInterface) {
@@ -455,13 +434,6 @@ export class ComponentLibraryPlugin {
         return definitions.join('\n')
     }
 }
-
-//==============================================================================
-
-// Instantiate our plugin components. This will load the BondgraphPlugin
-// and hence BG template definitions from the BG-RDF framework
-
-export const componentLibraryPlugin = ComponentLibraryPlugin.instance
 
 //==============================================================================
 //==============================================================================

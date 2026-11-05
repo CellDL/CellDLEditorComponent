@@ -19,7 +19,6 @@ limitations under the License.
 ******************************************************************************/
 
 import { CELLDL_STYLE_CLASS, type CellDLConnectedObject, type CellDLObject } from '#editor/celldlObjects'
-import { editGuides } from '#editor/editor/editguides'
 import { RestrictedPoint, type RestrictedValue } from '#editor/geometry'
 import { ControlRect } from '#editor/geometry/controls'
 import { Transform } from '#editor/geometry/transforms'
@@ -28,7 +27,7 @@ import { Point, type PointLike } from '#root/utils/points'
 import type { Styling } from '#root/utils/styling'
 import { getFillString } from '#root/utils/svgUtils'
 
-import { CellDLSVGElement, type ElementMoveOptions, type SvgElementOptions } from '.'
+import { CellDLSVGElement, type ElementMoveOptions, getElementTransform, type SvgElementOptions } from '.'
 import type { PathElement } from './utils/pathelement'
 
 //==============================================================================
@@ -51,7 +50,7 @@ export class BoundedElement extends CellDLSVGElement {
     constructor(object: CellDLObject, svgElement: SVGGraphicsElement, options: SvgElementOptions) {
         super(object, svgElement, options)
         // local transform on the element
-        this.#localTransform = Transform.fromString(getComputedStyle(svgElement).transform)
+        this.#localTransform = getElementTransform(svgElement)
         this.#controlRect = new ControlRect(
             RestrictedPoint.fromPoint(this.topLeft),
             RestrictedPoint.fromPoint(this.topLeft.add(this.size)),
@@ -62,7 +61,7 @@ export class BoundedElement extends CellDLSVGElement {
         this.#topLeftCorner = this.#controlRect.topLeftPoint
         this.#controlRect.gridAligned = !!options.gridAligned
         if (options.align && !options.edgeAligned && options.gridAligned) {
-            const gridAlignedCentroid = editGuides.gridAlign(this.centroid, { fullSnap: true })
+            const gridAlignedCentroid = object.context.editGuides.gridAlign(this.centroid, { fullSnap: true })
             this.setCentroid(gridAlignedCentroid)
             this.#controlRect.reposition(gridAlignedCentroid)
             if (this.#controlRect.dirty) {
@@ -101,7 +100,7 @@ export class BoundedElement extends CellDLSVGElement {
         const savedCentroid = this.centroid
         // This sets the control rect's attributes but doesn't paint anything
 
-        if (this.#controlRect.move(svgPoint, options)) {
+        if (this.#controlRect.move(svgPoint, { ...options, editGuides: this.celldlObject.context.editGuides })) {
             this.setCentroid(this.#controlRect.centroid.point)
             const centroidDelta = this.centroid.subtract(savedCentroid)
             // Reset any restrictions for `elementBoundingBoxBoxMoved()`

@@ -8,10 +8,10 @@ import type {
     CellDLConnection,
     CellDLObject
 } from '#editor/celldlObjects'
-import { alert } from '#editor/editor/alerts'
 
 import type { PluginInterface } from '#root/plugins'
 import {
+    type EditorToolButton,
     PANEL_ID,
     type PropertyGroup,
     type ValueChange
@@ -115,7 +115,7 @@ export class DrawingPlugin implements PluginInterface {
     //==========================================================================
 
     loadComponentProperties(properties: PropertyGroup[], panelId: PANEL_ID, celldlObject: CellDLObject) {
-        alert.clear()
+        celldlObject.context.alert.clear()
         if (panelId === PANEL_ID.STYLE_PANEL
          && celldlObject.celldlSvgElement
          && (<PluginData>celldlObject.pluginData(this.id)).managed) {
@@ -150,6 +150,28 @@ export class DrawingPlugin implements PluginInterface {
         return ''
     }
 
+    toolButtons(): EditorToolButton[][] {
+        return [[
+            {
+                toolId: `${PLUGIN_ID}/draw-closed-compartment`,
+                prompt: 'Closed compartment',
+                icon: 'lucide-SquircleDashed'
+            },
+            {
+                toolId: `${PLUGIN_ID}/draw-background-region`,
+                prompt: 'Background region',
+                icon: 'lucide-SquareDashedKanban'
+            }
+/* TEMP -- until implemented...
+        ], [
+            {
+                toolId: `${DRAWING_PLUGIN_ID}/draw-membrane-segment`,
+                prompt: 'Membrane segment',
+                icon: 'lucide-Tally2'
+            }
+*/
+        ]]
+    }
 }
 
 //==============================================================================

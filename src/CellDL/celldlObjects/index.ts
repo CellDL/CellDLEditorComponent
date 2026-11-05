@@ -23,19 +23,16 @@ import { DCT, isLiteral, type Literal, type NamedNode, RDF, RDFS } from '@celldl
 
 //==============================================================================
 
-import { Point, type PointLike } from '#root/utils/points'
 
-import { alert } from '#editor/editor/alerts'
-import { editGuides } from '#editor/editor/editguides'
-
-import { BoundedElement } from '#editor/SVGElements/boundedelement'
-import { CompartmentElement } from '#editor/SVGElements/compartmentelement'
 import type { ObjectTemplate } from '#editor/components'
 import type { CellDLDiagram } from '#editor/diagram'
-import { SvgConnection } from '#editor/SVGElements/svgconnection'
 import type { CellDLSVGElement, ElementMoveOptions } from '#editor/SVGElements'
+import { BoundedElement } from '#editor/SVGElements/boundedelement'
+import { CompartmentElement } from '#editor/SVGElements/compartmentelement'
+import { SvgConnection } from '#editor/SVGElements/svgconnection'
 
-import { componentLibraryPlugin } from '#root/plugins'
+import { Point, type PointLike } from '#root/utils/points'
+import type { DiagramContext } from '#editor/diagram/context'
 
 //==============================================================================
 
@@ -79,6 +76,7 @@ export abstract class CellDLObject {
 
     #celldlStyleClass: CELLDL_STYLE_CLASS
     #celldlDiagram: CellDLDiagram
+    #context: DiagramContext
     #celldlSvgElement?: CellDLSVGElement
     #celldlTypeName: string
 
@@ -99,9 +97,10 @@ export abstract class CellDLObject {
         public readonly uri: NamedNode,
         objectTemplate: ObjectTemplate,
         celldlDiagram: CellDLDiagram,
-        updateStore: boolean=true
+        updateStore: boolean=false
     ) {
         this.#celldlDiagram = celldlDiagram
+        this.#context = celldlDiagram.context
         // @ts-expect-error: celldlStyleClass is a member of the object's constructor
         this.#celldlStyleClass = this.constructor.celldlStyleClass
         // @ts-expect-error: celldlType is a member of the object's constructor
@@ -116,7 +115,7 @@ export abstract class CellDLObject {
         }
 
         // Get data that plugins need to associate with the object
-        this.#pluginData = componentLibraryPlugin.getPluginData(this)
+        this.#pluginData = this.#context.componentLibraryPlugin.getPluginData(this)
     }
 
     toString(): string {
@@ -140,6 +139,10 @@ export abstract class CellDLObject {
 
     get connections(): CellDLConnection[] {
         return []
+    }
+
+    get context(): DiagramContext {
+        return this.#context
     }
 
     get description() {
@@ -356,28 +359,26 @@ export abstract class CellDLObject {
 
 export class CellDLMoveableObject extends CellDLObject {
 
-    #boundedElement: BoundedElement|undefined
-
     get isMoveable() {
         return true
     }
 
     startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
         // We are finding alignment guides as we move and don't want to find ours
-        editGuides.aligning(this, true)
+        this.context.editGuides.aligning(this, true)
         super.startMove(svgPoint, options)
     }
 
     move(svgPoint: PointLike, options: ElementMoveOptions={}) {
         super.move(svgPoint, options)
         // Highliglight guides of objects that our centroid's aligned with
-        editGuides.matchGuide(this)
+        this.context.editGuides.matchGuide(this)
     }
 
     endMove() {
         super.endMove()
         // We've stopped moving and want our alignment guides available
-        editGuides.aligning(this, false)
+        this.context.editGuides.aligning(this, false)
     }
 
     redraw() {
@@ -385,7 +386,8 @@ export class CellDLMoveableObject extends CellDLObject {
     }
 
     assignSvgElement(svgElement: SVGGraphicsElement, align: boolean) {
-        this.#boundedElement = new BoundedElement(this, svgElement, {
+        // This sets `this.celldlSvgElement` as part of constructor
+        new BoundedElement(this, svgElement, {
             align,
             gridAligned: this.isAlignable
         })
@@ -427,10 +429,10 @@ export class CellDLConnectedObject extends CellDLMoveableObject {
         uri: NamedNode,
         objectTemplate: ObjectTemplate,
         celldlDiagram: CellDLDiagram,
-        updateStore: boolean=true
+        updateStore: boolean=false
     ) {
         super(uri, objectTemplate, celldlDiagram, updateStore)
-        this.#maxConnections = componentLibraryPlugin.getMaxConnections(this)
+        this.#maxConnections = this.context.componentLibraryPlugin.getMaxConnections(this)
     }
 
     toString(): string {
@@ -461,7 +463,7 @@ export class CellDLConnectedObject extends CellDLMoveableObject {
         if (this.numConnections < this.maxConnections) {
             this.#connections.set(connection.id, connection)
         } else {
-            alert.elementError(
+            this.context.alert.elementError(
                 `${this.id}: Cannot add ${connection.id} --  connection limit reached`,
                 this.celldlSvgElement ? this.celldlSvgElement.svgElement : undefined
             )
@@ -509,7 +511,7 @@ export class CellDLComponent extends CellDLConnectedObject {
         uri: NamedNode,
         objectTemplate: ObjectTemplate,
         celldlDiagram: CellDLDiagram,
-        updateStore: boolean=true
+        updateStore: boolean=false
     ) {
         super(uri, objectTemplate, celldlDiagram, updateStore)
         this.#interfacePorts = objectTemplate.metadataProperties
@@ -618,13 +620,12 @@ export class CellDLConnection extends CellDLObject {
     static celldlTypeName = 'Connection'
 
     #connectedObjects: CellDLConnectedObject[] = []
-    #svgConnection: SvgConnection|undefined
 
     constructor(
         uri: NamedNode,
         objectTemplate: ObjectTemplate,
         celldlDiagram: CellDLDiagram,
-        updateStore: boolean=true
+        updateStore: boolean=false
     ) {
         super(uri, objectTemplate, celldlDiagram, updateStore)
         const metadata = objectTemplate.metadataProperties
@@ -640,7 +641,7 @@ export class CellDLConnection extends CellDLObject {
                 connector.addConnection(this)
             }
         } else {
-            alert.elementError(
+            this.context.alert.elementError(
                 `Connection ${this.id} has no source and/or target...`,
                 this.celldlSvgElement ? this.celldlSvgElement.svgElement : undefined
             )
@@ -672,12 +673,13 @@ export class CellDLConnection extends CellDLObject {
     }
 
     assignSvgElement(svgElement: SVGGraphicsElement, _align: boolean) {
-        this.#svgConnection = new SvgConnection(this, svgElement)
+        // This sets `this.celldlSvgElement` as part of constructor
+        new SvgConnection(this, svgElement)
     }
 
     setSelectedHandles(enable: boolean) {
-        if (this.#svgConnection) {
-            this.#svgConnection.setSelectedHandles(enable)
+        if (this.celldlSvgElement) {
+            this.celldlSvgElement.setSelectedHandles(enable)
         }
     }
 }

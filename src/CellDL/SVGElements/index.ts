@@ -24,12 +24,11 @@ import { Point, type PointLike, PointMath } from '#root/utils/points'
 import { CONNECTION_SPLAY_PADDING, MAX_CONNECTION_SPLAY_PADDING, SVG_ICON_HEIGHT } from '#root/utils/styling'
 import { CONNECTION_WIDTH, SELECTION_STROKE_WIDTH } from '#root/utils/styling'
 import type { Styling } from '#root/utils/styling'
-import { svgCircle, type RectDimensions, getRectDimensions, modifyRectDimensions, svgRectElement } from '#root/utils/svgUtils'
+import { svgCircle, type RectDimensions, getRectDimensions, loadImages, modifyRectDimensions, svgRectElement } from '#root/utils/svgUtils'
 
 import { CELLDL_STYLE_CLASS, type CellDLObject } from '#editor/celldlObjects'
 import { Bounds, type PointMoveOptions, type RestrictedValue } from '#editor/geometry'
 import { Transform } from '#editor/geometry/transforms'
-import { notifyChanges } from '#editor/editor'
 
 //==============================================================================
 
@@ -84,6 +83,21 @@ export function setInternalIds(svgElement: SVGGraphicsElement, previousId: strin
     }
 }
 
+export function getElementTransform(svgElement: SVGGraphicsElement): Transform {
+    // NB. An `SVGTransform`'s `matrix` is a *live* object tied to the element's `transform`
+    // attribute. Firefox and Safari update it in place when the attribute is later set (e.g.
+    // in `BoundedElement.redraw()`), so we must take a snapshot of its values rather than
+    // keep a reference to it. We also combine all transforms in the list, not just the first.
+    let transform = Transform.Identity()
+    const elementTransforms = svgElement.transform.baseVal
+    for (let index = 0; index < elementTransforms.length; ++index) {
+        // biome-ignore lint/style/noNonNullAssertion: index is in range
+        const { a, b, c, d, e, f } = elementTransforms[index]!.matrix
+        transform = new Transform({ a, b, c, d, e, f }).leftMultiply(transform)
+    }
+    return transform
+}
+
 //==============================================================================
 
 export abstract class CellDLSVGElement {
@@ -114,10 +128,8 @@ export abstract class CellDLSVGElement {
         // get all transformations that are being applied to the SVG element
         let element = svgElement.parentNode as SVGGraphicsElement
         while (element !== this.#svgDiagramElement) {
-            const transform = getComputedStyle(element).transform
-            if (transform !== 'none') {
-                this.#globalTransform = this.#globalTransform.leftMultiply(Transform.fromString(transform))
-            }
+            const transform = getElementTransform(element)
+            this.#globalTransform = this.#globalTransform.leftMultiply(transform)
             element = element.parentNode as SVGGraphicsElement
         }
         celldlObject.setCelldlSvgElement(this)
@@ -183,7 +195,7 @@ export abstract class CellDLSVGElement {
         const bbox = svgElement.getBBox()
         let topLeft = new Point(bbox.x, bbox.y)
         let bottomRight = new Point(bbox.x + bbox.width, bbox.y + bbox.height)
-        const localTransform = Transform.fromString(getComputedStyle(svgElement).transform)
+        const localTransform = getElementTransform(svgElement)
         const transform = this.#globalTransform.leftMultiply(localTransform)
         topLeft = transform.transformPoint(topLeft)
         bottomRight = transform.transformPoint(bottomRight)
@@ -384,7 +396,7 @@ export abstract class CellDLSVGElement {
                                      this.#startResizeDims, topLeftDelta, bottomRightDelta)
             }
             this.#updateBounds()
-            notifyChanges()
+            this.celldlObject.context.editor.notifyChanges()
         }
     }
 
@@ -728,6 +740,7 @@ export abstract class CellDLSVGElement {
      * @param imageData A depiction of the element as a data URL.
      */
     async updateImageElement(imageData: string) {
+        await loadImages([imageData])   // So the new image has a size when it's rendered
         this.svgElement.innerHTML = `<image href="${imageData}" height="${SVG_ICON_HEIGHT}"/>`
         await vue.nextTick()            // Wait for image to render
         this.#updatedSvgElement()

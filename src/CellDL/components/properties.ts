@@ -27,7 +27,6 @@ import { DCT, RDFS, type Term } from '@celldl/rdf'
 import type { CellDLObject } from '#editor/celldlObjects'
 import type { NamedProperty } from '#editor/components'
 
-import { componentLibraryPlugin } from '#root/plugins'
 import {
     type ComponentProperties,
     type ItemDetails,
@@ -188,7 +187,7 @@ export class ObjectPropertiesPanel {
             }
             // Set plugin specific component properties into `this.#componentPropertiesRef`
 
-            componentLibraryPlugin.loadComponentProperties(this.#componentPropertiesRef.value.groups,
+            celldlObject.context.componentLibraryPlugin.loadComponentProperties(this.#componentPropertiesRef.value.groups,
                                                            this.#panelId, celldlObject)
         }
     }
@@ -211,14 +210,14 @@ export class ObjectPropertiesPanel {
             }
             // Update plugin specific component properties in `this.#componentPropertiesRef`
 
-            await componentLibraryPlugin.updateObjectProperties(celldlObject, this.#panelId, itemId, value,
+            await celldlObject.context.componentLibraryPlugin.updateObjectProperties(celldlObject, this.#panelId, itemId, value,
                                                                 this.#componentPropertiesRef.value.groups)
         }
     }
 
     async updateObjectStyling(celldlObject: CellDLObject|null, styling: Styling) {
         if (celldlObject) {
-            await componentLibraryPlugin.updatedComponentStyling(celldlObject, styling)
+            await celldlObject.context.componentLibraryPlugin.updatedComponentStyling(celldlObject, styling)
         }
     }
 }

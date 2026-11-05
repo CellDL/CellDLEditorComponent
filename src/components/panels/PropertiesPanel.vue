@@ -3,7 +3,7 @@
         template(#title)
             div {{ title }}
         template(#content)
-            div#panel-content
+            .panel-content
                 div(
                     v-if="!properties.objectId"
                 ) Please select a single element or path.
@@ -26,12 +26,6 @@
 </template>
 <script setup lang="ts">
 import * as vue from 'vue'
-import { useThemeCssVariables } from '#root/utils/themeCssVariables'
-
-useThemeCssVariables('accordion')
-useThemeCssVariables('accordioncontent')
-useThemeCssVariables('accordioncontent')
-useThemeCssVariables('accordionpanel')
 
 import type { ComponentProperties } from '#root/utils/editor-types'
 
@@ -71,14 +65,7 @@ function updateProperties(itemId: string, oldValue: number|string, newValue: num
 </script>
 
 <style scoped>
-#panel-content {
+.panel-content {
     margin-top: 20px;
-}
-</style>
-
-<style>
-/* Allow for FloatLabel text of InputWidget */
-.p-accordioncontent-content {
-    padding-top: 8px !important;
 }
 </style>

@@ -1,26 +1,41 @@
 <template lang="pug">
-    Toolbar.vertical
+    Toolbar.horizontal
         template(#start)
+            .toolbar-group(v-for="(group, groupIndex) in leftGroups" :key="groupIndex")
+                .tool-separator(v-if="groupIndex > 0")
+                ToolButton(
+                    v-for="button in group"
+                    :key="button.toolId"
+                    :toolId="button.toolId"
+                    :active="button?.active"
+                    :prompt="button.prompt"
+                    :icon="button.icon"
+                    :image="button.image"
+                    :modal="!!button?.panel"
+                    type="popover"
+                    :panel="button.panel"
+                    @button-event="leftButtonEvent"
+                )
+                    component(
+                        :is="button.panel"
+                        :title="button.prompt"
+                        :toolId="button.toolId"
+                    )
+        template(#end)
             ToolButton(
-                v-for="button in buttons"
+                v-for="button in rightButtons"
+                :key="button.toolId"
                 :toolId="button.toolId"
                 :active="button?.active"
                 :prompt="button.prompt"
                 :icon="button.icon"
                 :image="button.image"
                 :modal="!!button?.panel"
-                :type="type"
+                type="panel"
                 :panel="button.panel"
-                @button-event="buttonEvent"
+                @button-event="rightButtonEvent"
             )
                 component(
-                    v-if="type === 'popover'"
-                    :is="button.panel"
-                    :title="button.prompt"
-                    :toolId="button.toolId"
-                )
-                component(
-                    v-if="type === 'panel'"
                     :is="button.panel"
                     :title="button.prompt"
                     :toolId="button.toolId"
@@ -38,7 +53,7 @@ useThemeCssVariables('toolbar')
 
 //==============================================================================
 
-import type { EditorToolButton, PopoverEventData } from '#root/utils/editor-types'
+import { EDITOR_EVENTS_KEY, type EditorToolButton, type PopoverEventData } from '#root/utils/editor-types'
 import type { Styling } from '#root/utils/styling'
 
 import ToolButton from './ToolButton.vue'
@@ -46,9 +61,12 @@ import ToolButton from './ToolButton.vue'
 //==============================================================================
 
 const props = defineProps<{
-    type?: string
-    buttons: EditorToolButton[]
+    leftButtons: EditorToolButton[]
+    rightButtons: EditorToolButton[]
 }>()
+
+// Events go to the editor this component is part of
+const editorEvents = vue.inject(EDITOR_EVENTS_KEY, document)
 
 const emit = defineEmits<{
     'button-event': [
@@ -57,8 +75,34 @@ const emit = defineEmits<{
     ]
 }>()
 
-function buttonEvent(toolId: string, active: boolean, panel: vue.Raw<vue.Component> | null) {
-    for (const button of props.buttons) {
+const leftGroups = vue.computed(() => {
+    const groups: EditorToolButton[][] = []
+    let current: EditorToolButton[] = []
+    for (const btn of props.leftButtons) {
+        if (btn.separator) {
+            if (current.length) groups.push(current)
+            current = []
+        } else {
+            current.push(btn)
+        }
+    }
+    if (current.length) groups.push(current)
+    return groups
+})
+
+function leftButtonEvent(toolId: string, active: boolean, panel: vue.Raw<vue.Component> | null) {
+    for (const button of props.leftButtons) {
+        if (active && toolId === button.toolId) {
+            button.active = true
+        } else {
+            button.active = false
+        }
+    }
+    emit('button-event', toolId, active)
+}
+
+function rightButtonEvent(toolId: string, active: boolean, panel: vue.Raw<vue.Component> | null) {
+    for (const button of props.rightButtons) {
         if (active && toolId === button.toolId) {
             button.active = true
         } else {
@@ -69,7 +113,7 @@ function buttonEvent(toolId: string, active: boolean, panel: vue.Raw<vue.Compone
 }
 
 function panelEvent(toolId: string, itemId: string, oldValue: string, newValue: string) {
-    document.dispatchEvent(
+    editorEvents.dispatchEvent(
         new CustomEvent('panel-event', {
             detail: {
                 type: 'value',
@@ -85,7 +129,7 @@ function panelEvent(toolId: string, itemId: string, oldValue: string, newValue: 
 }
 
 function styleEvent(toolId: string, styling: Styling) {
-    document.dispatchEvent(
+    editorEvents.dispatchEvent(
         new CustomEvent('style-event', {
             detail: {
                 type: 'value',
@@ -100,26 +144,36 @@ function styleEvent(toolId: string, styling: Styling) {
 
 </script>
 
-<style scoped>
-.panel-content {
-    width: 250px;
-    border: 2px solid var(--editor-border-color);
-    border-left-width: 1px;
-    right: 38px; /* This depends on panel bar width... */
-    top: 1.8em;
-    bottom: 1.6em;
-    position: absolute;
+<style>
+.editor-pane .p-toolbar.horizontal {
+    flex-direction: row !important;
+    height: 38px !important;
+    padding: 0 !important;
+    flex-wrap: nowrap !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+}
+
+.editor-pane .p-toolbar.horizontal > .p-toolbar-start,
+.editor-pane .p-toolbar.horizontal > .p-toolbar-end {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    padding: 0 !important;
+    gap: 0 !important;
 }
 </style>
 
-<style>
-.p-toolbar.vertical,
-.p-toolbar.vertical > .p-toolbar-start {
-    flex-direction: column !important;
-    width: 38px !important;
-    padding: 0 !important;
-    border-top: 1px solid grey;
-    flex-wrap: nowrap !important;
-    border-radius: 0 !important;
+<style scoped>
+.toolbar-group {
+    display: flex;
+    flex-direction: row;
+    flex-shrink: 0;
+}
+
+.tool-separator {
+    width: 10px;
+    background-color: #fee;
+    border-color: var(--editor-border-color);
+    border-width: 1px 0;
 }
 </style>

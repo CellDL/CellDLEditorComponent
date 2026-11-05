@@ -25,7 +25,6 @@ import SVGPathCommander from 'svg-path-commander'
 
 import type { CellDLConnection } from '#editor/celldlObjects'
 import { ID_PART_SEPARATOR } from '#editor/diagram'
-import { alert } from '#editor/editor/alerts'
 
 import type { PointLike } from '#root/utils/points'
 import {
@@ -107,7 +106,7 @@ export class SvgConnection extends CellDLSVGElement {
                           )
             }
         } else {
-            alert.elementError(`Connection ${connection.id}: wrong number of paths for connectors`, this.svgElement)
+            this.celldlObject.context.alert.elementError(`Connection ${connection.id}: wrong number of paths for connectors`, this.svgElement)
         }
     }
 

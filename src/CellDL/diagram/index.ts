@@ -68,13 +68,12 @@ import type { BoundedElement } from '#editor/SVGElements/boundedelement'
 import { createCompartmentSvgElement } from '#editor/SVGElements/utils/compartment'
 import type { SvgConnection } from '#editor/SVGElements/svgconnection'
 
-import { type CellDLEditor, notifyChanges, type PointerEventHandler } from '#editor/editor'
-import { editGuides } from '#editor/editor/editguides'
-import { undoRedo, type UndoState } from '#editor/diagram/undoredo'
+import type { CellDLEditor, PointerEventHandler } from '#editor/editor'
+import type { UndoState } from '#editor/diagram/undoredo'
 
 import type { ObjectTemplate } from '#editor/components'
 
-import { componentLibraryPlugin } from '#root/plugins'
+import { DiagramContext } from './context'
 
 //==============================================================================
 
@@ -124,12 +123,12 @@ export class CellDLDiagram {
     #defsElement: SVGDefsElement|null|undefined
 
     #kb = new MetadataStore()
-    #celldlEditor: CellDLEditor
-
     #documentNode: NamedNode
     #documentNS: $rdf.NamespacedUri
     #filePath: string
 
+    #context: DiagramContext
+    #celldlEditor: CellDLEditor
     #diagramMetadata: Record<string, NamedNode>
     #diagramProperties: StringProperties = {}
 
@@ -169,10 +168,11 @@ export class CellDLDiagram {
             }
             this.#initaliseMetadata()
         }
+        this.#context = new DiagramContext(this, celldlEditor)  // has to be after `svgDiagram` has been  assigned
         this.#setLastIdentifier()
         this.#setupDefines()
         this.#setStylesheet()
-        componentLibraryPlugin.openDiagram(this.#documentNode.uri, this.#kb)
+        this.#context.componentLibraryPlugin.openDiagram(this.#documentNode.uri, this.#kb)
     }
 
     finishSetup() {
@@ -184,16 +184,12 @@ export class CellDLDiagram {
         this.#loadAnnotations()
         if (this.#imported) {
             // We want the file to be flagged as modified
-            notifyChanges()
+            this.#celldlEditor.notifyChanges()
         }
     }
 
-    async edit() {
-        await this.#celldlEditor.editDiagram(this)
-    }
-
-    get editorFrame() {
-        return this.#celldlEditor.editorFrame
+    get context() {
+        return this.#context
     }
 
     get metadata(): StringProperties {
@@ -212,7 +208,7 @@ export class CellDLDiagram {
                 // @ts-expect-error: `key` is a valid key for `data`
                 this.#diagramProperties[key] = data[key]
             })
-        notifyChanges()
+        this.#celldlEditor.notifyChanges()
     }
 
     get rdfStore() {
@@ -320,12 +316,12 @@ export class CellDLDiagram {
             this.#svgDiagram.insertAdjacentHTML('afterbegin', `<defs></defs>`)
             this.#defsElement = this.#svgDiagram.firstChild as SVGDefsElement
             this.#defsElement.id = CELLDL_DEFINITIONS_ID
-            this.#defsElement.insertAdjacentHTML('afterbegin', componentLibraryPlugin.svgDefinitions())
+            this.#defsElement.insertAdjacentHTML('afterbegin', this.#context.componentLibraryPlugin.svgDefinitions())
         }
     }
 
     #setStylesheet() {
-        const css = `${CellDLStylesheet}${componentLibraryPlugin.styleRules()}`
+        const css = `${CellDLStylesheet}${this.#context.componentLibraryPlugin.styleRules()}`
         let styleElement = this.#svgDiagram.querySelector(
             `defs#${CELLDL_DEFINITIONS_ID} > style#${CELLDL_STYLESHEET_ID}`
         )
@@ -567,7 +563,7 @@ export class CellDLDiagram {
             }
 
             // Add statements about the document from plugins
-            componentLibraryPlugin.addPluginMetadataToStore(this.rdfStore)
+            this.#context.componentLibraryPlugin.addPluginMetadataToStore(this.rdfStore)
 
             // Make sure metadata is up-to-date
             this.#saveDiagramProperties()
@@ -645,9 +641,9 @@ export class CellDLDiagram {
         this.#objects.set(object.id, object)
         this.#spatialIndex.add(object)
         if (object.isMoveable) {
-            editGuides.addGuide(<CellDLComponent>object)
+            this.#context.editGuides.addGuide(<CellDLComponent>object)
         }
-        componentLibraryPlugin.addComponent(object)
+        this.#context.componentLibraryPlugin.addComponent(object)
     }
 
     #addConnection(connection: CellDLConnection) {
@@ -657,15 +653,15 @@ export class CellDLDiagram {
     addConnectedObject(svgElement: SVGGraphicsElement, template: ObjectTemplate): CellDLConnectedObject | null {
         const object = this.#addNewObject(svgElement, template)
         this.#addMoveableObject(object)
-        notifyChanges()
+        this.#celldlEditor.notifyChanges()
         return object as CellDLConnectedObject
     }
 
     addNewConnection(svgElement: SVGGraphicsElement, template: ObjectTemplate): CellDLConnection {
         const connection = this.#addNewObject(svgElement, template) as CellDLConnection
         // let the plugins know
-        componentLibraryPlugin.addConnection(connection)
-        notifyChanges()
+        this.#context.componentLibraryPlugin.addConnection(connection)
+        this.#celldlEditor.notifyChanges()
         return connection
     }
 
@@ -687,7 +683,7 @@ export class CellDLDiagram {
         if (object) {
             this.#addMoveableObject(object)
         }
-        notifyChanges()
+        this.#celldlEditor.notifyChanges()
         return object
     }
 
@@ -734,7 +730,7 @@ export class CellDLDiagram {
         if (component) {
             this.#addMoveableObject(component)
         }
-        notifyChanges()
+        this.#celldlEditor.notifyChanges()
         return component
     }
 
@@ -775,7 +771,7 @@ export class CellDLDiagram {
         ) as CellDLConnection
         this.#addConnection(connection)
         // let the plugins know
-        componentLibraryPlugin.addConnection(connection)
+        this.#context.componentLibraryPlugin.addConnection(connection)
         return connection
     }
 
@@ -838,7 +834,7 @@ export class CellDLDiagram {
         //
         const interfacePorts: CellDLInterface[] = []
         const connectors = connection.connectedObjects
-        const pathElements = (<SvgConnection>connection.celldlSvgElement).pathElements
+        const pathElements = (<SvgConnection><unknown>connection.celldlSvgElement).pathElements
         const pathStart = connectors[0] as CellDLConnectedObject
         const newConnectors: CellDLConnectedObject[] = []
         newConnectors.push(pathStart)
@@ -951,12 +947,12 @@ export class CellDLDiagram {
             }
         }
         // This is where we create an instanced object of its objectTemplate's class
-        const celldlObject = new CellDLClass(this.makeUri(svgElement.id), objectTemplate, this)
+        const celldlObject = new CellDLClass(this.makeUri(svgElement.id), objectTemplate, this, true)
         if (celldlObject.isConnection) {
             this.#addConnection(<CellDLConnection>celldlObject)
         }
         celldlObject.assignSvgElement(svgElement, true)
-        undoRedo.setInsertUndoState(celldlObject)
+        this.#context.undoRedo.setInsertUndoState(celldlObject)
         return celldlObject
     }
 
@@ -976,8 +972,8 @@ export class CellDLDiagram {
 
     #celldlObjectFromRdf<T extends CellDLObject>(CellDLClass: Constructor<T>, subject: $rdf.SubjectType): T {
         const metadata = this.#kb.metadataPropertiesForSubject(subject)
-        const objectTemplate = componentLibraryPlugin.getObjectTemplate(subject, metadata, this.#kb)
-        return new CellDLClass(subject, objectTemplate, this, false)
+        const objectTemplate = this.#context.componentLibraryPlugin.getObjectTemplate(subject, metadata, this.#kb)
+        return new CellDLClass(subject, objectTemplate, this)
     }
 
     #subjectsOfType(parentType: NamedNode): [$rdf.SubjectType, NamedNode][] {
@@ -1033,7 +1029,7 @@ export class CellDLDiagram {
 
     objectMoved(celldlObject: CellDLObject) {
         this.#spatialIndex.update(celldlObject)
-        notifyChanges()
+        this.#celldlEditor.notifyChanges()
     }
 
     undoDelete(undoState: UndoState) {
@@ -1042,7 +1038,7 @@ export class CellDLDiagram {
             storedObject.restoreSvgElement() // adds SVG element to DOM
             const celldlObject = storedObject.celldlObject
             if (celldlObject.isMoveable) {
-                editGuides.addGuide(<CellDLComponent>celldlObject)
+                this.#context.editGuides.addGuide(<CellDLComponent>celldlObject)
             }
             this.#objects.set(celldlObject.id, celldlObject)
             this.#kb.addStatementList(storedObject.knowledge)
@@ -1052,7 +1048,7 @@ export class CellDLDiagram {
                 for (const connection of connections) {
                     component.addConnection(connection)
                 }
-                componentLibraryPlugin.addComponent(celldlObject)
+                this.#context.componentLibraryPlugin.addComponent(celldlObject)
             } else if (celldlObject.isConnection) {
                 connections.push(celldlObject as CellDLConnection)
             }
@@ -1062,7 +1058,7 @@ export class CellDLDiagram {
             this.#spatialIndex.add(celldlObject)
         }
         for (const connection of connections) {
-            componentLibraryPlugin.addConnection(connection)
+            this.#context.componentLibraryPlugin.addConnection(connection)
             for (const component of connection.connectedObjects) {
                 component.addConnection(connection)
             }
@@ -1078,7 +1074,7 @@ export class CellDLDiagram {
     removeObject(celldlObject: CellDLObject, undoState: UndoState|null=null) {
         if (this.#objects.has(celldlObject.id)) {
             this.#removeObject(celldlObject, undoState)
-            notifyChanges()
+            this.#celldlEditor.notifyChanges()
         }
     }
 
@@ -1087,7 +1083,7 @@ export class CellDLDiagram {
             undoState.storeObject(celldlObject)
         }
         if (celldlObject.isMoveable) {
-            editGuides.removeGuide(<CellDLComponent>celldlObject)
+            this.#context.editGuides.removeGuide(<CellDLComponent>celldlObject)
         }
         celldlObject.celldlSvgElement?.remove() // Will remove SVG element from DOM
         this.#kb.removeStatementsForSubject(celldlObject.uri)
@@ -1099,14 +1095,14 @@ export class CellDLDiagram {
                 this.#removeObject(connection, undoState)
                 component.deleteConnection(connection)
             }
-            componentLibraryPlugin.componentDeleted(component)
+            this.#context.componentLibraryPlugin.componentDeleted(component)
         }
         if (celldlObject.isConnection) {
             const connection = <CellDLConnection>celldlObject
             for (const connector of connection.connectedObjects) {
                 connector.deleteConnection(connection)
             }
-            componentLibraryPlugin.connectionDeleted(connection)
+            this.#context.componentLibraryPlugin.connectionDeleted(connection)
         }
     }
 }

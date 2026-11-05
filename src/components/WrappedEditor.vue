@@ -1,24 +1,19 @@
 <template lang="pug">
-    .flex.flex-col.h-full
-        main.editor-pane.relative.flex.grow
-            EditorToolbar.editor-bar(
-                :buttons="toolButtons"
-                type="popover"
+    .celldl-editor.flex.flex-col
+        main.editor-pane.relative.flex.flex-col.grow
+            EditorToolbar.editor-bar-h(
+                :leftButtons="toolButtons"
+                :rightButtons="panelButtons"
                 @button-event="buttonEvent"
             )
-            div#svg-container(ref="svgContainer")
+            div.svg-container(ref="svgContainer")
                 EditorContextMenu(
                     :contextMenuProps="contextMenuProps"
                 )
                 <!-- context-menu(id="context-menu")  -->
-            EditorToolbar.editor-bar(
-                :buttons="panelButtons"
-                type="panel"
-                @button-event="buttonEvent"
-            )
         footer.status-bar
-            span#status-msg
-            span#status-pos
+            span.status-msg(ref="statusMsg")
+            span.status-pos(ref="statusPos")
 </template>
 
 <script setup lang="ts">
@@ -42,18 +37,16 @@ import * as vueCommon from '#root/utils/vueCommon'
 import { CellDLDiagram } from '#editor/diagram'
 import { CellDLEditor } from '#editor/editor'
 import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS } from '#editor/editor'
-import { editGuides } from '#editor/editor/editguides'
-import { undoRedo } from '#editor/diagram/undoredo'
 
-import { type EditorToolButton, PANEL_ID } from '#root/utils/editor-types'
+import { EDITOR_EVENTS_KEY, type EditorToolButton, PANEL_ID } from '#root/utils/editor-types'
 
-import { componentLibraryPlugin } from '#root/plugins'
+import { ComponentLibraryPlugin } from '#root/plugins'
 
-import { BondgraphPlugin } from '#root/plugins/bondgraph'
-import BondgraphPopover from '#root/plugins/bondgraph/bondgraph.vue'
+import { BondgraphPlugin, PLUGIN_ID as BG_PLUGIN_ID } from '#root/plugins/bondgraph'
 
-import { DrawingPlugin } from '#root/plugins/drawing'
-import DrawingPopover from '#root/plugins/drawing/drawing.vue'
+import { DrawingPlugin, PLUGIN_ID as DRAWING_PLUGIN_ID } from '#root/plugins/drawing'
+
+import { CONNECTION_STYLE_DEFINITIONS } from '#editor/connections'
 
 // WIP import { ElectricalPlugin } from '#root/plugins/electrical'
 import type { PopoverEventData, ViewState } from '#root/utils/editor-types'
@@ -132,7 +125,9 @@ export type EditorData = {
 
 // Setup PrimeVue's theme, vue-tippy, and our plugins
 
-const crtInstance = vue.getCurrentInstance();
+const crtInstance = vue.getCurrentInstance()
+
+const componentLibraryPlugin = new ComponentLibraryPlugin()
 
 if (crtInstance) {
     const app = crtInstance.appContext.app
@@ -150,11 +145,11 @@ if (crtInstance) {
 
     app.use(vueTippy)
 
-    // Install our component library manager with the Bondgraph plugin
+    // Register our Bondgraph and Drawing plugins with the component library manager
 
-    componentLibraryPlugin.install(app)
     componentLibraryPlugin.registerPlugin(new BondgraphPlugin())
     componentLibraryPlugin.registerPlugin(new DrawingPlugin())
+
 // WIP    componentLibraryPlugin.registerPlugin(new ElectricalPlugin())
 }
 
@@ -162,13 +157,19 @@ if (crtInstance) {
 //==============================================================================
 
 const svgContainer = vue.ref(null)
+const statusMsg = vue.useTemplateRef<HTMLElement>('statusMsg')
+const statusPos = vue.useTemplateRef<HTMLElement>('statusPos')
 
 let celldlDiagram: CellDLDiagram|undefined
 
 // Plugins need to be initialised before creating the editor
 
-const celldlEditor: CellDLEditor = new CellDLEditor()
+const celldlEditor: CellDLEditor = new CellDLEditor(componentLibraryPlugin)
+
 //const celldlEditor: TestCellDLEditor = new TestCellDLEditor()
+
+// Our child components send their events to our editor
+vue.provide(EDITOR_EVENTS_KEY, celldlEditor.events)
 
 
 //==============================================================================
@@ -177,10 +178,16 @@ const props = defineProps<CellDLEditorProps>()
 
 const emit = defineEmits<{
     'editor-data': [data: EditorData],
+    'editor-ready': [],
+    'file-edited': [],
     'editor-state': [state: {
         error: string
     }]
 }>()
+
+// Let our host know when the diagram has been changed
+
+celldlEditor.events.addEventListener('file-edited', () => emit('file-edited'))
 
 //==============================================================================
 
@@ -203,7 +210,7 @@ const defaultComponent = componentLibraryPlugin.getSelectedTemplate()!
 //==============================================================================
 
 function despatchToolbarEvent(type: string, source: string, value: boolean|string) {
-    document.dispatchEvent(
+    celldlEditor.events.dispatchEvent(
         new CustomEvent('toolbar-event', {
             detail: {
                 type,
@@ -222,12 +229,14 @@ const contextMenuProps = vue.ref<ContextMenuProps>({
     state: new Set()
 })
 
-document.addEventListener('open-context-menu', (event: Event) => {
+celldlEditor.events.addEventListener('open-context-menu', (event: Event) => {
     contextMenuProps.value = (<CustomEvent>event).detail
 })
 
 //==============================================================================
 //==============================================================================
+
+// Build the left toolbar buttons: SelectTool + BG component templates + BG stroke styles + Drawing tools
 
 const toolButtons = vue.ref<EditorToolButton[]>([
     {
@@ -235,22 +244,30 @@ const toolButtons = vue.ref<EditorToolButton[]>([
         active: (DEFAULT_EDITOR_TOOL_ID as EDITOR_TOOL_IDS) === EDITOR_TOOL_IDS.SelectTool,
         prompt: 'Selection tool',
         icon: 'lucide-MousePointer'
-    },
-    {
-        toolId: EDITOR_TOOL_IDS.BondgraphTool,
-        active: (DEFAULT_EDITOR_TOOL_ID as EDITOR_TOOL_IDS) === EDITOR_TOOL_IDS.BondgraphTool,
-        prompt: 'Bond graph tools',
-        icon: 'lucide-Network',
-        panel: vue.markRaw(BondgraphPopover)
-    },
-    {
-        toolId: EDITOR_TOOL_IDS.DrawingTool,
-        active: (DEFAULT_EDITOR_TOOL_ID as EDITOR_TOOL_IDS) === EDITOR_TOOL_IDS.DrawingTool,
-        prompt: 'Drawing tools',
-        icon: 'lucide-SquarePen',
-        panel: vue.markRaw(DrawingPopover)
     }
 ])
+
+let buttonGroupId = 1
+
+// Add bond graph tool buttons
+const bgPlugin = componentLibraryPlugin.getPlugin(BG_PLUGIN_ID)
+if (bgPlugin) {
+    for (const buttonGroup of bgPlugin.toolButtons()) {
+        toolButtons.value.push({ toolId: `separator-${buttonGroupId}`, prompt: '', separator: true })
+        toolButtons.value.push(...buttonGroup)
+        buttonGroupId += 1
+    }
+}
+
+// Add drawing tool buttons
+const drawingPlugin = componentLibraryPlugin.getPlugin(DRAWING_PLUGIN_ID)
+if (drawingPlugin) {
+    for (const buttonGroup of drawingPlugin.toolButtons()) {
+        toolButtons.value.push({ toolId: `separator-${buttonGroupId}`, prompt: '', separator: true })
+        toolButtons.value.push(...buttonGroup)
+        buttonGroupId += 1
+    }
+}
 
 //==============================================================================
 
@@ -278,10 +295,10 @@ const panelButtons = vue.ref<EditorToolButton[]>([
 //==============================================================================
 
 function resetToolBars() {
-    // Set the toolbar to its default tool
+    // Set SelectTool as the only active tool button
 
     for (const toolButton of toolButtons.value) {
-        toolButton.active = (DEFAULT_EDITOR_TOOL_ID as EDITOR_TOOL_IDS) === toolButton.toolId
+        toolButton.active = toolButton.toolId === EDITOR_TOOL_IDS.SelectTool
     }
 
     // Hide any open panel
@@ -290,11 +307,48 @@ function resetToolBars() {
 
 //==============================================================================
 
-function buttonEvent(toolId: PANEL_ID, active: boolean) {
+async function buttonEvent(toolId: PANEL_ID, active: boolean) {
 
-    // Tell the editor that a tool has changed
+    if (toolId.startsWith(`${BG_PLUGIN_ID}/`)) {
+        const componentId = toolId.slice(BG_PLUGIN_ID.length + 1)
 
-    despatchToolbarEvent('state', toolId, active)
+        // Check if this is a component template
+        const template = bgPlugin?.componentLibrary.templates.find(t => t.id === componentId)
+        if (template) {
+            // Async-load the image to obtain its natural dimensions for placement
+            const dims = await new Promise<{ width: number; height: number }>(resolve => {
+                const img = new Image()
+                img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight })
+                img.src = template.imageData
+            })
+            celldlEditor.events.dispatchEvent(
+                new CustomEvent('component-selected', {
+                    detail: {
+                        id: toolId,
+                        centre: { x: dims.width / 2, y: dims.height / 2 },
+                        offset: { x: 0, y: 0 }
+                    }
+                })
+            )
+        } else {
+            // Bond graph connection style
+            celldlEditor.events.dispatchEvent(
+                new CustomEvent('connection-style', {
+                    detail: { style: componentId }
+                })
+            )
+        }
+    } else if (toolId.startsWith(`${DRAWING_PLUGIN_ID}/`)) {
+        const drawingToolId = toolId.slice(DRAWING_PLUGIN_ID.length + 1)
+        celldlEditor.events.dispatchEvent(
+            new CustomEvent('celldl-drawing', {
+                detail: { tool: drawingToolId }
+            })
+        )
+    } else {
+        // Standard toolbar event (SelectTool, panel open/close)
+        despatchToolbarEvent('state', toolId, active)
+    }
 }
 
 //==============================================================================
@@ -333,7 +387,7 @@ vue.watch(
             const command = props.editorCommand as EditorEditCommand
             const options = command.options
             if (options.action === 'clean') {
-                undoRedo.clean()
+                celldlDiagram!.context.undoRedo.clean()
             }
         } else if (props.editorCommand?.command === 'set-state') {
             const command = props.editorCommand as EditorSetStateCommand
@@ -343,7 +397,7 @@ vue.watch(
             }
         } else if (props.editorCommand?.command === 'view') {
             const command = props.editorCommand as EditorViewCommand
-            editGuides.setState(command.options)
+            celldlDiagram?.context.editGuides.setState(command.options)
         }
     }
 )
@@ -357,13 +411,14 @@ vue.onMounted(async () => {
             if (svgContainerElement.clientWidth === 0 || svgContainerElement.clientHeight === 0) {
                 console.error('zero sized container!!')
             }
-            celldlEditor.mount(svgContainerElement)
+            celldlEditor.mount(svgContainerElement, statusMsg.value, statusPos.value)
 
             // Create a new diagram in the editor's window
             celldlDiagram = new CellDLDiagram('', '', celldlEditor)
-            await celldlDiagram.edit()
+            await celldlEditor.editDiagram(celldlDiagram)
 
 //            testEditor(celldlEditor)
+            emit('editor-ready')
         })
     }
 })
@@ -376,15 +431,21 @@ vue.onMounted(async () => {
 .editor-pane {
     min-height: calc(100% - 1.6em);
 }
-.editor-bar {
-    width: 40px;
-    overflow: auto;
+.editor-bar-h {
+    height: 40px;
+    width: 100%;
+    overflow: visible;
+    border: 2px solid var(--editor-border-color);
+    background-color: var(--editor-statusbar-background);
 }
-#svg-container {
+.svg-container {
     margin:  0;
     border: 2px solid var(--editor-border-color);
+    border-top-width: 0;
     flex: 1;
+    min-height: 0;
     overflow: hidden;
+    position: relative;     /* The diagram's (absolutely positioned) host fills us */
 }
 .hidden {
     display: none;
@@ -396,13 +457,13 @@ vue.onMounted(async () => {
     padding-right: 16px;
     background-color: var(--editor-statusbar-background);
 }
-#status-msg.error {
+.status-msg.error {
     color: red;
 }
-#status-msg.warn {
+.status-msg.warn {
    color: blue;
 }
-#status-pos {
+.status-pos {
     float: right;
 }
 </style>

@@ -38,6 +38,42 @@ export const SVG_URI = 'http://www.w3.org/2000/svg'
 
 //==============================================================================
 
+/**
+ * Make sure the given images have been fetched and decoded.
+ *
+ * An SVG `<image>` without an explicit `width` (or `height`) gets its size from the
+ * image's intrinsic dimensions, which aren't known until the image has been decoded.
+ * Until then `getBBox()` returns a zero width and height. Decoding asynchronously
+ * populates the browser's image cache, so once this resolves an `<image>` with the
+ * same `href` is laid out at its proper size.
+ *
+ * @param source An element whose `<image>` descendants are to be loaded, or image URLs.
+ */
+export async function loadImages(source: Element | string[]): Promise<void> {
+    const hrefs: Set<string> = new Set()
+    if (Array.isArray(source)) {
+        source.forEach((href) => { if (href) hrefs.add(href) })
+    } else {
+        for (const image of source.querySelectorAll('image')) {
+            const href = image.getAttribute('href') || image.getAttribute('xlink:href')
+            if (href) {
+                hrefs.add(href)
+            }
+        }
+    }
+    await Promise.all([...hrefs].map(async (href) => {
+        const image = new Image()
+        image.src = href
+        try {
+            await image.decode()
+        } catch {
+            // A broken image -- its bounds will be empty but that shouldn't stop loading
+        }
+    }))
+}
+
+//==============================================================================
+
 export interface LatexMathSvgOptions {
     background?: string
     border?: string

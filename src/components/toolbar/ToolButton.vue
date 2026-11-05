@@ -1,17 +1,21 @@
 <template lang="pug">
     div(
+        v-if="type==='panel'"
         ref="panelRef"
         :class="panelClasses"
         :style="panelStyle"
     )
         slot
     .ci.tool-button(
+        ref="buttonRef"
         :id="toolId"
         :class="buttonClasses"
         :style="buttonStyle"
-        v-tippy="{ content: prompt, placement: 'right' }"
+        v-tippy="{ content: prompt, placement: 'bottom' }"
         :aria-label="prompt"
+        :draggable="!!image"
         @click="toolButtonClick"
+        @dragstart="dragStartEvent"
     )
         component(
             :is="buttonIcon"
@@ -25,7 +29,7 @@
 import * as vue from 'vue'
 import * as LucideIcons from '@lucide/vue'
 
-import type { PropertyGroup } from '#root/utils/editor-types'
+import { EDITOR_EVENTS_KEY, type PropertyGroup } from '#root/utils/editor-types'
 
 const props = defineProps<{
     toolId: string
@@ -37,6 +41,9 @@ const props = defineProps<{
     type?: string
     panel?: vue.Raw<vue.Component>
 }>()
+
+// Events go to the editor this component is part of
+const editorEvents = vue.inject(EDITOR_EVENTS_KEY, document)
 
 const buttonClasses = vue.computed(() => {
     const classes = []
@@ -72,15 +79,23 @@ const buttonStyle = vue.computed(() => {
 const panelVisible = vue.ref(false)
 
 const panelClasses = vue.computed(() => {
-    return [props.type==='panel' ? 'panel' : 'popover', { hidden: !panelVisible.value }]
+    return [props.type === 'panel' ? 'panel' : 'popover', { hidden: !panelVisible.value }]
 })
 
-const popoverTop = vue.ref()
+const popoverTop = vue.ref<string>()
+const popoverLeft = vue.ref<string>()
+
+const panelTop = vue.ref<string>()
+const panelHeight = vue.ref<string>()
+const panelRight = vue.ref<string>()
 
 const panelStyle = vue.computed(() => {
-    if (props.type==='popover') {
-       return { top: popoverTop.value }
-   }
+    if (props.type === 'popover') {
+        return { top: popoverTop.value, left: popoverLeft.value }
+    }
+    if (props.type === 'panel') {
+        return { position: 'fixed', top: panelTop.value, height: panelHeight.value, right: panelRight.value }
+    }
 })
 
 const pointerPos = vue.ref<number>()
@@ -95,6 +110,58 @@ vue.onMounted(() => {
     }
 })
 
+//==============================================================================
+
+// A panel fills its editor's area below the button. It's positioned with viewport-relative
+// coords (`position: fixed`) so the result is independent of which ancestor happens to be
+// the containing block, which means it has to be repositioned whenever its editor's
+// position or size changes while it's open.
+
+const buttonRef = vue.ref<HTMLElement | null>(null)
+
+function positionPanel() {
+    const button = buttonRef.value
+    if (!button || !panelVisible.value) {
+        return
+    }
+    const editorRect = button.closest('.editor-pane')?.getBoundingClientRect()
+    const buttonRect = button.getBoundingClientRect()
+    const top = buttonRect.bottom
+    const height = (editorRect?.bottom ?? window.innerHeight) - top
+    const right = window.innerWidth - (editorRect?.right ?? window.innerWidth)
+    panelTop.value = `${top}px`
+    panelHeight.value = `${height}px`
+    panelRight.value = `${right}px`
+}
+
+const panelResizeObserver = new ResizeObserver(positionPanel)
+
+function trackPanelPosition(track: boolean) {
+    const editorPane = buttonRef.value?.closest('.editor-pane')
+    if (track) {
+        positionPanel()
+        if (editorPane) {
+            panelResizeObserver.observe(editorPane)
+        }
+        window.addEventListener('resize', positionPanel)
+        window.addEventListener('scroll', positionPanel)
+    } else {
+        panelResizeObserver.disconnect()
+        window.removeEventListener('resize', positionPanel)
+        window.removeEventListener('scroll', positionPanel)
+    }
+}
+
+vue.watch(panelVisible, (visible) => {
+    if (props.type === 'panel') {
+        trackPanelPosition(visible)
+    }
+})
+
+vue.onBeforeUnmount(() => trackPanelPosition(false))
+
+//==============================================================================
+
 // Make sure popover is closed when button is deactivated
 vue.watch(
     () => props.active,
@@ -104,6 +171,36 @@ vue.watch(
         }
     }
 )
+
+// Preload natural image dimensions for drag-and-drop (dragstart must be synchronous)
+const naturalDims = vue.ref<{ width: number; height: number } | null>(null)
+
+vue.watchEffect(() => {
+    if (props.image) {
+        const img = new Image()
+        img.onload = () => { naturalDims.value = { width: img.naturalWidth, height: img.naturalHeight } }
+        img.src = props.image
+    } else {
+        naturalDims.value = null
+    }
+})
+
+function dragStartEvent(e: DragEvent) {
+    if (!props.image || !e.dataTransfer) return
+    const dims = naturalDims.value ?? { width: 72, height: 72 }
+    const target = e.currentTarget as HTMLElement
+    const details = {
+        id: props.toolId,
+        centre: { x: dims.width / 2, y: dims.height / 2 },
+        offset: { x: e.offsetX - target.scrollWidth / 2, y: e.offsetY - target.scrollHeight / 2 }
+    }
+    e.dataTransfer.items.add(JSON.stringify(details), 'text/plain')
+    editorEvents.dispatchEvent(
+        new CustomEvent('component-drag', {
+            detail: { type: 'dragstart', source: props.toolId, value: props.toolId }
+        })
+    )
+}
 
 const emit = defineEmits<{
     'button-event': [
@@ -123,11 +220,8 @@ async function toolButtonClick(e: MouseEvent) {
         if (props.type === 'panel') {
             target.classList.toggle('active')
             if (panelElement) {
-                if (panelVisible.value) {
-                    panelVisible.value = false
-                } else {
-                    panelVisible.value = true
-                }
+                // Showing the panel positions it (see `trackPanelPosition()`)
+                panelVisible.value = !panelVisible.value
             }
         } else {
             if (!target.classList.contains('active')) {
@@ -136,20 +230,32 @@ async function toolButtonClick(e: MouseEvent) {
                     if (!panelVisible.value) {
                         panelVisible.value = true
 
-                        // Wait for panel to be rendered before getting its height
+                        // Wait for panel to be rendered before getting its dimensions
                         await vue.nextTick()
 
-                        const popoverHeight = panelElement?.clientHeight
-                        let top = target.offsetTop + (target.clientWidth - popoverHeight) / 2
-                        pointerPos.value = popoverHeight / 2 - 10 // 10 is half of pointer's height
+                        const popoverWidth = panelElement?.clientWidth
 
-                        if (top < (20 + window.scrollY)) {
-                            // Make sure our top is at least 20px below top containing element
-                            const adjustment = (20 + window.scrollY) - top
-                            top = (20 + window.scrollY)
-                            pointerPos.value -= adjustment
+                        // Get positions relative to the editor-pane (position: relative container)
+                        const editorPane = target.closest('.editor-pane')
+                        const editorRect = editorPane?.getBoundingClientRect()
+                        const buttonRect = target.getBoundingClientRect()
+                        const toolbarHeight = target.closest('.editor-bar-h')?.clientHeight ?? 38
+
+                        // Center popover horizontally under the button
+                        let left = (buttonRect.left - (editorRect?.left ?? 0)) + (target.clientWidth - popoverWidth) / 2
+
+                        // Keep within editor bounds
+                        if (left < 0) left = 0
+                        if (editorRect && left + popoverWidth > editorRect.width) {
+                            left = editorRect.width - popoverWidth
                         }
-                        popoverTop.value = `${top}px`
+
+                        // Arrow points to center of button from top of popover
+                        const buttonCenterX = (buttonRect.left - (editorRect?.left ?? 0)) + target.clientWidth / 2
+                        pointerPos.value = buttonCenterX - left - 10 // 10 is half of pointer's width
+
+                        popoverTop.value = `${toolbarHeight}px`
+                        popoverLeft.value = `${left}px`
                     }
                 }
             }
@@ -163,12 +269,12 @@ async function toolButtonClick(e: MouseEvent) {
 .tool-button {
     border-style: solid;
     border-color: var(--editor-border-color);
-    border-width: 0 1px 2px;
+    border-width: 0 1px;
     display: grid;
     place-items: center;
 }
 .tool-button:hover {
-    background-color: lightgrey;
+    background-color: var(--editor-button-hover);
 }
 
 .tool-button.ci {
@@ -180,7 +286,11 @@ async function toolButtonClick(e: MouseEvent) {
 }
 
 .tool-button.image {
-    background-size: 100% 100% !important;
+    background-size: 80% 80% !important;
+    background-position: center !important;
+}
+.tool-button.image:hover {
+    background-color: var(--editor-button-hover) !important;
 }
 
 .tool-button.modal::before {
@@ -197,6 +307,10 @@ async function toolButtonClick(e: MouseEvent) {
     content: url("./icons/ModalButtonLight.svg");
 }
 
+.p-toolbar-end .tool-button {
+    border-width: 0 0 0 2px;
+}
+
 .celldl-dark-mode .tool-button.modal::before {
     content: url("./icons/ModalButtonDark.svg");
 }
@@ -208,14 +322,15 @@ async function toolButtonClick(e: MouseEvent) {
 .panel {
     width: 250px;
     border: 2px solid var(--editor-border-color);
-    border-left-width: 1px;
-    right: 38px; /* This depends on panel bar width... */
-    top: 1.8em;
-    bottom: 1.6em;
-    position: absolute;
+    border-top-width: 1px;
+    z-index: 100;
+    overflow-y: auto;
+    background-color: var(--p-surface-0);
 }
+
 .popover {
     position: absolute;
+    z-index: 100;
 }
 
 .active {
