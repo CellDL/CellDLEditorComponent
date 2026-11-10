@@ -299,7 +299,11 @@ export class CellDLEditor {
         shadowRoot.addEventListener('pointerdown', this.#pointerDownEvent.bind(this) as EventListener, { signal })
         shadowRoot.addEventListener('pointermove', this.#pointerMoveEvent.bind(this) as EventListener, { signal })
         shadowRoot.addEventListener('pointerup', this.#pointerUpEvent.bind(this) as EventListener, { signal })
-        this.#container.addEventListener('pointerleave', () => this.#pathDrag.pointerLeave(), { signal })
+        this.#container.addEventListener('pointerleave', () => {
+            // Clear the status bar when the pointer leaves the canvas
+            this.#clearStatus()
+            this.#pathDrag.pointerLeave()
+        }, { signal })
 
         // Keyboard handlers. These are on the editor's own root element, so an editor only
         // acts on keys while focus is somewhere inside it (its canvas, toolbar or panels).
@@ -560,6 +564,13 @@ export class CellDLEditor {
                 this.#statusMsg.classList.add(style)
                 this.#statusStyle = style
             }
+        }
+    }
+
+    #clearStatus() {
+        this.status = ''
+        if (this.#statusPos) {
+            this.#statusPos.innerText = ''
         }
     }
 
