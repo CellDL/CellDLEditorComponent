@@ -1,3 +1,4 @@
 <template lang="pug">
-    EditorApp
+    .grid
+        EditorApp.h-dvh
 </template>
