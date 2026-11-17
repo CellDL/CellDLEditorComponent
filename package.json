@@ -1,6 +1,6 @@
 {
     "name": "@celldl/editor",
-    "version": "0.20261007.0",
+    "version": "0.20260915.0",
     "author": {
         "name": "David Brooks",
         "email": "d.brooks@auckland.ac.nz"
@@ -68,14 +68,15 @@
         "jsonschema": "^1.5.0",
         "mini-svg-data-uri": "^1.4.4",
         "primeicons": "^7.0.0",
-        "primevue": "4.2.5",
+        "primevue": "^4.5.5",
         "rbush": "^4.0.1",
         "svg-intersections": "github:dbrnz/svg-intersections#fix-numbers",
         "svg-path-commander": "^2.1.11",
         "systeminformation": "^5.27.11",
         "transformation-matrix": "^3.1.0",
+        "tslog": "^5.4.0",
         "ua-parser-js": "^2.0.8",
-        "vue": "3.5.40",
+        "vue": "^3.5.44",
         "vue-tippy": "^6.7.1"
     },
     "devDependencies": {
