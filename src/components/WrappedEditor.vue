@@ -8,7 +8,8 @@
             )
             div.svg-container(ref="svgContainer")
                 EditorContextMenu(
-                    :contextMenuProps="contextMenuProps"
+                    :editorStatus="editorStatus"
+                    :menuEvent="contextMenuEvent"
                 )
                 <!-- context-menu(id="context-menu")  -->
         footer.status-bar
@@ -38,7 +39,13 @@ import { CellDLDiagram } from '#editor/diagram'
 import { CellDLEditor } from '#editor/editor'
 import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS } from '#editor/editor'
 
-import { EDITOR_EVENTS_KEY, type EditorToolButton, PANEL_ID } from '#root/utils/editor-types'
+import {
+    EDITOR_EVENTS_KEY,
+    type EditorStateData,
+    type EditorStatus,
+    type EditorToolButton,
+    PANEL_ID
+} from '#root/utils/editor-types'
 
 import { ComponentLibraryPlugin } from '#root/plugins'
 
@@ -53,12 +60,11 @@ import type { PopoverEventData, ViewState } from '#root/utils/editor-types'
 
 //import { TestCellDLEditor, testEditor } from '../../tests/editor'
 
+import EditorContextMenu from './contextmenu/EditorContextMenu.vue'
 import PropertiesPanel from './panels/PropertiesPanel.vue'
 import StylingPanel from './panels/StylingPanel.vue'
 
 import EditorToolbar from './toolbar/EditorToolbar.vue'
-import EditorContextMenu from './widgets/EditorContextMenu.vue'
-import type { ContextMenuProps } from './widgets/EditorContextMenu.vue'
 
 //==============================================================================
 
@@ -178,6 +184,8 @@ vue.provide(EDITOR_EVENTS_KEY, celldlEditor.events)
 
 //==============================================================================
 
+const editorStatus = vue.ref<EditorStatus>({})
+
 const props = defineProps<CellDLEditorProps>()
 
 const emit = defineEmits<{
@@ -229,12 +237,10 @@ function despatchToolbarEvent(type: string, source: string, value: boolean|strin
 
 // Pass 'context-menu' events from the editor to the context menu's component
 
-const contextMenuProps = vue.ref<ContextMenuProps>({
-    state: new Set()
-})
+const contextMenuEvent = vue.ref<{event?: Event}>({})
 
 celldlEditor.events.addEventListener('open-context-menu', (event: Event) => {
-    contextMenuProps.value = (<CustomEvent>event).detail
+    contextMenuEvent.value = (<CustomEvent>event).detail
 })
 
 //==============================================================================

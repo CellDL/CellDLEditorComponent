@@ -35,6 +35,7 @@ import { SelectionSet } from '#editor/diagram/selectionset'
 import type { MoveUndoState, UndoRedo } from '#editor/diagram/undoredo'
 import { round } from '#editor/utils'
 
+import { CONTEXT_MENU } from '#root/components/contextmenu/types'
 import { isMacOs } from '#root/utils/common'
 import { PANEL_ID } from '#root/utils/editor-types'
 import { type Point, type PointLike, PointMath } from '#root/utils/points'
@@ -103,16 +104,6 @@ const DEFAULT_EDITOR_MODE = EDITOR_MODE.Selecting
 
 //==============================================================================
 
-export enum CONTEXT_MENU {
-    DELETE = 'menu-delete',
-    EDIT_GROUP = 'menu-edit-group',
-    INFO = 'menu-info',
-    GROUP_OBJECTS = 'menu-group',
-    UNGROUP_OBJECTS = 'menu-ungroup'
-}
-
-//==============================================================================
-
 // Is a key event from an element that takes text input (e.g. a field in a panel)?
 
 function fromEditableElement(event: KeyboardEvent): boolean {
@@ -172,8 +163,6 @@ export class CellDLEditor {
 
     #pathMaker: PathMaker | null = null
     #nextPathNode: PathNode | null = null
-
-    #contextMenuActiveItems: Set<CONTEXT_MENU> = new Set()
 
     #currentTemplateDetails: TemplateEventDetails | null = null
     #drawConnectionSettings: StringProperties = {}
@@ -345,7 +334,6 @@ export class CellDLEditor {
             }
             this.events.dispatchEvent(new CustomEvent('open-context-menu', {
                 detail: {
-                    state: this.#contextMenuActiveItems,
                     event: event
                 }
             }))
@@ -354,9 +342,9 @@ export class CellDLEditor {
             const targetId = (<CustomEvent>event).detail.id
             if (targetId === CONTEXT_MENU.DELETE) {
                 this.#deleteSelectedObjects()
-            } else if (targetId === CONTEXT_MENU.INFO) {
+            } else if (targetId === CONTEXT_MENU.INSPECT) {
 // WIP               this.#showSelectedObjectInfo()
-            } else if (targetId === CONTEXT_MENU.GROUP_OBJECTS) {
+            } else if (targetId === CONTEXT_MENU.GROUP) {
                 if (this.#boxMaker) {
                     this.#boxMaker.groupComponents()
                     this.#closeBoxMaker()
@@ -480,13 +468,6 @@ export class CellDLEditor {
         }
     }
 
-    enableContextMenuItem(itemId: CONTEXT_MENU, enable: boolean = true) {
-        if (enable) {
-            this.#contextMenuActiveItems.add(itemId)
-        } else {
-            this.#contextMenuActiveItems.delete(itemId)
-        }
-    }
 
     #changeMode(editorMode: EDITOR_MODE) {
         this.#editorMode = editorMode
