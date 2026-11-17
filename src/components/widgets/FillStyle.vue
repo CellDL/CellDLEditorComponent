@@ -65,8 +65,6 @@
                         value="V"
                         @change="emitChange"
                     )
-        Divider
-        // middle colour??
 </template>
 
 <script setup lang="ts">
@@ -183,7 +181,7 @@ function emitChange() {
 
 <style>
 /* Otherwise the tick mark is not obvious */
-.p-checkbox-checked .p-checkbox-icon {
+.editor-pane .p-checkbox-checked .p-checkbox-icon {
     color: red !important;
 }
 </style>

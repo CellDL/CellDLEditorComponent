@@ -21,14 +21,13 @@ limitations under the License.
 import * as vue from 'vue'
 
 import { Point, type PointLike, PointMath } from '#root/utils/points'
-import { CONNECTION_SPLAY_PADDING, MAX_CONNECTION_SPLAY_PADDING } from '#root/utils/styling'
+import { CONNECTION_SPLAY_PADDING, MAX_CONNECTION_SPLAY_PADDING, SVG_ICON_HEIGHT } from '#root/utils/styling'
 import { CONNECTION_WIDTH, SELECTION_STROKE_WIDTH } from '#root/utils/styling'
 import type { Styling } from '#root/utils/styling'
-import { svgCircle } from '#root/utils/svgUtils'
+import { svgCircle, type RectDimensions, getRectDimensions, loadImages, modifyRectDimensions, svgRectElement } from '#root/utils/svgUtils'
 
 import { CELLDL_STYLE_CLASS, type CellDLObject } from '#editor/celldlObjects'
 import { Bounds, type PointMoveOptions, type RestrictedValue } from '#editor/geometry'
-import { FixedControlRect } from '#editor/geometry/controls'
 import { Transform } from '#editor/geometry/transforms'
 
 //==============================================================================
@@ -41,6 +40,12 @@ export type ElementMoveOptions = PointMoveOptions & {
 export type DomLocation = {
     parentId?: string
     priorSiblingId?: string
+}
+
+export type SvgElementOptions = {
+    align?: boolean
+    edgeAligned?: boolean
+    gridAligned?: boolean
 }
 
 //==============================================================================
@@ -78,25 +83,43 @@ export function setInternalIds(svgElement: SVGGraphicsElement, previousId: strin
     }
 }
 
+export function getElementTransform(svgElement: SVGGraphicsElement): Transform {
+    // NB. An `SVGTransform`'s `matrix` is a *live* object tied to the element's `transform`
+    // attribute. Firefox and Safari update it in place when the attribute is later set (e.g.
+    // in `BoundedElement.redraw()`), so we must take a snapshot of its values rather than
+    // keep a reference to it. We also combine all transforms in the list, not just the first.
+    let transform = Transform.Identity()
+    const elementTransforms = svgElement.transform.baseVal
+    for (let index = 0; index < elementTransforms.length; ++index) {
+        // biome-ignore lint/style/noNonNullAssertion: index is in range
+        const { a, b, c, d, e, f } = elementTransforms[index]!.matrix
+        transform = new Transform({ a, b, c, d, e, f }).leftMultiply(transform)
+    }
+    return transform
+}
+
 //==============================================================================
 
-export class CellDLSVGElement {
+export abstract class CellDLSVGElement {
     #bounds!: Bounds
     #centroid!: Point
     #normalisedCentre: Point = new Point(0.5, 0.5)
+    #edgeAligned: boolean = false
     #cornerOffsets!: [Point, Point, Point, Point] // Wrt centroid, anticlockwise from bottom right
     #selected: boolean = false
     #selectionClasses: Set<string> = new Set()
     #selectionElement: SVGGraphicsElement
     #size: Point = new Point()
     #svgElement: SVGGraphicsElement
+    #startResizeDims: RectDimensions|undefined
     #topLeft!: Point
     #globalTransform: Transform = Transform.Identity()
     #svgDiagramElement: SVGSVGElement
 
     constructor(
         readonly celldlObject: CellDLObject,
-        svgElement: SVGGraphicsElement | null
+        svgElement: SVGGraphicsElement | null,
+        options?: SvgElementOptions
     ) {
         if (svgElement === null) {
             throw new Error(`CellDL object '${celldlObject.id}' isn't represented in SVG...`)
@@ -105,13 +128,12 @@ export class CellDLSVGElement {
         // get all transformations that are being applied to the SVG element
         let element = svgElement.parentNode as SVGGraphicsElement
         while (element !== this.#svgDiagramElement) {
-            const transform = getComputedStyle(element).transform
-            if (transform !== 'none') {
-                this.#globalTransform = this.#globalTransform.leftMultiply(Transform.fromString(transform))
-            }
+            const transform = getElementTransform(element)
+            this.#globalTransform = this.#globalTransform.leftMultiply(transform)
             element = element.parentNode as SVGGraphicsElement
         }
         celldlObject.setCelldlSvgElement(this)
+        this.#edgeAligned = !!options?.edgeAligned
         this.#svgElement = svgElement
         this.#selectionElement = svgElement
         this.#updatedSvgElement()
@@ -173,7 +195,7 @@ export class CellDLSVGElement {
         const bbox = svgElement.getBBox()
         let topLeft = new Point(bbox.x, bbox.y)
         let bottomRight = new Point(bbox.x + bbox.width, bbox.y + bbox.height)
-        const localTransform = Transform.fromString(getComputedStyle(svgElement).transform)
+        const localTransform = getElementTransform(svgElement)
         const transform = this.#globalTransform.leftMultiply(localTransform)
         topLeft = transform.transformPoint(topLeft)
         bottomRight = transform.transformPoint(bottomRight)
@@ -189,9 +211,21 @@ export class CellDLSVGElement {
     }
 
     #updateBounds() {
+        let selectionState: string|null|undefined
+        if (this.#svgElement.tagName === 'g' && this.#selectionElement.tagName === 'rect') {
+            selectionState = this.#selectionElement.getAttribute('display')
+            this.#selectionElement.setAttribute('display', 'none')
+        }
         const bounds = this.svgBounds(true)
+        if (selectionState !== undefined) {
+            if (selectionState !== null) {
+                this.#selectionElement.setAttribute('display', selectionState)
+            } else {
+                this.#selectionElement.removeAttribute('display')
+            }
+        }
         this.#size = new Point(bounds.right - bounds.left, bounds.bottom - bounds.top)
-        if (this.#centroid) {
+        if (!this.#edgeAligned && this.#centroid) {
             this.#topLeft = this.#centroid.subtract(this.#size.scale(this.#normalisedCentre))
             // Get bounds in local coordinates
             this.#bounds = new Bounds(
@@ -260,12 +294,11 @@ export class CellDLSVGElement {
                 svgChild.setAttribute('width', `${bounds.width}px`)
                 svgChild.setAttribute('height', `${bounds.height}px`)
             }
-            const selectionRect = new FixedControlRect(bounds.asArray()) // versus control rect in RectangularObject
-            const svg = selectionRect.svg({
+            const bottomRight = bounds.topLeft.add({x: bounds.width, y: bounds.height})
+            this.#selectionElement = svgRectElement(bounds.topLeft, bottomRight, {
                 class: `selection-element parent-id editor-specific ${[...this.#selectionClasses.values()].join(' ')}`
             })
-            this.#svgElement.insertAdjacentHTML('beforeend', svg)
-            this.#selectionElement = this.#svgElement.lastChild as SVGGraphicsElement
+            this.#svgElement.appendChild(this.#selectionElement)
             // Indicate a component is a conduit with a circular mark at its centre
             if (this.celldlObject.isConduit) {
                 const centre = new Point(bounds.right - bounds.left, bounds.bottom - bounds.top)
@@ -322,6 +355,8 @@ export class CellDLSVGElement {
         return { }
     }
 
+//==============================================================================
+
     /**
      * Check if an object can be moved.
      *
@@ -337,9 +372,39 @@ export class CellDLSVGElement {
 
     startMove(_svgPoint: PointLike, _options: ElementMoveOptions={}) {}
 
-    move(_svgPoint: PointLike, _options: ElementMoveOptions={}) {}
+    move(_svgPoint: PointLike, _options: ElementMoveOptions={}): boolean {
+        return false
+    }
 
-    endMove() {}
+    endMove() {
+        // Update dimensions in case the element has been moved by a sub-class
+        this.#updateBounds()
+    }
+
+//==============================================================================
+
+    startResize() {
+        if (this.#selectionElement.tagName === 'rect') {
+            this.#startResizeDims = getRectDimensions(this.#selectionElement as SVGRectElement)
+        }
+    }
+
+    resize(topLeftDelta: PointLike, bottomRightDelta: PointLike) {
+        if (!PointMath.isZero(topLeftDelta) || !PointMath.isZero(bottomRightDelta)) {
+            if (this.#startResizeDims) {
+                modifyRectDimensions(this.#selectionElement as SVGRectElement,
+                                     this.#startResizeDims, topLeftDelta, bottomRightDelta)
+            }
+            this.#updateBounds()
+            this.celldlObject.context.editor.notifyChanges()
+        }
+    }
+
+    endResize() {
+        this.#startResizeDims = undefined
+    }
+
+//==============================================================================
 
     xBounds(padding: number = 0): [number, number] {
         padding = this.xPadding(padding)
@@ -618,6 +683,16 @@ export class CellDLSVGElement {
 
     drawControlHandles() {}
 
+    setSelectedHandles(enable: boolean) {
+        if (this.selected) {
+            if (enable) {
+                this.drawControlHandles()
+            } else {
+                this.clearControlHandles()
+            }
+        }
+    }
+
     highlight(highlight = true) {
         this.#setSelectionClass('highlight', highlight)
     }
@@ -665,7 +740,8 @@ export class CellDLSVGElement {
      * @param imageData A depiction of the element as a data URL.
      */
     async updateImageElement(imageData: string) {
-        this.svgElement.innerHTML = `<image href="${imageData}"/>`
+        await loadImages([imageData])   // So the new image has a size when it's rendered
+        this.svgElement.innerHTML = `<image href="${imageData}" height="${SVG_ICON_HEIGHT}"/>`
         await vue.nextTick()            // Wait for image to render
         this.#updatedSvgElement()
     }

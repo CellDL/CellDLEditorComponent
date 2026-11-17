@@ -25,7 +25,6 @@ import SVGPathCommander from 'svg-path-commander'
 
 import type { CellDLConnection } from '#editor/celldlObjects'
 import { ID_PART_SEPARATOR } from '#editor/diagram'
-import { alert } from '#editor/editor/alerts'
 
 import type { PointLike } from '#root/utils/points'
 import {
@@ -107,7 +106,7 @@ export class SvgConnection extends CellDLSVGElement {
                           )
             }
         } else {
-            alert.elementError(`Connection ${connection.id}: wrong number of paths for connectors`, this.svgElement)
+            this.celldlObject.context.alert.elementError(`Connection ${connection.id}: wrong number of paths for connectors`, this.svgElement)
         }
     }
 
@@ -144,12 +143,6 @@ export class SvgConnection extends CellDLSVGElement {
 
     drawControlHandles() {
         this.#pathElements.forEach((element) => { element.drawControlHandles() })
-    }
-
-    clearSelectedHandles() {
-        if (this.selected) {
-            this.#pathElements.forEach((element) => { element.clearControlHandles() })
-        }
     }
 
     endMove() {
@@ -223,17 +216,17 @@ export class SvgConnection extends CellDLSVGElement {
 
     getStyle(): Styling {
         return {
-            pathStyle: getStrokeString(this.svgElement, {
+            strokeStyle: getStrokeString(this.svgElement, {
                 colour: CONNECTION_COLOUR,
                 width: CONNECTION_WIDTH,
-                dashScale: CONNECTION_DASH
+                dashScale: 0   // CONNECTION_DASH
             })
         }
     }
 
     setStyle(styling: Styling) {
-        if (styling.pathStyle) {
-            setStrokeFromString(this.svgElement, styling.pathStyle)
+        if (styling.strokeStyle) {
+            setStrokeFromString(this.svgElement, styling.strokeStyle)
         }
     }
 }

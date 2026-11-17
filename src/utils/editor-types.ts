@@ -27,6 +27,13 @@ import type { Styling } from './styling'
 
 //==============================================================================
 
+// Components inside an editor send their events to the editor via this injected target
+// (a page may have several editors, so `document` can't be used)
+
+export const EDITOR_EVENTS_KEY: vue.InjectionKey<EventTarget> = Symbol('celldl-editor-events')
+
+//==============================================================================
+
 export enum PANEL_ID {
     METADATA_PANEL = 'metadata-property-panel',
     PROPERTIES_PANEL = 'properties-property-panel',
@@ -118,6 +125,7 @@ export type EditorToolButton = {
     image?: string
     panel?: vue.Raw<vue.Component>
     props?: vue.Ref<PropertyGroup[]>
+    separator?: boolean  // If true, renders as a visual group separator instead of a button
 }
 
 //==============================================================================
@@ -138,6 +146,7 @@ export type FileStatus = {
 //==============================================================================
 
 export type ViewState = {
+    showAxes?: boolean
     showGrid?: boolean
     gridSpacing?: number
     snapToGrid?: number

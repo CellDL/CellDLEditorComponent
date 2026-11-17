@@ -3,34 +3,46 @@
         template(#title)
             div {{ title }}
         template(#content)
-            div(v-if="!properties.objectId") Please select a single element or path.
-            template(v-else)
-                .group(v-for="group in styleGroups")
-                    FillStyle(
-                        v-if="group.styling.fillStyle"
-                        :fillStyle="group.styling.fillStyle"
-                        @change="updateFillStyle"
-                    )
-                    CornerStyle(
-                        v-if="group.styling.cornerStyle"
-                        :cornerStyle="group.styling.cornerStyle"
-                        @change="updateCornerStyle"
-                    )
-                    TextStyle(
-                        v-if="group.styling.textStyle"
-                        :textStyle="group.styling.textStyle"
-                        @change="updateTextStyle"
-                    )
-                    PathStyle(
-                        v-if="group.styling.pathStyle"
-                        :pathStyle="group.styling.pathStyle"
-                        @change="updatePathStyle"
-                    )
-                    GapStyle(
-                        v-if="group.styling.gapStyle"
-                        :gapStyle="group.styling.gapStyle"
-                        @change="updateGapStyle"
-                    )
+            .panel-content
+                div(v-if="!properties.objectId") Please select a single element or path.
+                template(v-else)
+                    Accordion(multiple=true v-model:value="openAccordions")
+                        .group(v-for="(group, groupIndex) in properties.groups")
+                            AccordionPanel(v-if="group.styling.fillStyle" value="fill")
+                                AccordionHeader(:pt="{ root: { class: 'left-icon' } }") Fill
+                                AccordionContent
+                                    FillStyle(
+                                        :fillStyle="group.styling.fillStyle"
+                                        @change="(fillStyle) => updateFillStyle(fillStyle, groupIndex)"
+                                    )
+                            AccordionPanel(v-if="group.styling.cornerStyle" value="corner")
+                                AccordionHeader(:pt="{ root: { class: 'left-icon' } }") Corner
+                                AccordionContent
+                                    CornerStyle(
+                                        :cornerStyle="group.styling.cornerStyle"
+                                        @change="(cornerStyle) => updateCornerStyle(cornerStyle, groupIndex)"
+                                    )
+                            AccordionPanel(v-if="group.styling.textStyle" value="text")
+                                AccordionHeader(:pt="{ root: { class: 'left-icon' } }") Text
+                                AccordionContent
+                                    TextStyle(
+                                        :textStyle="group.styling.textStyle"
+                                        @change="(textStyle) => updateTextStyle(textStyle, groupIndex)"
+                                    )
+                            AccordionPanel(v-if="group.styling.strokeStyle" value="stroke")
+                                AccordionHeader(:pt="{ root: { class: 'left-icon' } }") Stroke
+                                AccordionContent
+                                    StrokeStyle(
+                                        :strokeStyle="group.styling.strokeStyle"
+                                        @change="(strokeStyle) => updateStrokeStyle(strokeStyle, groupIndex)"
+                                    )
+                            AccordionPanel(v-if="group.styling.gapStyle" value="membrane")
+                                AccordionHeader(:pt="{ root: { class: 'left-icon' } }") Membrane
+                                AccordionContent
+                                    GapStyle(
+                                        :gapStyle="group.styling.gapStyle"
+                                        @change="(gapStyle) => updateGapStyle(gapStyle, groupIndex)"
+                                    )
 </template>
 
 <script setup lang="ts">
@@ -38,12 +50,13 @@
 
 import * as vue from 'vue'
 
-import type { ComponentProperties, PropertyGroup } from '#root/utils/editor-types'
+import type { ComponentProperties } from '#root/utils/editor-types'
+import type { Styling } from '#root/utils/styling'
 
 import CornerStyle from '../widgets/CornerStyle.vue'
 import FillStyle from '../widgets/FillStyle.vue'
 import GapStyle from '../widgets/GapStyle.vue'
-import PathStyle from '../widgets/PathStyle.vue'
+import StrokeStyle from '../widgets/StrokeStyle.vue'
 import TextStyle from '../widgets/TextStyle.vue'
 
 import ToolPanel from './ToolPanel.vue'
@@ -55,59 +68,148 @@ const props = defineProps<{
     toolId: string
 }>()
 
+const properties = vue.inject(`${props.toolId}-componentProperties`) as vue.Ref<ComponentProperties>
+
 const emit = defineEmits(['style-event'])
 
 //==============================================================================
 
-const properties = vue.inject<vue.Ref<ComponentProperties>>(`${props.toolId}-componentProperties`)
+// Which accordion groups are open by default for the selected object: its only group,
+// if it has just one, otherwise none
 
-const disabled = vue.ref<boolean>(properties?.value ? !properties.value.objectId : true)
-const styleGroups = vue.ref<PropertyGroup[]>([])
-
-// Need to make sure panel is closed when button is deactivated
-vue.watch(
-    () => properties?.value,
-    (newValue) => {
-        const visible = !!newValue?.objectId
-        if (visible) {
-            styleGroups.value = newValue.groups
+function defaultOpenAccordions(): string[] {
+    let defaultPanel: string|undefined
+    let panels = 0
+    for (const group of properties.value.groups) {
+        if (group.styling?.fillStyle) {
+            panels += 1
+            if (!defaultPanel) {
+                defaultPanel = 'fill'
+            } else if (defaultPanel !== 'fill') {
+                break
+            }
         }
-        disabled.value = !visible
-    },
-    { deep: true }
+        if (group.styling?.cornerStyle) {
+            panels += 1
+            if (!defaultPanel) {
+                defaultPanel = 'corner'
+            } else if (defaultPanel !== 'corner') {
+                break
+            }
+        }
+        if (group.styling?.textStyle) {
+            panels += 1
+            if (!defaultPanel) {
+                defaultPanel = 'text'
+            } else if (defaultPanel !== 'text') {
+                break
+            }
+        }
+        if (group.styling?.strokeStyle) {
+            panels += 1
+            if (!defaultPanel) {
+                defaultPanel = 'stroke'
+            } else if (defaultPanel !== 'stroke') {
+                break
+            }
+        }
+        if (group.styling?.gapStyle) {
+            panels += 1
+            if (!defaultPanel) {
+                defaultPanel = 'membrane'
+            } else if (defaultPanel !== 'membrane') {
+                break
+            }
+        }
+    }
+    return panels === 1 && defaultPanel ? [defaultPanel] : []
+}
+
+// The groups that are open. This is state rather than computed from the object's styling,
+// so that groups stay open while their values are being changed, and is only reset to the
+// default when a different object is selected.
+
+const openAccordions = vue.ref<string[]>([])
+
+vue.watch(
+    () => properties.value.objectId,
+    () => { openAccordions.value = defaultOpenAccordions() },
+    { immediate: true }
 )
 
 //==============================================================================
 
-function updateCornerStyle(cornerStyle: string) {
-    void vue.nextTick().then(() => {
-        emit('style-event', props.toolId, { cornerStyle })
-    })
+type StylingFields = 'cornerStyle' | 'fillStyle' | 'gapStyle' | 'strokeStyle' | 'textStyle'
+
+function updateStyling(field: StylingFields, value: string, groupIndex: number) {
+    const styling = properties.value.groups[groupIndex]?.styling
+    if (styling) {
+        const newStyling: Styling = {}
+        newStyling[field] = value
+        emit('style-event', props.toolId, newStyling)
+        styling[field] = value
+    }
 }
 
-function updateFillStyle(fillStyle: string) {
-    void vue.nextTick().then(() => {
-        emit('style-event', props.toolId, { fillStyle })
-    })
+function updateCornerStyle(cornerStyle: string, groupIndex: number) {
+    updateStyling('cornerStyle', cornerStyle, groupIndex)
 }
 
-function updateGapStyle(gapStyle: string) {
-    void vue.nextTick().then(() => {
-        emit('style-event', props.toolId, { gapStyle })
-    })
+function updateFillStyle(fillStyle: string, groupIndex: number) {
+    updateStyling('fillStyle', fillStyle, groupIndex)
 }
 
-function updatePathStyle(pathStyle: string) {
-    void vue.nextTick().then(() => {
-        emit('style-event', props.toolId, { pathStyle })
-    })
+function updateGapStyle(gapStyle: string, groupIndex: number) {
+    updateStyling('gapStyle', gapStyle, groupIndex)
 }
 
-function updateTextStyle(textStyle: string) {
-    void vue.nextTick().then(() => {
-        emit('style-event', props.toolId, { textStyle })
-    })
+function updateStrokeStyle(strokeStyle: string, groupIndex: number) {
+    updateStyling('strokeStyle', strokeStyle, groupIndex)
+}
+
+function updateTextStyle(textStyle: string, groupIndex: number) {
+    updateStyling('textStyle', textStyle, groupIndex)
 }
 
 //==============================================================================
 </script>
+
+<style scoped>
+.panel-content {
+    margin-top: 20px;
+}
+
+/* Move the toggle icon to the left */
+:deep(.left-icon) {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: start;
+    column-gap: 10px;
+    padding-bottom: 10px;
+}
+
+.p-accordionheader {
+    padding-left: 0;
+}
+
+.p-accordionpanel {
+    border-bottom-width: 4px;
+    padding-top: 0;
+    padding-bottom: 10px;
+}
+
+/* Text inputs (above sliders) otherwise default to a 20 character width, which is
+   wider than the panel and so widens their group, misaligning its colour boxes */
+:deep(.p-accordioncontent-content .p-inputtext) {
+    width: 100%;
+    min-width: 0;
+}
+
+</style>
+
+<style>
+/* Allow for FloatLabel text of InputWidget */
+.editor-pane .p-accordioncontent-content {
+    padding-top: 8px !important;
+}
+</style>

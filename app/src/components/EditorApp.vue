@@ -13,10 +13,10 @@
             :group="toastId"
             :pt:root:style="{ position: 'absolute' }"
         )
-        .h-dvh.flex.flex-col
-            .flex.items-baseline
+        .flex.flex-col.w-full.h-full
+            .flex.top-header
                 MainMenu(
-                :id="mainMenuId"
+                    :id="mainMenuId"
                     :haveFile="haveFile"
                     :fileModified="fileModified"
                     :editorStatus="editorStatus"
@@ -55,6 +55,7 @@
                 :editorCommand="editorCommand"
                 :theme="editorTheme"
                 @editorData="onEditorData"
+                @editorReady="onEditorReady"
                 @error="onError"
             )
             AboutDialog(
@@ -94,6 +95,15 @@
 .update-link:hover {
     background-color: var(--p-content-hover-background);
     border-color: var(--p-content-border-color);
+}
+
+/* Disable Message enter and leave animations */
+.p-message-enter-active,
+.p-message-leave-active {
+  animation: none !important;
+  transition: none !important;
+  animation-duration: 0s !important;
+  transition-duration: 0s !important;
 }
 </style>
 
@@ -140,21 +150,16 @@ const props = defineProps<IEditorAppProps>()
 
 // Wait for the editor component to become ready
 
-const loadingMessage = vue.ref<string>('Loading CellDL editor');
+const loadingMessage = vue.ref<string>('Loading CellDL editor')
 
-(function checkInitialised() {
-  setTimeout(() => {
-    if (editorInitialised()) {
-        loadingMessage.value = ''
-        console.log('Editor ready...')
+async function onEditorReady() {
+    loadingMessage.value = ''
 
-        // Now start checking for a newer version of the editor
-        version.startCheck()
-    } else {
-        checkInitialised()
-    }
-  }, 50)
-})()
+    console.log('Editor ready...')
+
+    // Now start checking for a newer version of the editor
+    version.startCheck()
+}
 
 //==============================================================================
 //==============================================================================
@@ -593,7 +598,13 @@ function onEditAction(action: string) {
 const viewState = vue.ref<ViewState>({ ...DEFAULT_VIEW_STATE })
 
 function onViewAction(action: string, value: number|boolean) {
-    if (action === 'show-grid') {
+    if (action === 'show-axes') {
+        viewState.value = { ...viewState.value, showAxes: !!value }
+        editorCommand.value = {
+            command: 'view',
+            options: viewState.value
+        }
+    } else if (action === 'show-grid') {
         viewState.value = { ...viewState.value, showGrid: !!value }
         editorCommand.value = {
             command: 'view',

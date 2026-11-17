@@ -1,6 +1,5 @@
 //==========================================================================
 
-import { undoRedo } from "#editor/diagram/undoredo"
 import type { TestCellDLEditor } from "./wrapper"
 
 export { TestCellDLEditor } from "./wrapper"
@@ -24,15 +23,15 @@ export function testEditor(editor: TestCellDLEditor) {
 
     editor.selectObject(oneNode1)
 
-    undoRedo.clean()
+    editor.undoRedo.clean()
 
     editor.moveComponent(zeroNode1, {x: 100, y: 40})
 
     // biome-ignore lint/style/noNonNullAssertion: we have a diagram
-    undoRedo.undo(editor.celldlDiagram!)
+    editor.undoRedo.undo(editor.celldlDiagram!)
 
     // biome-ignore lint/style/noNonNullAssertion: we have a diagram
-    undoRedo.redo(editor.celldlDiagram!)
+    editor.undoRedo.redo(editor.celldlDiagram!)
 }
 
 //==========================================================================

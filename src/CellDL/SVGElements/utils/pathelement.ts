@@ -91,6 +91,7 @@ export class PathElement {
     #moveIndex: number = 0
     #movePoint: PathPoint | null = null
     #pathArray: NormalArray
+    #selected: boolean = false
     #selectionClasses: Set<string> = new Set()
     #svgElement: SVGPathElement
     #svgShadow: SVGPathElement
@@ -105,8 +106,7 @@ export class PathElement {
         lastElement: BoundedElement
     ) {
         this.#connection = connection
-        // biome-ignore lint/style/noNonNullAssertion: the diagram has an editor frame
-        this.#editorFrame = connection.celldlDiagram.editorFrame!
+        this.#editorFrame = connection.celldlDiagram.context.editorFrame
         this.#svgElement = svgElement
         this.#svgParentId = id.split(ID_PART_SEPARATOR).slice(0, -1).join(ID_PART_SEPARATOR)
         this.#svgShadow = this.#editorFrame.addElementAsString('<path class="shadow"/>', true) as SVGPathElement
@@ -195,6 +195,7 @@ export class PathElement {
     }
     select(selected = true) {
         this.#setSelectionClass('selected', selected)
+        this.#selected = selected
     }
 
     addControlHandle(_svgPoint: PointLike): PathPoint|undefined {
@@ -220,7 +221,10 @@ export class PathElement {
     }
 
     endMove() {
-        this.clearControlHandles()
+        this.activate(false)
+        if (!this.#selected) {
+            this.clearControlHandles()
+        }
         const newPoints = this.simplifyPathPoints()
         if (newPoints) {
             this.#pathPoints = newPoints
@@ -243,7 +247,7 @@ export class PathElement {
         return false
     }
 
-    move(svgPoint: PointLike, options: ElementMoveOptions={}) {
+    move(svgPoint: PointLike, options: ElementMoveOptions={}): boolean {
         let redraw = false
         if (options.moveEntireConnection) {
             this.pathPoints.forEach((pathPoint) => {

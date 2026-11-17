@@ -23,19 +23,16 @@ import { DCT, isLiteral, type Literal, type NamedNode, RDF, RDFS } from '@celldl
 
 //==============================================================================
 
-import { Point, type PointLike } from '#root/utils/points'
 
-import { alert } from '#editor/editor/alerts'
-import { editGuides } from '#editor/editor/editguides'
-
-import { BoundedElement } from '#editor/SVGElements/boundedelement'
-import { CompartmentElement } from '#editor/SVGElements/compartmentelement'
 import type { ObjectTemplate } from '#editor/components'
 import type { CellDLDiagram } from '#editor/diagram'
-import { SvgConnection } from '#editor/SVGElements/svgconnection'
 import type { CellDLSVGElement, ElementMoveOptions } from '#editor/SVGElements'
+import { BoundedElement } from '#editor/SVGElements/boundedelement'
+import { CompartmentElement } from '#editor/SVGElements/compartmentelement'
+import { SvgConnection } from '#editor/SVGElements/svgconnection'
 
-import { componentLibraryPlugin } from '#root/plugins'
+import { Point, type PointLike } from '#root/utils/points'
+import type { DiagramContext } from '#editor/diagram/context'
 
 //==============================================================================
 
@@ -73,12 +70,13 @@ class BranchPoint implements PointLike {
 
 //==============================================================================
 
-export class CellDLObject {
+export abstract class CellDLObject {
     static celldlStyleClass: CELLDL_STYLE_CLASS = CELLDL_STYLE_CLASS.Unknown
     static celldlTypeName: string = 'Object'
 
     #celldlStyleClass: CELLDL_STYLE_CLASS
     #celldlDiagram: CellDLDiagram
+    #context: DiagramContext
     #celldlSvgElement?: CellDLSVGElement
     #celldlTypeName: string
 
@@ -99,9 +97,10 @@ export class CellDLObject {
         public readonly uri: NamedNode,
         objectTemplate: ObjectTemplate,
         celldlDiagram: CellDLDiagram,
-        updateStore: boolean=true
+        updateStore: boolean=false
     ) {
         this.#celldlDiagram = celldlDiagram
+        this.#context = celldlDiagram.context
         // @ts-expect-error: celldlStyleClass is a member of the object's constructor
         this.#celldlStyleClass = this.constructor.celldlStyleClass
         // @ts-expect-error: celldlType is a member of the object's constructor
@@ -116,7 +115,7 @@ export class CellDLObject {
         }
 
         // Get data that plugins need to associate with the object
-        this.#pluginData = componentLibraryPlugin.getPluginData(this)
+        this.#pluginData = this.#context.componentLibraryPlugin.getPluginData(this)
     }
 
     toString(): string {
@@ -142,12 +141,12 @@ export class CellDLObject {
         return []
     }
 
-    get description() {
-        return this.#description
+    get context(): DiagramContext {
+        return this.#context
     }
 
-    get hasEditGuides() {
-        return false
+    get description() {
+        return this.#description
     }
 
     get id(): string {
@@ -307,6 +306,9 @@ export class CellDLObject {
         this.#celldlSvgElement?.drawControlHandles()
     }
 
+    setSelectedHandles(_enable: boolean) {
+    }
+
     highlight(highlight: boolean=true) {
         this.#celldlSvgElement?.highlight(highlight)
     }
@@ -318,6 +320,7 @@ export class CellDLObject {
     }
 
     select(selected: boolean=true) {
+        this.setSelectedHandles(selected)
         this.#celldlSvgElement?.select(selected)
     }
 
@@ -356,28 +359,26 @@ export class CellDLObject {
 
 export class CellDLMoveableObject extends CellDLObject {
 
-    #boundedElement: BoundedElement|undefined
-
-    startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
-        // Finding alignment guides as we move
-        editGuides.aligning(this, true)
-        super.startMove(svgPoint, options)
-    }
-
     get isMoveable() {
         return true
+    }
+
+    startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
+        // We are finding alignment guides as we move and don't want to find ours
+        this.context.editGuides.aligning(this, true)
+        super.startMove(svgPoint, options)
     }
 
     move(svgPoint: PointLike, options: ElementMoveOptions={}) {
         super.move(svgPoint, options)
         // Highliglight guides of objects that our centroid's aligned with
-        editGuides.matchGuide(this)
+        this.context.editGuides.matchGuide(this)
     }
 
     endMove() {
         super.endMove()
-        // We've stopped finding our alignment guides
-        editGuides.aligning(this, false)
+        // We've stopped moving and want our alignment guides available
+        this.context.editGuides.aligning(this, false)
     }
 
     redraw() {
@@ -385,7 +386,11 @@ export class CellDLMoveableObject extends CellDLObject {
     }
 
     assignSvgElement(svgElement: SVGGraphicsElement, align: boolean) {
-        this.#boundedElement = new BoundedElement(this, svgElement, this.isAlignable, align)
+        // This sets `this.celldlSvgElement` as part of constructor
+        new BoundedElement(this, svgElement, {
+            align,
+            gridAligned: this.isAlignable
+        })
     }
 }
 
@@ -395,8 +400,20 @@ export class CellDLAnnotation extends CellDLMoveableObject {
     static celldlStyleClass = CELLDL_STYLE_CLASS.Annotation
     static celldlTypeName = 'Annotation'
 
-    get hasEditGuides() {
-        return true
+    #annotationElement: CompartmentElement|undefined
+
+    assignSvgElement(svgElement: SVGGraphicsElement, align: boolean) {
+        this.#annotationElement = new CompartmentElement(this, svgElement, {
+            align: align,
+            gridAligned: this.isAlignable,
+            isRegion: true
+        })
+    }
+
+    setSelectedHandles(enable: boolean) {
+        if (this.#annotationElement) {
+            this.#annotationElement.setSelectedHandles(enable)
+        }
     }
 }
 
@@ -411,10 +428,11 @@ export class CellDLConnectedObject extends CellDLMoveableObject {
     constructor(
         uri: NamedNode,
         objectTemplate: ObjectTemplate,
-        celldlDiagram: CellDLDiagram
+        celldlDiagram: CellDLDiagram,
+        updateStore: boolean=false
     ) {
-        super(uri, objectTemplate, celldlDiagram)
-        this.#maxConnections = componentLibraryPlugin.getMaxConnections(this)
+        super(uri, objectTemplate, celldlDiagram, updateStore)
+        this.#maxConnections = this.context.componentLibraryPlugin.getMaxConnections(this)
     }
 
     toString(): string {
@@ -445,7 +463,7 @@ export class CellDLConnectedObject extends CellDLMoveableObject {
         if (this.numConnections < this.maxConnections) {
             this.#connections.set(connection.id, connection)
         } else {
-            alert.elementError(
+            this.context.alert.elementError(
                 `${this.id}: Cannot add ${connection.id} --  connection limit reached`,
                 this.celldlSvgElement ? this.celldlSvgElement.svgElement : undefined
             )
@@ -460,7 +478,15 @@ export class CellDLConnectedObject extends CellDLMoveableObject {
         super.startMove(svgPoint, options)
         // Remove control handles from selected connections
         this.#connections.forEach(connection => {
-            connection.clearSelectedHandles()
+            connection.setSelectedHandles(false)
+        })
+    }
+
+    endMove() {
+        super.endMove()
+        // Restore control handles on selected connections
+        this.#connections.forEach(connection => {
+            connection.setSelectedHandles(true)
         })
     }
 
@@ -484,9 +510,10 @@ export class CellDLComponent extends CellDLConnectedObject {
     constructor(
         uri: NamedNode,
         objectTemplate: ObjectTemplate,
-        celldlDiagram: CellDLDiagram
+        celldlDiagram: CellDLDiagram,
+        updateStore: boolean=false
     ) {
-        super(uri, objectTemplate, celldlDiagram)
+        super(uri, objectTemplate, celldlDiagram, updateStore)
         this.#interfacePorts = objectTemplate.metadataProperties
             .getPropertyAsArray(CELLDL.uri('hasInterface'))
             .map((node) => <CellDLInterface>celldlDiagram.getConnector(node))
@@ -503,10 +530,6 @@ export class CellDLComponent extends CellDLConnectedObject {
 
     get interfacePorts() {
         return this.#interfacePorts
-    }
-
-    get hasEditGuides() {
-        return true
     }
 
     move(svgPoint: PointLike, options: ElementMoveOptions={}) {
@@ -539,23 +562,15 @@ export class CellDLCompartment extends CellDLConnectedObject {
     static readonly celldlStyleClass = CELLDL_STYLE_CLASS.Compartment
     static celldlTypeName = 'Compartment'
 
-
-    constructor(
-        uri: NamedNode,
-        objectTemplate: ObjectTemplate,
-        celldlDiagram: CellDLDiagram
-    ) {
-        super(uri, objectTemplate, celldlDiagram)
-    }
     #associatedComponents: CellDLMoveableObject[] = []
     #compartmentElement: CompartmentElement|undefined
 
-    get isAlignable() {
-        return false
-    }
-
     assignSvgElement(svgElement: SVGGraphicsElement, align: boolean) {
-        this.#compartmentElement = new CompartmentElement(this, svgElement, this.isAlignable, align)
+        this.#compartmentElement = new CompartmentElement(this, svgElement, {
+            align: align,
+            gridAligned: this.isAlignable,
+            isRegion: false
+        })
         if (this.celldlSvgElement) {
             for (const object of this.celldlDiagram.objectsContainedIn(this.celldlSvgElement.bounds)) {
                 const celldlObject = object.object
@@ -566,10 +581,13 @@ export class CellDLCompartment extends CellDLConnectedObject {
         }
     }
 
+// after a resize need to update associatedComponents
+
     startMove(svgPoint: PointLike, options: ElementMoveOptions={}) {
         super.startMove(svgPoint, options)
+        // this needs to be like a selection-set start move....
         for (const component of this.#associatedComponents) {
-            component.startMove(svgPoint, { noAlign: true, snapGrid: false })
+            component.startMove(svgPoint, options)
         }
     }
 
@@ -577,7 +595,7 @@ export class CellDLCompartment extends CellDLConnectedObject {
         super.move(svgPoint, options)
         // A move of the compartment moves associated components.
         for (const component of this.#associatedComponents) {
-            component.move(svgPoint, { noAlign: true, snapGrid: false })
+            component.move(svgPoint, options)
         }
     }
 
@@ -585,6 +603,12 @@ export class CellDLCompartment extends CellDLConnectedObject {
         super.endMove()
         for (const component of this.#associatedComponents) {
             component.endMove()
+        }
+    }
+
+    setSelectedHandles(enable: boolean) {
+        if (this.#compartmentElement) {
+            this.#compartmentElement.setSelectedHandles(enable)
         }
     }
 }
@@ -596,14 +620,14 @@ export class CellDLConnection extends CellDLObject {
     static celldlTypeName = 'Connection'
 
     #connectedObjects: CellDLConnectedObject[] = []
-    #svgConnection: SvgConnection|undefined
 
     constructor(
         uri: NamedNode,
         objectTemplate: ObjectTemplate,
-        celldlDiagram: CellDLDiagram
+        celldlDiagram: CellDLDiagram,
+        updateStore: boolean=false
     ) {
-        super(uri, objectTemplate, celldlDiagram)
+        super(uri, objectTemplate, celldlDiagram, updateStore)
         const metadata = objectTemplate.metadataProperties
         const source = celldlDiagram.getConnector(metadata.getProperty(CELLDL.uri('hasSource')))
         const target = celldlDiagram.getConnector(metadata.getProperty(CELLDL.uri('hasTarget')))
@@ -617,7 +641,7 @@ export class CellDLConnection extends CellDLObject {
                 connector.addConnection(this)
             }
         } else {
-            alert.elementError(
+            this.context.alert.elementError(
                 `Connection ${this.id} has no source and/or target...`,
                 this.celldlSvgElement ? this.celldlSvgElement.svgElement : undefined
             )
@@ -649,12 +673,13 @@ export class CellDLConnection extends CellDLObject {
     }
 
     assignSvgElement(svgElement: SVGGraphicsElement, _align: boolean) {
-        this.#svgConnection = new SvgConnection(this, svgElement)
+        // This sets `this.celldlSvgElement` as part of constructor
+        new SvgConnection(this, svgElement)
     }
 
-    clearSelectedHandles() {
-        if (this.#svgConnection) {
-            this.#svgConnection.clearSelectedHandles()
+    setSelectedHandles(enable: boolean) {
+        if (this.celldlSvgElement) {
+            this.celldlSvgElement.setSelectedHandles(enable)
         }
     }
 }

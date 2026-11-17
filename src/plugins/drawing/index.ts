@@ -2,15 +2,16 @@
 //==============================================================================
 
 import type { MetadataStore } from '@celldl/metadata'
+import { RDFS } from '@celldl/rdf'
 
 import type {
     CellDLConnection,
     CellDLObject
 } from '#editor/celldlObjects'
-import { alert } from '#editor/editor/alerts'
 
 import type { PluginInterface } from '#root/plugins'
 import {
+    type EditorToolButton,
     PANEL_ID,
     type PropertyGroup,
     type ValueChange
@@ -72,12 +73,11 @@ export class DrawingPlugin implements PluginInterface {
     openDiagram(_uri: string, _rdfStore: MetadataStore) {
     }
 
-
     addPluginMetadataToStore(_rdfStore: MetadataStore) {
     }
 
     getPluginData(celldlObject: CellDLObject): object {
-        if (celldlObject.isCompartment) {
+        if (celldlObject.isCompartment || celldlObject.isAnnotation) {
             return {
                 managed: true
             }
@@ -115,23 +115,27 @@ export class DrawingPlugin implements PluginInterface {
     //==========================================================================
 
     loadComponentProperties(properties: PropertyGroup[], panelId: PANEL_ID, celldlObject: CellDLObject) {
-        alert.clear()
+        celldlObject.context.alert.clear()
         if (panelId === PANEL_ID.STYLE_PANEL
          && celldlObject.celldlSvgElement
          && (<PluginData>celldlObject.pluginData(this.id)).managed) {
             properties.forEach(group => {
                 if (group.groupId === STYLE_GROUP_ID) {
                     if (celldlObject.celldlSvgElement) {
-                        group.styling = celldlObject.celldlSvgElement.getStyle()
+                        group.styling = { ...celldlObject.celldlSvgElement.getStyle() }
                     }
                 }
             })
         }
     }
 
-    async updateObjectProperties(celldlObject: CellDLObject, panelId: PANEL_ID, itemId: string, value: ValueChange,
+    async updateObjectProperties(celldlObject: CellDLObject, _panelId: PANEL_ID, itemId: string, _value: ValueChange,
                                  _componentProperties: PropertyGroup[]) {
         celldlObject.celldlSvgElement?.updateElement()
+        if (itemId === RDFS.uri('label').value) {
+            // Reload object's panel properties as text style depends on the object having a label.
+            celldlObject.celldlDiagram.setPropertiesPanelObject(celldlObject)
+        }
     }
 
     async updatedComponentStyling(celldlObject: CellDLObject, styling: Styling) {
@@ -146,6 +150,28 @@ export class DrawingPlugin implements PluginInterface {
         return ''
     }
 
+    toolButtons(): EditorToolButton[][] {
+        return [[
+            {
+                toolId: `${PLUGIN_ID}/draw-closed-compartment`,
+                prompt: 'Closed compartment',
+                icon: 'lucide-SquircleDashed'
+            },
+            {
+                toolId: `${PLUGIN_ID}/draw-background-region`,
+                prompt: 'Background region',
+                icon: 'lucide-SquareDashedKanban'
+            }
+/* TEMP -- until implemented...
+        ], [
+            {
+                toolId: `${DRAWING_PLUGIN_ID}/draw-membrane-segment`,
+                prompt: 'Membrane segment',
+                icon: 'lucide-Tally2'
+            }
+*/
+        ]]
+    }
 }
 
 //==============================================================================

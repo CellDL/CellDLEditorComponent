@@ -19,7 +19,7 @@ limitations under the License.
 ******************************************************************************/
 /** biome-ignore-all lint/style/noNonNullAssertion: <keys exist in Map> */
 
-// WIP: import { ucum } from '@atomic-ehr/ucum'
+import { ucum } from '@atomic-ehr/ucum'
 
 //==============================================================================
 
@@ -43,11 +43,13 @@ import type {
 } from '#root/libopencor/locUIJsonApi'
 
 import {
+    type EditorToolButton,
     type ItemDetails,
     PANEL_ID,
     type PropertyGroup,
     type ValueChange
 } from '#root/utils/editor-types'
+import { logging } from '#root/utils/logging'
 import type { ConnectionStatus, PluginInterface } from '#root/plugins'
 import type {
     Styling
@@ -56,7 +58,6 @@ import {
     getFillString
 } from '#root/utils/svgUtils'
 
-import { alert } from '#editor/editor/alerts'
 import {
     CellDLComponent,
     type CellDLConnection,
@@ -67,6 +68,7 @@ import type {
     ElementTypeName,
     ObjectTemplate
 } from '#editor/components'
+import { CONNECTION_STYLE_DEFINITIONS } from '#editor/connections'
 import {
     getItemProperty,
     updateItemProperty
@@ -629,18 +631,18 @@ export class BondgraphPlugin implements PluginInterface {
     //==========================================================================
 
     loadComponentProperties(componentProperties: PropertyGroup[], panelId: PANEL_ID, celldlObject: CellDLObject) {
-        alert.clear()
+        celldlObject.context.alert.clear()
         if (panelId === PANEL_ID.PROPERTIES_PANEL) {
             if (!celldlObject.isConnection) {
                 const pluginData = (<PluginData>celldlObject.pluginData(this.id))
                 componentProperties.forEach(group => {
-                   if (BG_PROPERTY_GROUP_IDS.includes(group.groupId)) {
+                    if (BG_PROPERTY_GROUP_IDS.includes(group.groupId)) {
                         const groupTemplate = this.#elementPropertiesTemplate.get(group.groupId)
                         if (groupTemplate) {
                             if (group.groupId === BG_PROPERTY_GROUP_ID.ElementProperties) {
-                                this.#loadElementProperties(celldlObject, group, groupTemplate)
+                                this.#loadElementProperties(celldlObject, group, groupTemplate, pluginData)
                             } else if (group.groupId === BG_PROPERTY_GROUP_ID.ElementInitialValue) {
-                                this.#loadElementProperties(celldlObject, group, groupTemplate)
+                                this.#loadElementProperties(celldlObject, group, groupTemplate, pluginData)
                             } else if (pluginData.elementTemplate) {
                                 if (group.groupId === BG_PROPERTY_GROUP_ID.ElementParameters) {
                                     this.#setVariableItems(pluginData.elementTemplate.parameters, group)
@@ -663,8 +665,7 @@ export class BondgraphPlugin implements PluginInterface {
         }
     }
 
-    #loadElementProperties(celldlObject: CellDLObject, componentGroup: PropertyGroup, groupTemplate: IndexedPropertyGroup) {
-        const pluginData = <PluginData>celldlObject.pluginData(this.id)
+    #loadElementProperties(celldlObject: CellDLObject, componentGroup: PropertyGroup, groupTemplate: IndexedPropertyGroup, pluginData: PluginData) {
         groupTemplate.items.forEach((itemDetails: ItemDetails) => {
             const items: ItemDetails[] = []
             if (itemDetails.itemId === BG_ELEMENT_TYPE_ITEM) {
@@ -684,6 +685,7 @@ export class BondgraphPlugin implements PluginInterface {
             } else if (itemDetails.itemId === BG_ELEMENT_VALUE_ITEM) {
                 const item = getItemProperty(celldlObject, itemDetails)
                 if (item) {
+                    item.units = pluginData.elementTemplate?.value?.units
                     items.push(item)
                     item.optional = false
                     if (pluginData.baseComponent.type === this.#transformNodeType) {
@@ -697,11 +699,11 @@ export class BondgraphPlugin implements PluginInterface {
 
     #loadElementStyling(celldlObject: CellDLObject, componentGroup: PropertyGroup, connection: boolean) {
         if (connection) {
-            componentGroup.styling = celldlObject.celldlSvgElement!.getStyle()
+            componentGroup.styling = { ...celldlObject.celldlSvgElement?.getStyle() }
         } else {
             const pluginData = (<PluginData>celldlObject.pluginData(this.id))
             if (!('fillString' in pluginData)) {
-                pluginData.fillString = celldlObject.celldlSvgElement!.getStyle().fillStyle // getFillString(celldlObject.celldlSvgElement!.svgElement)
+                pluginData.fillString = celldlObject.celldlSvgElement?.getStyle().fillStyle
             }
             componentGroup.styling = {
                 fillStyle: pluginData.fillString
@@ -743,14 +745,11 @@ export class BondgraphPlugin implements PluginInterface {
         ).forEach((r) => {
             values.set(r.get('name')!.value, r.get('value')!.value)
         })
-
         group.items.forEach(item => {
             const itemVariable = item.itemId.split('/')
             const varName = itemVariable[1]!
             if (values.has(varName)) {
-                const valueUnits = values.get(varName)!.split(' ')
-                item.value = valueUnits[0]
-                item.units = valueUnits[1]
+                item.value = values.get(varName)
             }
         })
     }
@@ -772,7 +771,8 @@ export class BondgraphPlugin implements PluginInterface {
             let item = group.items[0]
             if (item) {
                 if (variable) {
-                    item.name = `${itemDefn.name} (${variable.units})`
+                    item.name = itemDefn.name
+                    item.units = variable.units
                     item.optional = false
                 } else {
                     item.optional = false
@@ -780,7 +780,8 @@ export class BondgraphPlugin implements PluginInterface {
                 }
             } else if (variable) {
                 item = Object.assign({}, itemDefn, {
-                    name: `${itemDefn.name} (${variable.units})`,
+                    name: itemDefn.name,
+                    units: variable.units,
                     optional: false,
                     value: itemDefn.defaultValue
                 })
@@ -791,12 +792,12 @@ export class BondgraphPlugin implements PluginInterface {
                 const newValue = String(item.value).trim()
                 if (newValue && elementTemplate) {
                     const objectUri = celldlObject.uri.toString()
-                    const variable = elementTemplate!.value
+                    const variable = elementTemplate?.value
                     celldlObject.rdfStore.update(`${SPARQL_PREFIXES}
                         PREFIX : <${this.#currentDocumentUri}#>
 
                         INSERT DATA {
-                           ${objectUri} bgf:hasValue "${newValue} ${variable!.units}"^^cdt:ucum .
+                           ${objectUri} bgf:hasValue "${newValue} ${variable?.units}"^^cdt:ucum .
                         }
                     `)
                 }
@@ -849,6 +850,7 @@ export class BondgraphPlugin implements PluginInterface {
 
     async updateObjectProperties(celldlObject: CellDLObject, panelId: PANEL_ID, itemId: string, value: ValueChange,
                                  componentProperties: PropertyGroup[]) {
+        logging.trace('updateObjectProperties', { objectId: celldlObject.id, newValue: value.newValue })
         if (panelId === PANEL_ID.PROPERTIES_PANEL) {
             const itemGroupId = itemId.split('/')[0]
             if (!itemGroupId) {
@@ -909,6 +911,7 @@ export class BondgraphPlugin implements PluginInterface {
     //==================================
 
     async updatedComponentStyling(celldlObject: CellDLObject, styling: Styling) {
+        logging.trace('updatedComponentStyling', { objectId: celldlObject.id, styling })
         const pluginData = (<PluginData>celldlObject.pluginData(this.id))
         if (styling.fillStyle) {   // we don't need styleType, just the presence of `fillStyle` in the `styling` object
             const fillString = styling.fillStyle
@@ -917,7 +920,7 @@ export class BondgraphPlugin implements PluginInterface {
                 await this.#updateSvgElement(celldlObject, pluginData.species, pluginData.location)
             }
         }
-        if (styling.pathStyle) {
+        if (styling.strokeStyle) {
             celldlObject.celldlSvgElement!.setStyle(styling)
         }
     }
@@ -927,12 +930,13 @@ export class BondgraphPlugin implements PluginInterface {
     async #updateElementProperties(value: ValueChange, itemId: string,
                                    celldlObject: CellDLObject, groupTemplate: IndexedPropertyGroup) {
         const pluginData = (<PluginData>celldlObject.pluginData(this.id))
+        logging.trace('updateElementProperties', { groupId: groupTemplate.groupId, itemId: itemId })
 
         // check all groups belonging to the PROPERTIES_PANEL
         if (groupTemplate.groupId === BG_PROPERTY_GROUP_ID.ElementProperties) {
             for (const item of groupTemplate.items) {
                 if (itemId === item.itemId) {
-                    alert.clear()
+                    celldlObject.context.alert.clear()
                     if (itemId === BG_ELEMENT_TYPE_ITEM) {
                         await this.#updateElementType(item, value, celldlObject)
                     } else if (itemId === BG_ELEMENT_SPECIES_ITEM) {
@@ -941,7 +945,7 @@ export class BondgraphPlugin implements PluginInterface {
                             updateItemProperty(item.property, value, celldlObject)
                             pluginData.species = value.newValue
                         } else {
-                            alert.error(errorMsg)
+                            celldlObject.context.alert.error(errorMsg)
                         }
                     } else if (itemId === BG_ELEMENT_LOCATION_ITEM) {
                         //pluginData.location = value.newValue
@@ -950,7 +954,7 @@ export class BondgraphPlugin implements PluginInterface {
                             updateItemProperty(item.property, value, celldlObject)
                             pluginData.location = value.newValue
                         } else {
-                            alert.error(errorMsg)
+                            celldlObject.context.alert.error(errorMsg)
                         }
                     }
                     break
@@ -958,7 +962,7 @@ export class BondgraphPlugin implements PluginInterface {
             }
         } else if (groupTemplate.groupId === BG_PROPERTY_GROUP_ID.ElementInitialValue) {
             if (itemId === BG_ELEMENT_VALUE_ITEM) {
-                alert.clear()
+                celldlObject.context.alert.clear()
                 this.#updateElementValue(value, celldlObject)
             }
         } else if (groupTemplate.groupId === BG_PROPERTY_GROUP_ID.ElementParameters
@@ -968,6 +972,19 @@ export class BondgraphPlugin implements PluginInterface {
     }
 
     //==================================
+
+    #valueWithUnits(value: string, defaultUnits: string) {
+        const valueFields = String(value).trim().split(/\s+/)
+        const valueString = valueFields[0] as string
+        let valueUnits = valueFields[1]
+        if (!valueUnits || ucum.convert(1, valueUnits, defaultUnits) === 1) {
+            valueUnits = defaultUnits
+        }
+        return {
+            value: valueString,
+            units: valueUnits
+        }
+    }
 
     #updateElementValue(value: ValueChange, celldlObject: CellDLObject) {
         const objectUri = celldlObject.uri.toString()
@@ -981,15 +998,16 @@ export class BondgraphPlugin implements PluginInterface {
             WHERE {
                 ${objectUri} bgf:hasValue ?value
             }`)
-        const newValue = String(value.newValue).trim()
         const elementTemplate = (<PluginData>celldlObject.pluginData(this.id)).elementTemplate
-        const variable = elementTemplate!.value
+        const units = elementTemplate?.value?.units as string
+        const newValue = String(value.newValue).trim()
         if (newValue) {
+            const valueUnits = this.#valueWithUnits(newValue, units)
             celldlObject.rdfStore.update(`${SPARQL_PREFIXES}
                 PREFIX : <${this.#currentDocumentUri}#>
 
                 INSERT DATA {
-                   ${objectUri} bgf:hasValue "${newValue} ${variable!.units}"^^cdt:ucum .
+                   ${objectUri} bgf:hasValue "${valueUnits.value} ${valueUnits.units}"^^cdt:ucum .
                 }
             `)
         }
@@ -1021,17 +1039,16 @@ export class BondgraphPlugin implements PluginInterface {
         if (!variable) {
             return
         }
+        const valueUnits = this.#valueWithUnits(value.newValue, variable.units)
         celldlObject.rdfStore.update(`${SPARQL_PREFIXES}
             PREFIX : <${this.#currentDocumentUri}#>
 
             INSERT DATA {
                 ${objectUri} ${predicate} _:pv .
                 _:pv bgf:varName "${varName}" ;
-                     bgf:hasValue "${value.newValue} ${variable.units}"^^cdt:ucum .
+                     bgf:hasValue "${valueUnits.value} ${valueUnits.units}"^^cdt:ucum .
             }
         `)
-// Check units...
-//            ucum.isConvertible(units1: string, units2: string)
     }
 
     //==================================
@@ -1069,6 +1086,28 @@ export class BondgraphPlugin implements PluginInterface {
 
     svgDefinitions(): string {
         return arrowMarkerDefinition('connection-end-arrow-bondgraph', 'bondgraph')
+    }
+
+    toolButtons(): EditorToolButton[][] {
+        return [
+            [
+                ...this.componentLibrary.templates.map(template => {
+                    return {
+                        toolId: `${PLUGIN_ID}/${template.id}`,
+                        prompt: template.name,
+                        image: template.imageData
+                    }
+                })
+            ],[
+                ...CONNECTION_STYLE_DEFINITIONS.map(styleDefn => {
+                    return {
+                        toolId: `${PLUGIN_ID}/${styleDefn.id}`,
+                        prompt: `${styleDefn.name} bond`,
+                        icon: styleDefn.icon
+                    }
+                })
+            ]
+        ]
     }
 
     //==========================================================================
@@ -1344,7 +1383,7 @@ export class BondgraphPlugin implements PluginInterface {
                     value: { name: 'k', units: '', value: '1' },
                 }
                 this.#elementTemplates.set(elementTemplate.type, elementTemplate)
-                this.#baseComponentToElementTemplates.get(component.type)!.push(elementTemplate)
+                this.#baseComponentToElementTemplates.get(component.type)?.push(elementTemplate)
                 continue
             }
             this.#query(`

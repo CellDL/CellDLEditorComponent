@@ -25,12 +25,11 @@ import type { NormalArray } from 'svg-path-commander'
 
 import { CONNECTION_SPLAY_PADDING } from '#root/utils/styling'
 import { Point, type PointLike, PointMath } from '#root/utils/points'
-import { editGuides } from '#editor/editor/editguides'
 
 import { FixedValue, RestrictedValue } from '#editor/geometry'
 import { roundEqual } from '#editor/utils'
 
-import type { BoundedElement } from './boundedelement'
+import type { BoundedElement } from '../boundedelement'
 import { FixedPathPoint, PathElement, PathPoint } from './pathelement'
 
 //==============================================================================
@@ -377,6 +376,7 @@ console.log(nPoints, index, face, otherFace, boundaryIntersection)
         if (intersections !== undefined && intersections[1]!) {
             const dirn = ['L', 'R'].includes(intersections[2]) ? 'H' : 'V'
             splayPoint.move(intersections[1], {
+                editGuides: this.connection.context.editGuides,
                 noAlignX: dirn === 'H',
                 noAlignY: dirn === 'V',
                 fullSnap: false,
@@ -423,7 +423,7 @@ console.log(nPoints, index, face, otherFace, boundaryIntersection)
                 this.#splitPath(dirn, nPoints - 3)
             }
         } else {
-            let alignedPosition = editGuides.gridAlign(pathPoint.offsetPoint(position))
+            let alignedPosition = this.connection.context.editGuides.gridAlign(pathPoint.offsetPoint(position))
             if (this.moveIndex === 2) {
                 const dirn = direction(this.pathPoints[1]!, this.pathPoints[2]!)
                 if (this.firstElement.containsPoint(alignedPosition, CONNECTION_SPLAY_PADDING)) {

@@ -18,7 +18,7 @@ limitations under the License.
 
 ******************************************************************************/
 
-import { editGuides, type GridAlignOptions } from '#editor/editor/editguides'
+import type { GridAlignOptions } from '#editor/editor/editguides'
 import type { Transform } from '#editor/geometry/transforms'
 import { round } from '#editor/utils'
 
@@ -396,7 +396,7 @@ export class RestrictedPoint {
 
     move(point: PointLike, options: PointMoveOptions = {}) {
         const newPoint = options.noOffset ? point : this.offsetPoint(point)
-        this.point = editGuides.gridAlign(newPoint, options)
+        this.point = options.editGuides ? options.editGuides.gridAlign(newPoint, options) : Point.fromPoint(newPoint)
     }
 
     offsetPoint(point: PointLike): Point {

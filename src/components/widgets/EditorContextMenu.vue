@@ -14,6 +14,7 @@ useThemeCssVariables('contextmenu')
 //==============================================================================
 
 import { CONTEXT_MENU } from '#editor/editor'
+import { EDITOR_EVENTS_KEY } from '#root/utils/editor-types'
 
 export type ContextMenuProps = {
     state: Set<CONTEXT_MENU>,
@@ -25,6 +26,9 @@ export type ContextMenuProps = {
 const props = defineProps<{
     contextMenuProps: ContextMenuProps
 }>()
+
+// Events go to the editor this component is part of
+const editorEvents = vue.inject(EDITOR_EVENTS_KEY, document)
 
 const menu = vue.ref()
 
@@ -39,7 +43,7 @@ vue.watch(
 )
 
 function contextMenuEvent(id: string) {
-    document.dispatchEvent(
+    editorEvents.dispatchEvent(
         new CustomEvent('context-menu-click', {
             detail: { id }
         })

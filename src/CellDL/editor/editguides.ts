@@ -27,6 +27,8 @@ import type { ViewState } from '#root/utils/editor-types'
 import { Point, type PointLike } from '#root/utils/points'
 import { getViewbox, SVG_URI } from '#root/utils/svgUtils'
 
+import { defaultGridOptions, DEFAULT_VIEW_STATE } from './defaults'
+
 //==============================================================================
 
 export const EDITOR_GRID_CLASS = 'alignment-grid'
@@ -54,6 +56,8 @@ const EPSILON = 0.1
 //==============================================================================
 
 export type GridAlignOptions = {
+    // Guides to align with. Points and control rectangles aren't aligned without them.
+    editGuides?: EditGuides
     fullSnap?: boolean
     noAlign?: boolean
     noAlignX?: boolean
@@ -62,27 +66,11 @@ export type GridAlignOptions = {
     snapGrid?: boolean
 }
 
-type GridOptions = {
+export type GridOptions = {
     gridSpacing: number // pixels
     resolution: number
     snapGrid: boolean
     fullSnap: boolean
-}
-
-// Needs to match what's passed to the CellDLEditor component as `viewState`
-
-const defaultGridOptions: GridOptions = {
-    gridSpacing: GRID_SPACING,
-    resolution: GRID_SNAP_RESOLUTION,
-    snapGrid: true,
-    fullSnap: true,
-}
-
-export const DEFAULT_VIEW_STATE: ViewState = {
-    showGrid: true,
-    gridSpacing: GRID_SPACING,
-    snapToGrid: defaultGridOptions.snapGrid ? (defaultGridOptions.fullSnap ? 1 : 0.5) : 0,
-    alignmentGuides: true
 }
 
 //==============================================================================
@@ -187,11 +175,11 @@ class IntervalGuide {
     #svgElement: SVGPathElement
     #useCount: number = 0
 
-    constructor(position: number, type: string, extent: [number, number]) {
+    constructor(position: number, type: string, extent: [number, number], axisGuide: boolean=false) {
         this.#centre = position
         this.#useCount = 1
         this.#svgElement = document.createElementNS(SVG_URI, 'path')
-        this.#svgElement.classList.add('alignment-guide')
+        this.#svgElement.classList.add(axisGuide ? 'axis-guide' : 'alignment-guide')
         if (type === 'H') {
             this.#svgElement.setAttribute('d', `M${extent[0]},${position}h${extent[1]}`)
         } else {
@@ -235,6 +223,7 @@ class IntervalGuide {
 
 class ComponentGuideGroup {
     #svgGroup: SVGGElement
+    #axis: IntervalGuide|undefined
     #intervalGuides: IntervalGuide[] = []
     #lastMatched: Map<string, IntervalGuide> = new Map()
     #extent: [number, number]
@@ -267,10 +256,27 @@ class ComponentGuideGroup {
         return guide
     }
 
+    addAxis() {
+        if (!this.#axis) {
+            this.#axis = new IntervalGuide(0, this.#type, this.#extent, true)
+            this.#svgGroup.appendChild(this.#axis.svgElement)
+        }
+    }
+
+    removeAxis() {
+        if (this.#axis) {
+            this.#svgGroup.removeChild(this.#axis.svgElement)
+            this.#axis = undefined
+        }
+    }
+
     #clearLastMatched(componentId: string) {
         if (this.#lastMatched.has(componentId)) {
             this.#lastMatched.get(componentId)?.show(false)
             this.#lastMatched.delete(componentId)
+        }
+        if (this.#axis) {
+            this.#axis.show(false)
         }
     }
 
@@ -303,6 +309,8 @@ class ComponentGuideGroup {
             if (this.#intervalGuides[n].useCount <= 0) {
                 this.#intervalGuides.splice(n, 1)
             }
+        } else if (this.#axis && Math.abs(position) < EPSILON) {
+            this.#axis.show(false)
         }
     }
 
@@ -330,6 +338,8 @@ class ComponentGuideGroup {
             lastMatched.show()
             this.#lastMatched.set(componentId, lastMatched)
             return lastMatched.centre
+        } else if (this.#axis && Math.abs(position) < EPSILON) {
+            this.#axis.show()
         }
         return null
     }
@@ -348,6 +358,7 @@ class ComponentGuides {
         this.#verticalGuideGroup = new ComponentGuideGroup('V', [extent[1], extent[3]])
         celldlDiagram.addEditorElement(this.#horizontalGuideGroup.svgGroup)
         celldlDiagram.addEditorElement(this.#verticalGuideGroup.svgGroup)
+        this.showAxes(!!DEFAULT_VIEW_STATE.showAxes)
     }
 
     addComponent(component: CellDLMoveableObject) {
@@ -360,10 +371,13 @@ class ComponentGuides {
     }
 
     aligning(component: CellDLMoveableObject, aligning: boolean) {
+        const centroid = component.celldlSvgElement?.centroid as Point
         if (aligning) {
-            this.removeComponent(component)
+            this.#horizontalGuideGroup.remove(component.id, centroid.y)
+            this.#verticalGuideGroup.remove(component.id, centroid.x)
         } else {
-            this.addComponent(component)
+            this.#horizontalGuideGroup.add(component.id, centroid.y)
+            this.#verticalGuideGroup.add(component.id, centroid.x)
         }
     }
 
@@ -388,30 +402,31 @@ class ComponentGuides {
         this.#horizontalGuideGroup.setTransform(viewbox)
         this.#verticalGuideGroup.setTransform(viewbox)
     }
+
+    #showAxes() {
+        this.#horizontalGuideGroup.show('X-axis', 0)
+        this.#verticalGuideGroup.show('Y-axis', 0)
+    }
+
+    showAxes(show: boolean) {
+        if (show) {
+            this.#horizontalGuideGroup.addAxis()
+            this.#verticalGuideGroup.addAxis()
+        } else {
+            this.#horizontalGuideGroup.removeAxis()
+            this.#verticalGuideGroup.removeAxis()
+        }
+    }
 }
 
 //==============================================================================
 
-class EditGuides {
-    static #instance: EditGuides | null = null
+// Each diagram has its own alignment grid and guides, held in its `DiagramContext`
 
+export class EditGuides {
     #alignmentGrid: AlignmentGrid | null = null
     #componentGuides: ComponentGuides | null = null
     #guidesEnabled: boolean = true
-
-    private constructor() {
-        if (EditGuides.#instance) {
-            throw new Error('Use EditGuides.instance instead of `new`')
-        }
-        EditGuides.#instance = this
-    }
-
-    static get instance(): EditGuides {
-        if (!EditGuides.#instance) {
-            EditGuides.#instance = new EditGuides()
-        }
-        return EditGuides.#instance
-    }
 
     addGuide(component: CellDLMoveableObject) {
         if (this.#componentGuides) {
@@ -460,6 +475,11 @@ class EditGuides {
             }
         }
         this.#guidesEnabled = !!state.alignmentGuides
+        if (this.#componentGuides) {
+            if (state.showAxes !== undefined) {
+                this.#componentGuides.showAxes(state.showAxes)
+            }
+        }
     }
 
     viewboxUpdated(viewbox: Extent) {
@@ -472,8 +492,5 @@ class EditGuides {
     }
 }
 
-//==============================================================================
-
-export const editGuides = EditGuides.instance
 
 //==============================================================================
