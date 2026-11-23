@@ -501,6 +501,11 @@ export class CellDLDiagram {
     }
 
     #trimSVGDiagram(svgDiagram: SVGSVGElement): Extent | null {
+        // Editor-specific elements in a layer (location shading) aren't measured
+        const editorElements = Array.from(svgDiagram.querySelectorAll(`g.${CELLDL_STYLE_CLASS.Layer} > .editor-specific`))
+        for (const element of editorElements) {
+            element.setAttribute('display', 'none')
+        }
         const bounds = (<SVGGraphicsElement[]>(
             Array.from(svgDiagram.children).filter(
                 (child) => 'getBBox' in child && !child.classList.contains('editor-specific')
@@ -525,6 +530,9 @@ export class CellDLDiagram {
                     yMax: -Infinity
                 }
             )
+        for (const element of editorElements) {
+            element.removeAttribute('display')
+        }
         const roundUp10 = (x: number) => 10 * Math.ceil(x / 10)
         const roundDn10 = (x: number) => 10 * Math.floor(x / 10)
         if (bounds.xMin < bounds.xMax && bounds.yMin < bounds.yMax) {
@@ -604,6 +612,20 @@ export class CellDLDiagram {
             this.#svgDiagram.append(element)
         }
         element.classList.add('editor-specific')
+    }
+
+    /**
+     * Add an editor-specific element to the current layer, in front of its
+     * compartments and behind everything else.
+     */
+    addEditorElementOverCompartments(element: SVGElement) {
+        if (this.#currentLayer) {
+            const before = Array.from(this.#currentLayer.children).find(
+                (child) => child !== element && !child.classList.contains(CELLDL_STYLE_CLASS.Compartment)
+            )
+            this.#currentLayer.insertBefore(element, before || null)
+            element.classList.add('editor-specific')
+        }
     }
 
     #removeEditorElements(svgDiagram: SVGSVGElement) {

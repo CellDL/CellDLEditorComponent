@@ -141,6 +141,14 @@ const viewItems = {
             }
         },
         {
+            label: 'Locations',
+            icon: getCheckedIcon(!!props.viewState.locationShading),
+            command: (e: MenuItemCommandEvent) => {
+                e.item.icon = toggleCheckedIcon(e.item)
+                emit('view-action', 'show-locations', itemChecked(e.item))
+            }
+        },
+        {
             label: 'Snap',
             icon: 'pi',
             items: snapToGridItems

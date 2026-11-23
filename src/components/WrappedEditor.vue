@@ -402,6 +402,9 @@ vue.watch(
         } else if (props.editorCommand?.command === 'view') {
             const command = props.editorCommand as EditorViewCommand
             celldlDiagram?.context.editGuides.setState(command.options)
+            if (command.options.locationShading !== undefined) {
+                celldlEditor.showLocationShading(command.options.locationShading)
+            }
         }
     }
 )
