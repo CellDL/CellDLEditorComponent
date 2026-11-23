@@ -55,7 +55,7 @@ export class DiagramContext {
     #editor: CellDLEditor
     #editGuides = new EditGuides()
     #editorFrame: EditorFrame
-    #undoRedo = new UndoRedo()
+    #undoRedo: UndoRedo
 
     constructor(diagram: CellDLDiagram, editor: CellDLEditor) {
         // The editor's plugin library, which has the plugins registered (a new
@@ -68,6 +68,7 @@ export class DiagramContext {
         // This MUST remain as the last group in the diagram when new layer groups are added...
 
         this.#editorFrame = new EditorFrame(diagram)
+        this.#undoRedo = new UndoRedo(editor)
     }
 
     get alert() {
