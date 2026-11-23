@@ -829,6 +829,8 @@ export class CellDLEditor {
                     const svgPoint = this.#domToSvgCoords(event)
                     this.#pathMaker.addPoint(svgPoint, event.shiftKey)
                 }
+            } else if (clickedObject === null || clickedObject.isConnection) {
+                this.#selectionClickEvent(event, element, clickedObject)
             }
         } else if (this.#editorMode === EDITOR_MODE.Selecting) {
             this.#selectionClickEvent(event, element, clickedObject)
@@ -919,9 +921,8 @@ export class CellDLEditor {
                     const nodeOrAlert = PathMaker.validStartObject(currentObject)
                     if (nodeOrAlert.alert) {
                         this.showTooltip(nodeOrAlert.alert, 'error')
-                    } else if (nodeOrAlert.node) {
-                        this.#nextPathNode = nodeOrAlert.node
                     }
+                    this.#nextPathNode = nodeOrAlert.node ?? null
                 } else {
                     this.#nextPathNode = this.#pathMaker.validPathNode(currentObject)
                 }
@@ -1184,20 +1185,18 @@ export class CellDLEditor {
         if (fromEditableElement(event)) {
             return
         }
-        if (this.#editorMode === EDITOR_MODE.PathDrawing
-         && (event.key === 'Escape' || event.key === 'Backspace')) {
+        if (event.key === 'Escape' || event.key === 'Backspace' || event.key === 'Delete') {
             if (this.#pathMaker) {
                 // Remove any partial path
                 this.#pathMaker.close()
                 this.#pathMaker = null
+            } else if (event.key !== 'Escape') {
+                // Prevent any default browser action (e.g. navigating back)
+                event.preventDefault()
+                this.#deleteSelectedObjects()
             }
-        } else if (event.key === 'Backspace') {
-            // Prevent any default browser action (e.g. navigating back)
-            event.preventDefault()
-            this.#deleteSelectedObjects()
-        } else if (this.#editorMode === EDITOR_MODE.Selecting
-            && (isMacOs() && event.metaKey
-            || !isMacOs() && event.ctrlKey)) {
+        } else if (this.#pathMaker === null
+                && (isMacOs() && event.metaKey || !isMacOs() && event.ctrlKey)) {
             if (event.key === 'z' && !event.shiftKey) {
                 this.#undoRedo!.undo(this.#celldlDiagram!)
             } else if (event.key === 'Z' || event.key === 'z' && event.shiftKey) {
