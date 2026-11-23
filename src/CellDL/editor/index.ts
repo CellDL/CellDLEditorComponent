@@ -35,6 +35,7 @@ import { SelectionSet } from '#editor/diagram/selectionset'
 import type { MoveUndoState, UndoRedo } from '#editor/diagram/undoredo'
 import { round } from '#editor/utils'
 
+import { CONTEXT_MENU } from '#root/components/contextmenu/types'
 import { isMacOs } from '#root/utils/common'
 import { PANEL_ID } from '#root/utils/editor-types'
 import { type Point, type PointLike, PointMath } from '#root/utils/points'
@@ -44,6 +45,7 @@ import type { ComponentLibraryPlugin } from '#root/plugins'
 
 //==============================================================================
 
+import { EDITOR_COMMAND, keycodeToCommandMap, keyName } from './commands'
 import { DEFAULT_VIEW_STATE } from './defaults'
 import type { EditorFrame } from './editorframe'
 import { EDITOR_GRID_CLASS } from './editguides'
@@ -100,16 +102,6 @@ enum EDITOR_MODE {
 }
 
 const DEFAULT_EDITOR_MODE = EDITOR_MODE.Selecting
-
-//==============================================================================
-
-export enum CONTEXT_MENU {
-    DELETE = 'menu-delete',
-    EDIT_GROUP = 'menu-edit-group',
-    INFO = 'menu-info',
-    GROUP_OBJECTS = 'menu-group',
-    UNGROUP_OBJECTS = 'menu-ungroup'
-}
 
 //==============================================================================
 
@@ -172,8 +164,6 @@ export class CellDLEditor {
 
     #pathMaker: PathMaker | null = null
     #nextPathNode: PathNode | null = null
-
-    #contextMenuActiveItems: Set<CONTEXT_MENU> = new Set()
 
     #currentTemplateDetails: TemplateEventDetails | null = null
     #drawConnectionSettings: StringProperties = {}
@@ -284,6 +274,10 @@ export class CellDLEditor {
         shadowRoot.addEventListener('pointerdown', this.#pointerDownEvent.bind(this) as EventListener, { signal })
         shadowRoot.addEventListener('pointermove', this.#pointerMoveEvent.bind(this) as EventListener, { signal })
         shadowRoot.addEventListener('pointerup', this.#pointerUpEvent.bind(this) as EventListener, { signal })
+        // Clear the status bar when the pointer leaves the canvas
+        this.#container.addEventListener('pointerleave', () => {
+            this.#clearStatus()
+        }, { signal })
 
         // Keyboard handlers. These are on the editor's own root element, so an editor only
         // acts on keys while focus is somewhere inside it (its canvas, toolbar or panels).
@@ -341,7 +335,6 @@ export class CellDLEditor {
             }
             this.events.dispatchEvent(new CustomEvent('open-context-menu', {
                 detail: {
-                    state: this.#contextMenuActiveItems,
                     event: event
                 }
             }))
@@ -350,9 +343,9 @@ export class CellDLEditor {
             const targetId = (<CustomEvent>event).detail.id
             if (targetId === CONTEXT_MENU.DELETE) {
                 this.#deleteSelectedObjects()
-            } else if (targetId === CONTEXT_MENU.INFO) {
+            } else if (targetId === CONTEXT_MENU.INSPECT) {
 // WIP               this.#showSelectedObjectInfo()
-            } else if (targetId === CONTEXT_MENU.GROUP_OBJECTS) {
+            } else if (targetId === CONTEXT_MENU.GROUP) {
                 if (this.#boxMaker) {
                     this.#boxMaker.groupComponents()
                     this.#closeBoxMaker()
@@ -476,13 +469,6 @@ export class CellDLEditor {
         }
     }
 
-    enableContextMenuItem(itemId: CONTEXT_MENU, enable: boolean = true) {
-        if (enable) {
-            this.#contextMenuActiveItems.add(itemId)
-        } else {
-            this.#contextMenuActiveItems.delete(itemId)
-        }
-    }
 
     #changeMode(editorMode: EDITOR_MODE) {
         this.#editorMode = editorMode
@@ -542,6 +528,13 @@ export class CellDLEditor {
                 this.#statusMsg.classList.add(style)
                 this.#statusStyle = style
             }
+        }
+    }
+
+    #clearStatus() {
+        this.status = ''
+        if (this.#statusPos) {
+            this.#statusPos.innerText = ''
         }
     }
 
@@ -681,6 +674,15 @@ export class CellDLEditor {
             this.#boxMaker = null
         }
         this.#showStatus(null)
+    }
+
+    #groupSelectedObjects() {
+/* WIP
+        if (this.#boxMaker) {
+            this.#boxMaker.groupComponents()
+            this.#closeBoxMaker()
+        }
+*/
     }
 
     setPropertiesPanelObject(celldlObject: CellDLObject|undefined) {
@@ -1183,27 +1185,47 @@ export class CellDLEditor {
         this.events.dispatchEvent(new CustomEvent('file-edited'))
     }
 
+    #processEditorCommand(command: EDITOR_COMMAND) {
+        if        (command === EDITOR_COMMAND.COPY) {
+//          this.#copySelectedObjectsToClipboard()          // WIP
+        } else if (command === EDITOR_COMMAND.CUT) {
+//          this.#cutSelectedObjectsToClipboard()           // WIP
+        } else if (command === EDITOR_COMMAND.DELETE) {
+            this.#deleteSelectedObjects()
+        } else if (command === EDITOR_COMMAND.DUPLICATE) {
+//          this.#duplicateSelectedObjects()                // WIP
+        } else if (command === EDITOR_COMMAND.INSPECT) {
+//          this.#showSelectedObjectInfo()                  // WIP
+        } else if (command === EDITOR_COMMAND.GROUP) {
+            this.#groupSelectedObjects()
+        } else if (command === EDITOR_COMMAND.PASTE) {
+//          this.#pasteSelectedObjectsFromClipboard()       // WIP
+        } else if (command === EDITOR_COMMAND.REDO) {
+            this.#undoRedo?.redo(this.#celldlDiagram!)
+        } else if (command === EDITOR_COMMAND.UNDO) {
+            this.#undoRedo?.undo(this.#celldlDiagram!)
+        } else if (command === EDITOR_COMMAND.UNGROUP) {
+//          this.#ungroupSelectedObject()                   // WIP
+        }
+    }
+
     #keyDownEvent(event: KeyboardEvent) {
         // Keys typed into a field (e.g. in a panel) are for that field, not the diagram
         if (fromEditableElement(event)) {
             return
         }
-        if (event.key === 'Escape' || event.key === 'Backspace' || event.key === 'Delete') {
-            if (this.#pathMaker) {
+        if (this.#pathMaker) {
+            if (event.key === 'Escape' || event.key === 'Backspace' || event.key === 'Delete') {
                 // Remove any partial path
                 this.#pathMaker.close()
                 this.#pathMaker = null
-            } else if (event.key !== 'Escape') {
-                // Prevent any default browser action (e.g. navigating back)
-                event.preventDefault()
-                this.#deleteSelectedObjects()
             }
-        } else if (this.#pathMaker === null
-                && (isMacOs() && event.metaKey || !isMacOs() && event.ctrlKey)) {
-            if (event.key === 'z' && !event.shiftKey) {
-                this.#undoRedo!.undo(this.#celldlDiagram!)
-            } else if (event.key === 'Z' || event.key === 'z' && event.shiftKey) {
-                this.#undoRedo!.redo(this.#celldlDiagram!)
+        } else {
+            // Prevent any default browser action (e.g. navigating back)
+            event.preventDefault()
+            const command = keycodeToCommandMap.get(keyName(event))
+            if (command) {
+                this.#processEditorCommand(command)
             }
         }
     }
