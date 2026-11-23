@@ -117,6 +117,10 @@ export type CellDLEditorCommand = EditorEditCommand
 
 //==============================================================================
 
+export type DiagramClickEvent = {
+    id: string
+}
+
 export interface CellDLEditorProps {
     editorCommand?: CellDLEditorCommand
     theme?: Theme
@@ -192,6 +196,7 @@ const emit = defineEmits<{
     'editor-data': [data: EditorData],
     'editor-ready': [],
     'file-edited': [],
+    'diagram-click': [detail: DiagramClickEvent],
     'editor-state': [state: {
         error: string
     }]
@@ -200,6 +205,12 @@ const emit = defineEmits<{
 // Let our host know when the diagram has been changed
 
 celldlEditor.events.addEventListener('file-edited', () => emit('file-edited'))
+
+// and when one of its components or connections has been clicked
+
+celldlEditor.events.addEventListener('diagram-click', (event: Event) => {
+    emit('diagram-click', (<CustomEvent<DiagramClickEvent>>event).detail)
+})
 
 //==============================================================================
 

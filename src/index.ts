@@ -38,6 +38,7 @@ export {
 export type {
     CellDLEditorCommand,
     CellDLEditorProps,
+    DiagramClickEvent,
     EditorData,
     EditorEditCommand,
     EditorExportCommand,
