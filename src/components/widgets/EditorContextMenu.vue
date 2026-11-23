@@ -14,6 +14,7 @@ useThemeCssVariables('contextmenu')
 //==============================================================================
 
 import { CONTEXT_MENU } from '#editor/editor'
+import type { ArrangeOp } from '#editor/editor/arrange'
 import { EDITOR_EVENTS_KEY } from '#root/utils/editor-types'
 
 export type ContextMenuProps = {
@@ -42,10 +43,10 @@ vue.watch(
     }
 )
 
-function contextMenuEvent(id: string) {
+function contextMenuEvent(id: string, op?: ArrangeOp) {
     editorEvents.dispatchEvent(
         new CustomEvent('context-menu-click', {
-            detail: { id }
+            detail: { id, op }
         })
     )
     menu.value.hide()
@@ -53,12 +54,40 @@ function contextMenuEvent(id: string) {
 
 //==============================================================================
 
+function arrangeItems(id: CONTEXT_MENU, ops: [ArrangeOp, string][]) {
+    return ops.map(([op, label]) => ({
+        command: () => contextMenuEvent(id, op),
+        label
+    }))
+}
+
 const items = vue.computed(() => {
   return [
     {
         command: () => contextMenuEvent(CONTEXT_MENU.DELETE),
         disabled: !props.contextMenuProps?.state.has(CONTEXT_MENU.DELETE),
         label: 'Delete'
+    },
+    { separator: true },
+    {
+        disabled: !props.contextMenuProps?.state.has(CONTEXT_MENU.ALIGN),
+        items: arrangeItems(CONTEXT_MENU.ALIGN, [
+            ['left', 'Left'], ['centre', 'Centre'], ['right', 'Right'],
+            ['top', 'Top'], ['middle', 'Middle'], ['bottom', 'Bottom']
+        ]),
+        label: 'Align'
+    },
+    {
+        disabled: !props.contextMenuProps?.state.has(CONTEXT_MENU.DISTRIBUTE),
+        items: arrangeItems(CONTEXT_MENU.DISTRIBUTE, [
+            ['distribute-h', 'Horizontally'], ['distribute-v', 'Vertically']
+        ]),
+        label: 'Distribute'
+    },
+    {
+        command: () => contextMenuEvent(CONTEXT_MENU.STRAIGHTEN),
+        disabled: !props.contextMenuProps?.state.has(CONTEXT_MENU.STRAIGHTEN),
+        label: 'Straighten'
     },
     { separator: true },
     {

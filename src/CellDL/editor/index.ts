@@ -26,13 +26,14 @@ import '#root/assets/svgContent.css'
 // Also needed inside each editor's shadow root, where diagram content is styled via `:host` rules
 import svgContentCss from '#root/assets/svgContent.css?inline'
 
-import type { CellDLObject } from '#editor/celldlObjects'
+import type { CellDLConnection, CellDLObject } from '#editor/celldlObjects'
 import { PathMaker, type PathNode } from '#editor/connections/pathmaker'
 import type { TemplateEventDetails } from '#editor/components'
 import { objectMetadataTemplate, ObjectPropertiesPanel } from '#editor/components/properties'
 import type { CellDLDiagram } from '#editor/diagram'
 import { SelectionSet } from '#editor/diagram/selectionset'
-import type { MoveUndoState, UndoRedo } from '#editor/diagram/undoredo'
+import type { ArrangeUndoState, MoveUndoState, UndoRedo } from '#editor/diagram/undoredo'
+import type { SvgConnection } from '#editor/SVGElements/svgconnection'
 import { round } from '#editor/utils'
 
 import { isMacOs } from '#root/utils/common'
@@ -44,6 +45,7 @@ import type { ComponentLibraryPlugin } from '#root/plugins'
 
 //==============================================================================
 
+import { type ArrangeOp, arrangedBonds, arrangedCentres, minimumForArrange, SQUARE_UP_TOLERANCE } from './arrange'
 import { DEFAULT_VIEW_STATE } from './defaults'
 import type { EditorFrame } from './editorframe'
 import { EDITOR_GRID_CLASS } from './editguides'
@@ -104,11 +106,20 @@ const DEFAULT_EDITOR_MODE = EDITOR_MODE.Selecting
 //==============================================================================
 
 export enum CONTEXT_MENU {
+    ALIGN = 'menu-align',
     DELETE = 'menu-delete',
+    DISTRIBUTE = 'menu-distribute',
     EDIT_GROUP = 'menu-edit-group',
     INFO = 'menu-info',
     GROUP_OBJECTS = 'menu-group',
+    STRAIGHTEN = 'menu-straighten',
     UNGROUP_OBJECTS = 'menu-ungroup'
+}
+
+//==============================================================================
+
+function svgConnection(connection: CellDLConnection): SvgConnection {
+    return connection.celldlSvgElement as unknown as SvgConnection
 }
 
 //==============================================================================
@@ -339,6 +350,10 @@ export class CellDLEditor {
                 // This is to select the object that's had a right click
                 this.setSelectedObject(clickedObject)
             }
+            const arrangeable = this.#arrangeableObjects().length
+            this.enableContextMenuItem(CONTEXT_MENU.ALIGN, arrangeable >= minimumForArrange('left'))
+            this.enableContextMenuItem(CONTEXT_MENU.DISTRIBUTE, arrangeable >= minimumForArrange('distribute-h'))
+            this.enableContextMenuItem(CONTEXT_MENU.STRAIGHTEN, this.#bentSelectedConnections().length > 0)
             this.events.dispatchEvent(new CustomEvent('open-context-menu', {
                 detail: {
                     state: this.#contextMenuActiveItems,
@@ -350,6 +365,10 @@ export class CellDLEditor {
             const targetId = (<CustomEvent>event).detail.id
             if (targetId === CONTEXT_MENU.DELETE) {
                 this.#deleteSelectedObjects()
+            } else if (targetId === CONTEXT_MENU.ALIGN || targetId === CONTEXT_MENU.DISTRIBUTE) {
+                this.arrangeSelection((<CustomEvent>event).detail.op)
+            } else if (targetId === CONTEXT_MENU.STRAIGHTEN) {
+                this.straightenSelection()
             } else if (targetId === CONTEXT_MENU.INFO) {
 // WIP               this.#showSelectedObjectInfo()
             } else if (targetId === CONTEXT_MENU.GROUP_OBJECTS) {
@@ -1210,6 +1229,98 @@ export class CellDLEditor {
         if (event.key === 'Shift') {
             this.#setDefaultCursor()
         }
+    }
+
+    //==========================================================================
+
+    // Connections and compartments aren't aligned; moving a compartment moves its contents
+    #arrangeableObjects(): CellDLObject[] {
+        return this.selectionSet.objects.filter(object => object.isMoveable && !object.isConnection
+                                                       && !object.isCompartment && object.celldlSvgElement)
+    }
+
+    /**
+     * Align or distribute the selected components, as one undoable step. Bonds
+     * between them are straightened, and squared up when nearly horizontal or
+     * vertical; straight bonds with one end among them are redrawn between centres.
+     */
+    arrangeSelection(op: ArrangeOp): boolean {
+        if (this.#celldlDiagram === null || this.moving || this.#pathMaker !== null) {
+            return false
+        }
+        const objects = this.#arrangeableObjects()
+        if (objects.length < minimumForArrange(op)) {
+            return false
+        }
+        const bounds = objects.map(object => {
+            const svgElement = object.celldlSvgElement!
+            const { left, top, right, bottom } = svgElement.svgBounds()
+            return { left, top, right, bottom, centre: { x: svgElement.centroid.x, y: svgElement.centroid.y } }
+        })
+        const centres = arrangedCentres(bounds, op)
+        const { within, leaving } = arrangedBonds(objects)
+        const undoState = this.#undoRedo!.setArrangeUndoState(objects)
+        let changed = false
+        objects.forEach((object, index) => {
+            const centroid = bounds[index]!.centre
+            const target = centres[index]!
+            if (Math.abs(target.x - centroid.x) > 1e-6 || Math.abs(target.y - centroid.y) > 1e-6) {
+                object.reposition(centroid, target, { noAlign: true })
+                changed = true
+            }
+        })
+        // Once every end is where it goes
+        for (const connection of within) {
+            changed = svgConnection(connection).straighten(SQUARE_UP_TOLERANCE) || changed
+        }
+        for (const connection of leaving) {
+            if (!svgConnection(connection).hasControlPoints) {
+                changed = svgConnection(connection).straighten() || changed
+            }
+        }
+        return this.#endArrange(undoState, changed)
+    }
+
+    // Selected bonds, and those between selected components, that have bends
+    #bentSelectedConnections(): CellDLConnection[] {
+        const selected = this.selectionSet.objects
+        const connections = new Set(<CellDLConnection[]>selected.filter(object => object.isConnection))
+        for (const connection of arrangedBonds(selected.filter(object => !object.isConnection)).within) {
+            connections.add(connection)
+        }
+        return [...connections].filter(connection => svgConnection(connection).hasControlPoints)
+    }
+
+    /**
+     * Remove the bends of the selected bonds and of the bonds between selected
+     * components, as one undoable step.
+     */
+    straightenSelection(): boolean {
+        if (this.#celldlDiagram === null || this.moving || this.#pathMaker !== null) {
+            return false
+        }
+        const connections = this.#bentSelectedConnections()
+        if (connections.length === 0) {
+            return false
+        }
+        const ends = [...new Set(connections.flatMap(connection => connection.connectedObjects))]
+        const undoState = this.#undoRedo!.setArrangeUndoState(ends)
+        let changed = false
+        for (const connection of connections) {
+            changed = svgConnection(connection).straighten() || changed
+        }
+        return this.#endArrange(undoState, changed)
+    }
+
+    #endArrange(undoState: ArrangeUndoState, changed: boolean): boolean {
+        if (changed) {
+            undoState.endArrange()
+            this.setDirty()
+            this.notifyChanges()
+        } else {
+            this.#undoRedo!.resetActiveUndoState()
+        }
+        return changed
     }
 
     /* WIP

@@ -114,6 +114,10 @@ export class SvgConnection extends CellDLSVGElement {
         return this.#pathElements
     }
 
+    get hasControlPoints(): boolean {
+        return this.#pathElements.some(element => element.hasControlPoints)
+    }
+
     activate(active = true) {
         super.activate(active)
         this.#pathElements.forEach((element) => { element.activate(active) })
@@ -139,6 +143,14 @@ export class SvgConnection extends CellDLSVGElement {
 
     clearControlHandles() {
         this.#pathElements.forEach((element) => { element.clearControlHandles() })
+    }
+
+    straighten(square: number=0): boolean {
+        let changed = false
+        for (const element of this.#pathElements) {
+            changed = element.straighten(square) || changed
+        }
+        return changed
     }
 
     drawControlHandles() {

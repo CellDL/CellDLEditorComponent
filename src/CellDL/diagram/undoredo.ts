@@ -34,7 +34,8 @@ import { StoredObject } from './storedobject'
 enum UndoAction {
     DELETE = 1,
     INSERT = 2,
-    MOVE = 3
+    MOVE = 3,
+    ARRANGE = 4
 }
 
 type UndoObject = CellDLObject | SelectionSet
@@ -76,7 +77,7 @@ export class UndoState {
     storeObject(celldlObject: CellDLObject) {
         if (!this.#storedObjects.has(celldlObject.id)) {
             this.#storedObjects.set(celldlObject.id,
-                new StoredObject(celldlObject, this.action !== UndoAction.MOVE))
+                new StoredObject(celldlObject, this.action !== UndoAction.MOVE && this.action !== UndoAction.ARRANGE))
         }
     }
 }
@@ -88,6 +89,15 @@ type Direction = 'backwards' | 'forwards'
 //==============================================================================
 
 type ConnectionPathArrayMap = Map<string, NormalArray[]>
+
+function connectionPathArrays(connections: CellDLConnection[]): ConnectionPathArrayMap {
+    const pathArrays: ConnectionPathArrayMap = new Map()
+    for (const connection of connections) {
+        const pathElements = (connection.celldlSvgElement as unknown as SvgConnection)?.pathElements
+        pathArrays.set(connection.id, pathElements.map(pathElement => pathElement.pathArray))
+    }
+    return pathArrays
+}
 
 function setConnectionPathArray(connection: CellDLConnection, connectionPathArrays: ConnectionPathArrayMap) {
     const pathArrays = connectionPathArrays.get(connection.id)
@@ -181,6 +191,57 @@ export class MoveUndoState extends UndoState {
 
 //==============================================================================
 
+function centroids(objects: CellDLObject[]): Map<CellDLObject, Point> {
+    const centroids: Map<CellDLObject, Point> = new Map()
+    for (const object of objects) {
+        if (object.celldlSvgElement) {
+            centroids.set(object, Point.fromPoint(object.celldlSvgElement.centroid))
+        }
+    }
+    return centroids
+}
+
+// Aligning or distributing objects, and straightening their bonds
+
+export class ArrangeUndoState extends UndoState {
+    #connections: CellDLConnection[]
+    #nextPathArrays: ConnectionPathArrayMap = new Map()
+    #nextPositions: Map<CellDLObject, Point> = new Map()
+    #prevPathArrays: ConnectionPathArrayMap
+    #prevPositions: Map<CellDLObject, Point>
+
+    constructor(readonly objects: CellDLObject[]) {
+        // biome-ignore lint/style/noNonNullAssertion: there is at least one object
+        super(UndoAction.ARRANGE, objects[0]!)
+        this.#connections = [...new Set(objects.flatMap(object => object.connections))]
+        this.#prevPathArrays = connectionPathArrays(this.#connections)
+        this.#prevPositions = centroids(objects)
+    }
+
+    endArrange() {
+        this.#nextPathArrays = connectionPathArrays(this.#connections)
+        this.#nextPositions = centroids(this.objects)
+    }
+
+    restore(direction: Direction) {
+        const [from, to] = (direction === 'backwards') ? [this.#nextPositions, this.#prevPositions]
+                                                       : [this.#prevPositions, this.#nextPositions]
+        for (const object of this.objects) {
+            const start = from.get(object)
+            const end = to.get(object)
+            if (start && end && !PointMath.equals(start, end)) {
+                object.reposition(start, end, { noAlign: true })
+            }
+        }
+        const pathArrays = (direction === 'backwards') ? this.#prevPathArrays : this.#nextPathArrays
+        for (const connection of this.#connections) {
+            setConnectionPathArray(connection, pathArrays)
+        }
+    }
+}
+
+//==============================================================================
+
 export class UndoRedo {
     #activeUndoState: UndoState|null = null
     #redoStack: UndoState[] = []
@@ -203,6 +264,10 @@ export class UndoRedo {
             }
             this.#activeUndoState = null
         }
+    }
+
+    setArrangeUndoState(objects: CellDLObject[]): ArrangeUndoState {
+        return this.#setActiveUndoState(new ArrangeUndoState(objects)) as ArrangeUndoState
     }
 
     setDeleteUndoState(undoObject: UndoObject): UndoState {
@@ -277,6 +342,8 @@ export class UndoRedo {
                 diagram.undoDelete(undoState)
             } else if (undoState.action === UndoAction.MOVE) {
                 (undoState as MoveUndoState).reposition('forwards')
+            } else if (undoState.action === UndoAction.ARRANGE) {
+                (undoState as ArrangeUndoState).restore('forwards')
             }
         }
     }
@@ -291,6 +358,8 @@ export class UndoRedo {
                 diagram.undoInsert(undoState)
             } else if (undoState.action === UndoAction.MOVE) {
                 (undoState as MoveUndoState).reposition('backwards')
+            } else if (undoState.action === UndoAction.ARRANGE) {
+                (undoState as ArrangeUndoState).restore('backwards')
             }
         }
     }
