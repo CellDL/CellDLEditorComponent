@@ -168,6 +168,7 @@ export class CellDLEditor {
     #editorMode: EDITOR_MODE = DEFAULT_EDITOR_MODE
     #editorStatus: EditorStatus = new EditorStatusInstance()
     #dirty: boolean = false
+    #readOnly: boolean = false
 
     #dragging: boolean = false
     // Aborting this removes all the DOM event listeners added by `mount()`
@@ -338,6 +339,10 @@ export class CellDLEditor {
         }
         // Handle context menu events
         shadowRoot.addEventListener('contextmenu', (event) => {
+            if (this.#readOnly) {
+                event.preventDefault()
+                return
+            }
             const element = event.target as SVGGraphicsElement
             const clickedObject = this.#celldlDiagram!.objectById(getElementId(element))
             if (clickedObject && clickedObject === this.currentObject) {
@@ -382,6 +387,16 @@ export class CellDLEditor {
     }
     set status(text: string) {
         this.showMessage(text)
+    }
+
+    get readOnly(): boolean {
+        return this.#readOnly
+    }
+    set readOnly(readOnly: boolean) {
+        this.#readOnly = readOnly
+        if (readOnly) {
+            this.#changeMode(EDITOR_MODE.Selecting)
+        }
     }
 
     get undoRedo(): UndoRedo {
@@ -998,7 +1013,9 @@ export class CellDLEditor {
                 } else {
                     this.#setActiveObjects([currentObject])
                 }
-                currentObject.initialiseMove(element)  // will set moveable
+                if (!this.#readOnly) {
+                    currentObject.initialiseMove(element)  // will set moveable
+                }
                 this.currentObject = currentObject
             }
         }
@@ -1079,7 +1096,7 @@ export class CellDLEditor {
                 this.unsetSelectedObjects()
                 this.#boxMaker = new BoxMaker(this, svgPoint)
                 this.#boxMaking = true
-            } else if (this.currentObject?.isConnection) {
+            } else if (this.currentObject?.isConnection && !this.#readOnly) {
                 // Check if a linear path and if so, insert a control point and initialise moving it
                 this.#moveUndoState = this.#undoRedo!.setMoveUndoState(this.currentObject, svgPoint)
                 const controlElement = this.currentObject.addControlHandle(svgPoint)
@@ -1252,7 +1269,7 @@ export class CellDLEditor {
 
     #keyDownEvent(event: KeyboardEvent) {
         // Keys typed into a field (e.g. in a panel) are for that field, not the diagram
-        if (fromEditableElement(event)) {
+        if (this.#readOnly || fromEditableElement(event)) {
             return
         }
         if (this.#pathMaker) {
