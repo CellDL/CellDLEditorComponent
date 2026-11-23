@@ -69,6 +69,7 @@ import type {
     ObjectTemplate
 } from '#editor/components'
 import { CONNECTION_STYLE_DEFINITIONS } from '#editor/connections'
+import type { ElementLocation } from '#editor/geometry/regions'
 import {
     getItemProperty,
     updateItemProperty
@@ -410,6 +411,32 @@ export class BondgraphPlugin implements PluginInterface {
             rdfStore.add(statement.subject, statement.predicate, statement.object, bgfGraph)
         }
         this.#domainGraph = new DomainGraph(rdfStore, uri)
+    }
+
+    //======================================
+
+    /**
+     * The locations (`bgf:hasLocation`) of a diagram's elements, indexed by URI, and
+     * whether an element is a reaction or resistance, which joins the locations of
+     * the elements it is bonded to.
+     */
+    elementLocations(rdfStore: MetadataStore): Map<string, ElementLocation> {
+        const locations: Map<string, ElementLocation> = new Map()
+        rdfStore.query(`${SPARQL_PREFIXES}
+            SELECT ?uri ?location WHERE { ?uri bgf:hasLocation ?location }`
+        ).forEach((r: Map<string, $rdf.Term>) => {
+            locations.set(r.get('uri')!.value, { location: r.get('location')!.value })
+        })
+        rdfStore.query(`${SPARQL_PREFIXES}
+            SELECT ?uri WHERE {
+                ?uri a ?type .
+                { ?type rdfs:subClassOf* bgf:Reaction } UNION { ?type rdfs:subClassOf* bgf:Resistance }
+            }`, true
+        ).forEach((r: Map<string, $rdf.Term>) => {
+            const uri = r.get('uri')!.value
+            locations.set(uri, { ...locations.get(uri), joins: true })
+        })
+        return locations
     }
 
     //======================================

@@ -36,6 +36,7 @@ import type {
     CellDLObject
 } from '#editor/celldlObjects'
 import { CELLDL_CLASS_MAP } from '#editor/celldlObjects'
+import type { ElementLocation } from '#editor/geometry/regions'
 import type {
     ComponentLibrary,
     LibraryComponentTemplate,
@@ -98,6 +99,13 @@ export interface PluginInterface {
      * @param rdfStore The RDF store with metadata about the diagram.
      */
     addPluginMetadataToStore: (rdfStore: MetadataStore) => void
+
+    /**
+     * Get the locations of a diagram's elements, indexed by URI.
+     *
+     * @param rdfStore The RDF store with metadata about the diagram.
+     */
+    elementLocations?: (rdfStore: MetadataStore) => Map<string, ElementLocation>
 
     /**
      * Get plugin specific data to store with a CellDL object.
@@ -255,6 +263,16 @@ export class ComponentLibraryPlugin {
         for (const plugin of this.#registeredPlugins.values()) {
             plugin.addPluginMetadataToStore(rdfStore)
         }
+    }
+
+    elementLocations(rdfStore: MetadataStore): Map<string, ElementLocation> {
+        const locations: Map<string, ElementLocation> = new Map()
+        for (const plugin of this.#registeredPlugins.values()) {
+            for (const [uri, location] of plugin.elementLocations?.(rdfStore) || []) {
+                locations.set(uri, location)
+            }
+        }
+        return locations
     }
 
     //==========================================================================

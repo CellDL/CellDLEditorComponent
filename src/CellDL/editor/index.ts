@@ -49,6 +49,7 @@ import type { EditorFrame } from './editorframe'
 import { EDITOR_GRID_CLASS } from './editguides'
 import { PanZoom } from './panzoom'
 import { BoxMaker } from './boxmaker'
+import { LocationShading } from './shading'
 
 //==============================================================================
 
@@ -196,6 +197,8 @@ export class CellDLEditor {
     #componentLibraryPlugin: ComponentLibraryPlugin
 
     #openPanel: ObjectPropertiesPanel | undefined = undefined
+
+    #locationShading: LocationShading
     #panels: Map<PANEL_ID, ObjectPropertiesPanel>
     #tooltip: vue.Ref|undefined
     #tooltipElement: HTMLElement|undefined
@@ -208,6 +211,7 @@ export class CellDLEditor {
     constructor(componentLibraryPlugin: ComponentLibraryPlugin) {
         // Add a handler for events from toolbar buttons and popovers
         this.events.addEventListener('toolbar-event', this.#toolBarEvent.bind(this))
+        this.#locationShading = new LocationShading(this)
         this.events.addEventListener('component-selected', this.#componentTemplateSelectedEvent.bind(this))
         this.events.addEventListener('component-drag', this.#componentTemplateDragEvent.bind(this))
         this.events.addEventListener('connection-style', this.#connectionStyleEvent.bind(this))
@@ -397,6 +401,13 @@ export class CellDLEditor {
         }
     }
 
+    /**
+     * Show or hide the shading of a diagram's elements by their location.
+     */
+    showLocationShading(show: boolean) {
+        this.#locationShading.show(show)
+    }
+
     markClean() {
         if (this.#dirty) {
             this.#dirty = false
@@ -443,6 +454,8 @@ export class CellDLEditor {
         this.pointerMoved = false
         this.#activeObjects.clear()
         this.selectionSet.clear()
+
+        this.#locationShading.redraw()
     }
 
     closeDiagram() {
@@ -1203,6 +1216,7 @@ export class CellDLEditor {
             } else if (event.key === 'Z' || event.key === 'z' && event.shiftKey) {
                 this.#undoRedo!.redo(this.#celldlDiagram!)
             }
+            this.#locationShading.redraw()
         }
     }
 
