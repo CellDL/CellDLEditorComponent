@@ -1200,8 +1200,10 @@ export class CellDLEditor {
             || !isMacOs() && event.ctrlKey)) {
             if (event.key === 'z' && !event.shiftKey) {
                 this.#undoRedo!.undo(this.#celldlDiagram!)
+                this.notifyChanges()
             } else if (event.key === 'Z' || event.key === 'z' && event.shiftKey) {
                 this.#undoRedo!.redo(this.#celldlDiagram!)
+                this.notifyChanges()
             }
         }
     }

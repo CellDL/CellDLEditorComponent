@@ -22,6 +22,7 @@ import type * as vue from 'vue'
 
 //==============================================================================
 
+import type { CellDLEditor } from '#editor/editor'
 import type * as locApi from '#root/libopencor/locUIJsonApi'
 import type { Styling } from './styling'
 
@@ -31,6 +32,9 @@ import type { Styling } from './styling'
 // (a page may have several editors, so `document` can't be used)
 
 export const EDITOR_EVENTS_KEY: vue.InjectionKey<EventTarget> = Symbol('celldl-editor-events')
+
+// The editor, for panels provided by plugins
+export const EDITOR_KEY: vue.InjectionKey<CellDLEditor> = Symbol('celldl-editor')
 
 //==============================================================================
 

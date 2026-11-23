@@ -85,6 +85,11 @@ export interface PluginInterface {
     toolButtons: () => EditorToolButton[][]
 
     /**
+     * Get buttons, with their panels, for the right of the editor's toolbar.
+     */
+    panelButtons?: () => EditorToolButton[]
+
+    /**
      * A CellDL diagram has been opened.
      *
      * @param uri The diagram's URI.

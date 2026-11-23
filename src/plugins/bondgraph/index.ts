@@ -20,6 +20,7 @@ limitations under the License.
 /** biome-ignore-all lint/style/noNonNullAssertion: <keys exist in Map> */
 
 import { ucum } from '@atomic-ehr/ucum'
+import * as vue from 'vue'
 
 //==============================================================================
 
@@ -92,10 +93,13 @@ import type {
     BGElementStyle
 } from './utils'
 import { DomainGraph } from './domainGraph'
+import ReactionsPanel from './ReactionsPanel.vue'
 
 //==============================================================================
 
 export const PLUGIN_ID = 'bondgraph-components'
+
+const REACTIONS_PANEL_ID = 'reactions-panel'
 
 //==============================================================================
 //==============================================================================
@@ -1108,6 +1112,32 @@ export class BondgraphPlugin implements PluginInterface {
                 })
             ]
         ]
+    }
+
+    panelButtons(): EditorToolButton[] {
+        return [{
+            toolId: REACTIONS_PANEL_ID,
+            prompt: 'Reactions',
+            icon: 'lucide-FlaskConical',
+            panel: vue.markRaw(ReactionsPanel)
+        }]
+    }
+
+    /**
+     * Set a component's element type, species and location, as the Properties panel does.
+     */
+    async setElement(celldlObject: CellDLObject, elementType: string, species: string, location: string) {
+        const properties = this.getPanelTemplates(PANEL_ID.PROPERTIES_PANEL).map(group => ({ ...group, items: [] }))
+        this.loadComponentProperties(properties, PANEL_ID.PROPERTIES_PANEL, celldlObject)
+        const pluginData = <PluginData>celldlObject.pluginData(this.id)
+        for (const [itemId, oldValue, newValue] of [
+            [BG_ELEMENT_TYPE_ITEM, pluginData.elementTemplate?.type ?? pluginData.baseComponent.type, elementType],
+            [BG_ELEMENT_SPECIES_ITEM, pluginData.species ?? '', species],
+            [BG_ELEMENT_LOCATION_ITEM, pluginData.location ?? '', location]
+        ]) {
+            await this.updateObjectProperties(celldlObject, PANEL_ID.PROPERTIES_PANEL, itemId!,
+                                              { oldValue: oldValue!, newValue: newValue! }, properties)
+        }
     }
 
     //==========================================================================
