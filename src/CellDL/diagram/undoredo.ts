@@ -139,11 +139,16 @@ export class MoveUndoState extends UndoState {
         return connectionPathArrays
     }
 
-    endMove(position: PointLike|undefined) {
-        if (position !== undefined) {
+    endMove(position: PointLike|undefined): boolean {
+        if (position !== undefined && !PointMath.equals(this.#prevPosition, position)) {
             this.#nextPathArrays = this.#connectionPathArrays()
             this.#nextPosition = Point.fromPoint(position)
         }
+        return this.moved
+    }
+
+    get moved() {
+        return this.#nextPosition !== null
     }
 
     reposition(direction: Direction) {
@@ -183,6 +188,7 @@ export class MoveUndoState extends UndoState {
 
 export class UndoRedo {
     #activeUndoState: UndoState|null = null
+    #modified = false
     #redoStack: UndoState[] = []
     #undoStack: UndoState[] = []
 
@@ -190,10 +196,28 @@ export class UndoRedo {
         return this.#activeUndoState
     }
 
+    onModified: ((modified: boolean) => void)|null = null
+
+    get modified() {
+        return this.#modified
+    }
+
     clean() {
         this.#redoStack = []
         this.#undoStack = []
-        // notify CLEAN
+        this.updateModified()
+    }
+
+    updateModified() {
+        // A move only counts once it has moved something
+        if (this.#activeUndoState instanceof MoveUndoState && !this.#activeUndoState.moved) {
+            return
+        }
+        const modified = this.#undoStack.length > 0
+        if (modified !== this.#modified) {
+            this.#modified = modified
+            this.onModified?.(modified)
+        }
     }
 
     resetActiveUndoState() {
@@ -202,6 +226,7 @@ export class UndoRedo {
                 this.#popUndoStack()
             }
             this.#activeUndoState = null
+            this.updateModified()
         }
     }
 
@@ -248,6 +273,7 @@ export class UndoRedo {
             if (this.#undoStack.length === 0) {
                 // notify CLEAN
             }
+            this.updateModified()
             return undoState
         }
         return null
@@ -258,6 +284,7 @@ export class UndoRedo {
         if (!reDoing) {
             this.#clearRedoStack() // Can no longer redo once there are new items
         }
+        this.updateModified()
         return undoState
     }
 

@@ -185,13 +185,20 @@ const emit = defineEmits<{
     'editor-ready': [],
     'file-edited': [],
     'editor-state': [state: {
-        error: string
+        error?: string
+        modified?: boolean
     }]
 }>()
 
 // Let our host know when the diagram has been changed
 
 celldlEditor.events.addEventListener('file-edited', () => emit('file-edited'))
+
+// ... and when it is back to, or away from, its opened or cleaned state
+
+celldlEditor.events.addEventListener('modified-changed', (event: Event) => {
+    emit('editor-state', { modified: (event as CustomEvent<boolean>).detail })
+})
 
 //==============================================================================
 

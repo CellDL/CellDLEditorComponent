@@ -56,6 +56,7 @@
                 :theme="editorTheme"
                 @editorData="onEditorData"
                 @editorReady="onEditorReady"
+                @editorState="onEditorState"
                 @error="onError"
             )
             AboutDialog(
@@ -312,10 +313,6 @@ let currentFileHandle: FileSystemFileHandle|undefined
 
 vueusecore.useEventListener(document, 'file-edited', (_: Event) => {
     fileStatus.value.haveData = true
-    diagramModified(true)
-    if (!windowTitle.value.endsWith(' *')) {
-        windowTitle.value += ' *'
-    }
 })
 
 //==============================================================================
@@ -333,6 +330,17 @@ async function onEditorData(data: EditorData) {
 }
 
 //==============================================================================
+
+function onEditorState(state: { error?: string, modified?: boolean }) {
+    if (state.error) {
+        window.alert(state.error)
+    }
+    if (state.modified !== undefined) {
+        diagramModified(state.modified)
+        const title = windowTitle.value.replace(/ \*$/, '')
+        windowTitle.value = state.modified ? `${title} *` : title
+    }
+}
 
 function onError(msg: string) {
     window.alert(msg)

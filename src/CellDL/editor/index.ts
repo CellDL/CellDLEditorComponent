@@ -410,6 +410,9 @@ export class CellDLEditor {
         this.#celldlDiagram = celldlDiagram
         this.#editorFrame = celldlDiagram.context.editorFrame
         this.#undoRedo = celldlDiagram.context.undoRedo
+        this.#undoRedo.onModified = (modified: boolean) => {
+            this.events.dispatchEvent(new CustomEvent('modified-changed', { detail: modified }))
+        }
         this.#svgDiagram = celldlDiagram.svgDiagram
 
         // Initialise alignment guides and grid
@@ -1109,12 +1112,19 @@ export class CellDLEditor {
             if (this.currentObject && this.moving) {
                 this.moving = false
                 if (this.moved) {
-                    this.#moveUndoState?.endMove(svgPoint)
+                    const movedAway = this.#moveUndoState?.endMove(svgPoint) ?? true
                     if (this.#moveSelection) {
                         this.selectionSet.endMove()
                     } else {
                         this.currentObject.endMove()
                         this.currentObject.finaliseMove()
+                    }
+                    if (!movedAway) {
+                        this.#undoRedo!.resetActiveUndoState()
+                        this.#moveUndoState!.reposition('backwards')
+                        this.#moveUndoState = null
+                    } else {
+                        this.#undoRedo!.updateModified()
                     }
                 } else if (this.#moveUndoState) {
                     this.#undoRedo!.resetActiveUndoState()
