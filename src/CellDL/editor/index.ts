@@ -831,6 +831,9 @@ export class CellDLEditor {
                 }
             }
         } else if (this.#editorMode === EDITOR_MODE.Selecting) {
+            if (clickedObject) {
+                this.events.dispatchEvent(new CustomEvent('diagram-click', { detail: { id: clickedObject.id } }))
+            }
             this.#selectionClickEvent(event, element, clickedObject)
         }
     }
