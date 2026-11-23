@@ -38,7 +38,7 @@ import { CellDLDiagram } from '#editor/diagram'
 import { CellDLEditor } from '#editor/editor'
 import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS } from '#editor/editor'
 
-import { EDITOR_EVENTS_KEY, type EditorToolButton, PANEL_ID } from '#root/utils/editor-types'
+import { EDITOR_EVENTS_KEY, EDITOR_KEY, type EditorToolButton, PANEL_ID } from '#root/utils/editor-types'
 
 import { ComponentLibraryPlugin } from '#root/plugins'
 
@@ -174,6 +174,7 @@ const celldlEditor: CellDLEditor = new CellDLEditor(componentLibraryPlugin)
 
 // Our child components send their events to our editor
 vue.provide(EDITOR_EVENTS_KEY, celldlEditor.events)
+vue.provide(EDITOR_KEY, vue.markRaw(celldlEditor))
 
 
 //==============================================================================
@@ -293,7 +294,8 @@ const panelButtons = vue.ref<EditorToolButton[]>([
         prompt: 'Style',
         icon: 'lucide-Paintbrush',
         panel: vue.markRaw(StylingPanel)
-    }
+    },
+    ...(bgPlugin?.panelButtons?.() ?? [])
 ])
 
 //==============================================================================

@@ -34,7 +34,8 @@ import { StoredObject } from './storedobject'
 enum UndoAction {
     DELETE = 1,
     INSERT = 2,
-    MOVE = 3
+    MOVE = 3,
+    GROUP = 4
 }
 
 type UndoObject = CellDLObject | SelectionSet
@@ -78,6 +79,23 @@ export class UndoState {
             this.#storedObjects.set(celldlObject.id,
                 new StoredObject(celldlObject, this.action !== UndoAction.MOVE))
         }
+    }
+
+    // Store objects as they are now, e.g. after an inserted object's properties are set
+    updateStoredObjects() {
+        for (const [id, storedObject] of this.#storedObjects) {
+            this.#storedObjects.set(id, new StoredObject(storedObject.celldlObject, this.action !== UndoAction.MOVE))
+        }
+    }
+}
+
+//==============================================================================
+
+// Several changes undone and redone as one
+class GroupUndoState extends UndoState {
+    constructor(readonly undoStates: UndoState[]) {
+        // biome-ignore lint/style/noNonNullAssertion: a group has at least one state
+        super(UndoAction.GROUP, undoStates[0]!.undoObject)
     }
 }
 
@@ -183,6 +201,7 @@ export class MoveUndoState extends UndoState {
 
 export class UndoRedo {
     #activeUndoState: UndoState|null = null
+    #group: UndoState[]|null = null
     #redoStack: UndoState[] = []
     #undoStack: UndoState[] = []
 
@@ -202,6 +221,26 @@ export class UndoRedo {
                 this.#popUndoStack()
             }
             this.#activeUndoState = null
+        }
+    }
+
+    /**
+     * Collect changes until `endGroup()`, to undo them as one.
+     */
+    beginGroup() {
+        this.#group = []
+    }
+
+    endGroup() {
+        const undoStates = this.#group ?? []
+        this.#group = null
+        if (undoStates.length) {
+            for (const undoState of undoStates) {
+                if (undoState.action === UndoAction.INSERT) {
+                    undoState.updateStoredObjects()
+                }
+            }
+            this.#pushUndoStack(new GroupUndoState(undoStates), false)
         }
     }
 
@@ -262,6 +301,10 @@ export class UndoRedo {
     }
 
     #setActiveUndoState(undoState: UndoState): UndoState {
+        if (this.#group) {
+            this.#group.push(undoState)
+            return undoState
+        }
         this.#activeUndoState = undoState
         this.#pushUndoStack(undoState, false)
         return undoState
@@ -271,13 +314,7 @@ export class UndoRedo {
         const undoState = this.#popRedoStack()
         if (undoState) {
             this.#pushUndoStack(undoState, true)
-            if (undoState.action === UndoAction.DELETE) {
-                diagram.undoInsert(undoState)
-            } else if (undoState.action === UndoAction.INSERT) {
-                diagram.undoDelete(undoState)
-            } else if (undoState.action === UndoAction.MOVE) {
-                (undoState as MoveUndoState).reposition('forwards')
-            }
+            this.#restore(diagram, undoState, 'forwards')
         }
     }
 
@@ -285,13 +322,23 @@ export class UndoRedo {
         const undoState = this.#popUndoStack()
         if (undoState) {
             this.#pushRedoStack(undoState)
-            if (undoState.action === UndoAction.DELETE) {
-                diagram.undoDelete(undoState)
-            } else if (undoState.action === UndoAction.INSERT) {
-                diagram.undoInsert(undoState)
-            } else if (undoState.action === UndoAction.MOVE) {
-                (undoState as MoveUndoState).reposition('backwards')
+            this.#restore(diagram, undoState, 'backwards')
+        }
+    }
+
+    #restore(diagram: CellDLDiagram, undoState: UndoState, direction: Direction) {
+        const backwards = (direction === 'backwards')
+        if (undoState.action === UndoAction.GROUP) {
+            const undoStates = (undoState as GroupUndoState).undoStates
+            for (const state of backwards ? undoStates.toReversed() : undoStates) {
+                this.#restore(diagram, state, direction)
             }
+        } else if (undoState.action === UndoAction.MOVE) {
+            (undoState as MoveUndoState).reposition(direction)
+        } else if ((undoState.action === UndoAction.DELETE) === backwards) {
+            diagram.undoDelete(undoState)
+        } else {
+            diagram.undoInsert(undoState)
         }
     }
 }
