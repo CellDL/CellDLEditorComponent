@@ -352,6 +352,10 @@ export class CellDLDiagram {
         }
     }
 
+    get objects(): CellDLObject[] {
+        return [...this.#objects.values()]
+    }
+
     objectById(id: string): CellDLObject | null {
         return this.#objects.get(id) || null
     }
