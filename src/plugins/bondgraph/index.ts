@@ -195,6 +195,7 @@ export interface BondgraphVariable {
     variable: string        // The template's name for the variable
     name: string            // The variable's name in generated CellML
     units?: string
+    value?: string          // The diagram's value, with any units
 }
 
 //==============================================================================
@@ -432,10 +433,19 @@ export class BondgraphPlugin implements PluginInterface {
     bondgraphVariables(): BondgraphVariable[] {
         const prefix = `${this.#currentDocumentUri}#`
         const elements: Map<string, NamingElement> = new Map()
-        const units: Map<string, string> = new Map()
+        const details: Map<string, { units?: string, value?: string }> = new Map()
+        const values: Map<string, string> = new Map()
         for (const r of (this.#documentStore?.query(`${SPARQL_PREFIXES}
-            SELECT ?node ?type ?symbol ?species ?location WHERE {
+            SELECT ?node ?name ?value WHERE {
+                { ?node bgf:parameterValue ?pv } UNION { ?node bgf:VariableValue ?pv }
+                ?pv bgf:varName ?name ; bgf:hasValue ?value .
+            }`) ?? []) as Map<string, $rdf.Term>[]) {
+            values.set(`${r.get('node')!.value}/${r.get('name')!.value}`, r.get('value')!.value)
+        }
+        for (const r of (this.#documentStore?.query(`${SPARQL_PREFIXES}
+            SELECT ?node ?type ?symbol ?species ?location ?value WHERE {
                 ?node a ?type .
+                OPTIONAL { ?node bgf:hasValue ?value }
                 OPTIONAL { ?node bgf:hasSymbol ?symbol }
                 OPTIONAL { ?node bgf:hasSpecies ?species }
                 OPTIONAL { ?node bgf:hasLocation ?location }
@@ -460,7 +470,11 @@ export class BondgraphPlugin implements PluginInterface {
                 variables.push(intrinsic)
             }
             for (const v of variables) {
-                units.set(`${node}|${v.name}`, v.units)
+                details.set(`${node}|${v.name}`, {
+                    units: v.units,
+                    value: v.name === template.value?.name ? (r.get('value')?.value ?? template.value.value)
+                                                           : (values.get(`${node}/${v.name}`) ?? v.value)
+                })
             }
             elements.set(node, {
                 id: node, identifier: node.slice(prefix.length), domain: template.domain,
@@ -470,7 +484,7 @@ export class BondgraphPlugin implements PluginInterface {
         }
         return [...variableNames([...elements.values()]).entries()].map(([key, name]) => {
             const [id, variable] = key.split('|') as [string, string]
-            return { element: elements.get(id)!.identifier, variable, name, units: units.get(key) }
+            return { element: elements.get(id)!.identifier, variable, name, ...details.get(key) }
         })
     }
 

@@ -38,7 +38,7 @@ import { CellDLDiagram } from '#editor/diagram'
 import { CellDLEditor } from '#editor/editor'
 import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS } from '#editor/editor'
 
-import type { VariableMapping } from '#root/utils/cellml'
+import type { ParameterValues, VariableMapping } from '#root/utils/cellml'
 import { EDITOR_EVENTS_KEY, type EditorToolButton, PANEL_ID, VARIABLE_NAMES_KEY } from '#root/utils/editor-types'
 
 import { ComponentLibraryPlugin } from '#root/plugins'
@@ -115,6 +115,7 @@ export type CellDLEditorCommand = EditorEditCommand
 
 export interface CellDLEditorProps {
     editorCommand?: CellDLEditorCommand
+    parameterValues?: ParameterValues
     theme?: Theme
     variableMapping?: VariableMapping
 }
@@ -187,6 +188,7 @@ const emit = defineEmits<{
     'editor-data': [data: EditorData],
     'editor-ready': [],
     'file-edited': [],
+    'parameter-values': [values: ParameterValues],
     'variable-mapping': [mapping: VariableMapping],
     'editor-state': [state: {
         error: string
@@ -306,7 +308,7 @@ const panelButtons = vue.ref<EditorToolButton[]>([
     }
 ])
 
-// Our host owns the names of variables in generated CellML
+// Our host owns the names and values of variables in generated CellML
 
 vue.provide(VARIABLE_NAMES_KEY, {
     variables: () => bgPlugin?.bondgraphVariables() ?? [],
@@ -319,6 +321,16 @@ vue.provide(VARIABLE_NAMES_KEY, {
             mapping[variable] = { ...mapping[variable], name }
         }
         emit('variable-mapping', mapping)
+    },
+    values: () => props.parameterValues ?? {},
+    setValue: (variable: string, value: number|undefined) => {
+        const values = { ...props.parameterValues }
+        if (value === undefined) {
+            delete values[variable]
+        } else {
+            values[variable] = { ...values[variable], value }
+        }
+        emit('parameter-values', values)
     }
 })
 

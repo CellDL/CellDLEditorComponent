@@ -53,11 +53,13 @@
                     span {{ slotProps.message.message }}
             CellDLEditor.grow(
                 :editorCommand="editorCommand"
+                :parameterValues="parameterValues"
                 :theme="editorTheme"
                 :variableMapping="variableMapping"
                 @editorData="onEditorData"
                 @editorReady="onEditorReady"
                 @error="onError"
+                @parameterValues="(values) => parameterValues = values"
                 @variableMapping="(mapping) => variableMapping = mapping"
             )
             AboutDialog(
@@ -135,8 +137,8 @@ import * as vueCommon from '../utils/vueCommon'
 
 import CellDLEditor from '../../../src'
 
-import type { CellDLEditorCommand, EditorData, FileStatus, Theme, VariableMapping, ViewState } from '../../../src'
-import { editorInitialised, EditorStatus, renameCellMLVariables } from '../../../src'
+import type { CellDLEditorCommand, EditorData, FileStatus, ParameterValues, Theme, VariableMapping, ViewState } from '../../../src'
+import { applyCellMLParameterValues, editorInitialised, EditorStatus, renameCellMLVariables } from '../../../src'
 import { DEFAULT_VIEW_STATE } from '../../../src'
 
 //==============================================================================
@@ -276,6 +278,7 @@ vue.onMounted(() => {
 //==============================================================================
 
 const editorCommand = vue.ref<CellDLEditorCommand>()
+const parameterValues = vue.ref<ParameterValues>({})
 const variableMapping = vue.ref<VariableMapping>({})
 
 //==============================================================================
@@ -551,7 +554,8 @@ async function saveCellML(celldl: string) {
         const cellmlObject = celldl2cellml(`https://celldl.org/cellml/${fileHandle.name}`, celldl)
         if (cellmlObject.cellml) {
             const writableStream = await fileHandle.createWritable()
-            await writableStream.write(renameCellMLVariables(cellmlObject.cellml, variableMapping.value))
+            await writableStream.write(renameCellMLVariables(applyCellMLParameterValues(cellmlObject.cellml, parameterValues.value),
+                                                           variableMapping.value))
             await writableStream.close()
             toast.add({
                 severity: 'info',

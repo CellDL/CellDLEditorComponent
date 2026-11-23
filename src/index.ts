@@ -50,7 +50,12 @@ export type {
 export type { BondgraphVariable } from '#root/plugins/bondgraph'
 export { bgRdfStatements } from '#root/plugins/bondgraph/bgrdf'
 
-export { renameCellMLVariables, type VariableMapping } from '#root/utils/cellml'
+export {
+    applyCellMLParameterValues,
+    type ParameterValues,
+    renameCellMLVariables,
+    type VariableMapping
+} from '#root/utils/cellml'
 
 export { editorInitialised } from '#root/utils'
 

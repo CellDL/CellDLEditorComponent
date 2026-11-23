@@ -24,6 +24,11 @@ export type VariableMapping = Record<string, {
     units?: string
 }>
 
+export type ParameterValues = Record<string, {
+    value: number
+    units?: string
+}>
+
 export const VALID_CELLML_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/
 
 //==============================================================================
@@ -45,10 +50,7 @@ export function renameCellMLVariables(cellml: string, mapping: VariableMapping):
             throw new Error(`Invalid CellML variable name: ${name}`)
         }
     }
-    const doc = new DOMParser().parseFromString(cellml, 'application/xml')
-    if (doc.getElementsByTagName('parsererror').length) {
-        throw new Error('Cannot parse CellML')
-    }
+    const doc = parse(cellml)
     const renamed = (name: string|null) => (name && renames.get(name.trim())) ?? null
 
     for (const component of Array.from(doc.getElementsByTagNameNS('*', 'component'))) {
@@ -77,6 +79,47 @@ export function renameCellMLVariables(cellml: string, mapping: VariableMapping):
             ci.textContent = newName
         }
     }
+    return serialise(doc, cellml)
+}
+
+//==============================================================================
+
+/**
+ * Set the initial values of variables in CellML, leaving its math untouched.
+ *
+ * @throws if a value's units differ from its variable's
+ */
+export function applyCellMLParameterValues(cellml: string, values: ParameterValues): string {
+    if (Object.keys(values).length === 0) {
+        return cellml
+    }
+    const doc = parse(cellml)
+    for (const variable of Array.from(doc.getElementsByTagNameNS('*', 'variable'))) {
+        const name = variable.getAttribute('name') ?? ''
+        const value = Object.hasOwn(values, name) ? values[name] : undefined
+        if (!value || !variable.hasAttribute('initial_value')) {
+            continue
+        }
+        const units = variable.getAttribute('units')
+        if (value.units && value.units !== units) {
+            throw new Error(`\`${name}\` has units \`${units}\`, not \`${value.units}\``)
+        }
+        variable.setAttribute('initial_value', String(value.value))
+    }
+    return serialise(doc, cellml)
+}
+
+//==============================================================================
+
+function parse(cellml: string): Document {
+    const doc = new DOMParser().parseFromString(cellml, 'application/xml')
+    if (doc.getElementsByTagName('parsererror').length) {
+        throw new Error('Cannot parse CellML')
+    }
+    return doc
+}
+
+function serialise(doc: Document, cellml: string): string {
     const serialised = new XMLSerializer().serializeToString(doc)
     const declaration = serialised.startsWith('<?xml') ? '' : (cellml.match(/^\s*<\?xml[^>]*\?>\s*/)?.[0] ?? '')
     return declaration + serialised

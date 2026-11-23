@@ -9,6 +9,7 @@
                     th Element
                     th Variable
                     th Name
+                    th Value
                 tr(v-for="v in variables" :key="v.name")
                     td {{ v.element }}
                     td {{ v.name }}
@@ -20,6 +21,16 @@
                             :value="names.mapping()[v.name]?.name ?? ''"
                             :placeholder="v.name"
                             @change="rename(v.name, ($event.target as HTMLInputElement).value.trim())"
+                        )
+                    td
+                        input(
+                            type="text"
+                            spellcheck="false"
+                            :class="{ invalid: invalidValues.has(v.name) }"
+                            :value="names.values()[v.name]?.value ?? ''"
+                            :placeholder="v.value ?? ''"
+                            :title="v.units"
+                            @change="setValue(v.name, ($event.target as HTMLInputElement).value.trim())"
                         )
 </template>
 
@@ -43,6 +54,7 @@ const names = vue.inject(VARIABLE_NAMES_KEY) as VariableNames
 
 const variables = vue.ref<BondgraphVariable[]>([])
 const invalid = vue.ref<Set<string>>(new Set())
+const invalidValues = vue.ref<Set<string>>(new Set())
 
 vue.onMounted(() => {
     variables.value = names.variables()
@@ -60,6 +72,16 @@ function rename(variable: string, name: string) {
     }
     invalid.value.delete(variable)
     names.rename(variable, name)
+}
+
+function setValue(variable: string, value: string) {
+    const number = Number(value)
+    if (value !== '' && !Number.isFinite(number)) {
+        invalidValues.value.add(variable)
+        return
+    }
+    invalidValues.value.delete(variable)
+    names.setValue(variable, (value === '') ? undefined : number)
 }
 </script>
 
