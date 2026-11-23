@@ -92,6 +92,7 @@ import type {
     BGElementStyle
 } from './utils'
 import { DomainGraph } from './domainGraph'
+import { type NamingElement, variableNames } from './names'
 
 //==============================================================================
 
@@ -185,6 +186,16 @@ type ElementTemplate = ElementTypeName & {
     symbol: string
     defaultStyle: BGElementStyle
     baseComponent: BGBaseComponent
+}
+
+//==============================================================================
+
+export interface BondgraphVariable {
+    element: string         // The element's identifier
+    variable: string        // The template's name for the variable
+    name: string            // The variable's name in generated CellML
+    units?: string
+    value?: string          // The diagram's value, with any units
 }
 
 //==============================================================================
@@ -315,6 +326,7 @@ export class BondgraphPlugin implements PluginInterface {
     }
     #componentTemplates: Map<string, BGLibraryComponentTemplate> = new Map()
     #currentDocumentUri: string = ''
+    #documentStore: MetadataStore|undefined
     #physicalDomains: Map<string, PhysicalDomain> = new Map()
     #rdfStore: $rdf.RdfStore = new $rdf.RdfStore()
     #transformNodeType = BGF.uri('TransformNode').value
@@ -402,6 +414,7 @@ export class BondgraphPlugin implements PluginInterface {
         rdfStore.add($rdf.namedNode(uri), $rdf.RDF.uri('type'), BGF.uri('BondgraphModel'))
 
         this.#currentDocumentUri = uri
+        this.#documentStore = rdfStore
 
         // Add a copy of the BG-RDF framework as a **named graph**, to use when
         // finding BondElements and JunctionStructures
@@ -413,6 +426,67 @@ export class BondgraphPlugin implements PluginInterface {
     }
 
     //======================================
+
+    /**
+     * The variables of the diagram's bond elements, named as when generating CellML.
+     */
+    bondgraphVariables(): BondgraphVariable[] {
+        const prefix = `${this.#currentDocumentUri}#`
+        const elements: Map<string, NamingElement> = new Map()
+        const details: Map<string, { units?: string, value?: string }> = new Map()
+        const values: Map<string, string> = new Map()
+        for (const r of (this.#documentStore?.query(`${SPARQL_PREFIXES}
+            SELECT ?node ?name ?value WHERE {
+                { ?node bgf:parameterValue ?pv } UNION { ?node bgf:VariableValue ?pv }
+                ?pv bgf:varName ?name ; bgf:hasValue ?value .
+            }`) ?? []) as Map<string, $rdf.Term>[]) {
+            values.set(`${r.get('node')!.value}/${r.get('name')!.value}`, r.get('value')!.value)
+        }
+        for (const r of (this.#documentStore?.query(`${SPARQL_PREFIXES}
+            SELECT ?node ?type ?symbol ?species ?location ?value WHERE {
+                ?node a ?type .
+                OPTIONAL { ?node bgf:hasValue ?value }
+                OPTIONAL { ?node bgf:hasSymbol ?symbol }
+                OPTIONAL { ?node bgf:hasSpecies ?species }
+                OPTIONAL { ?node bgf:hasLocation ?location }
+            }`) ?? []) as Map<string, $rdf.Term>[]) {
+            const node = r.get('node')!.value
+            const template = this.#elementTemplates.get(r.get('type')!.value)
+            if (!node.startsWith(prefix) || !template || elements.has(node)) {
+                continue
+            }
+            const domain = this.#physicalDomains.get(template.domain)
+            const ports: Variable[] = domain ? [domain.flow, domain.potential] : []
+            if (domain && template.baseComponent.type === BGF.uri('Reaction').value) {
+                ports.splice(1, 1, { ...domain.potential, name: `${domain.potential.name}_f` },
+                                   { ...domain.potential, name: `${domain.potential.name}_r` })
+            }
+            // A store's quantity takes the element's own name
+            const value = template.value
+            const intrinsic = value && value.name === (domain?.quantity.name ?? 'q') ? value : undefined
+            const variables = [...ports, ...template.parameters.values(), ...template.variables.values()]
+                                .filter(v => v.name !== intrinsic?.name)
+            if (intrinsic) {
+                variables.push(intrinsic)
+            }
+            for (const v of variables) {
+                details.set(`${node}|${v.name}`, {
+                    units: v.units,
+                    value: v.name === template.value?.name ? (r.get('value')?.value ?? template.value.value)
+                                                           : (values.get(`${node}/${v.name}`) ?? v.value)
+                })
+            }
+            elements.set(node, {
+                id: node, identifier: node.slice(prefix.length), domain: template.domain,
+                label: r.get('symbol')?.value, species: r.get('species')?.value, location: r.get('location')?.value,
+                variables: [...new Set(variables.map(v => v.name))], intrinsic: intrinsic?.name
+            })
+        }
+        return [...variableNames([...elements.values()]).entries()].map(([key, name]) => {
+            const [id, variable] = key.split('|') as [string, string]
+            return { element: elements.get(id)!.identifier, variable, name, ...details.get(key) }
+        })
+    }
 
     addPluginMetadataToStore(rdfStore: MetadataStore) {
         // First remove existing statements about components in the document

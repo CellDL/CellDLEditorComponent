@@ -52,7 +52,7 @@ export default vite.defineConfig({
     },
     plugins: [
         dts({
-            exclude: ['./app/**'],
+            exclude: ['./app/**', './tests/**'],
             insertTypesEntry: true
         }),
         tailwindcssPlugin(),

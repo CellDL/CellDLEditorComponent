@@ -23,6 +23,8 @@ import type * as vue from 'vue'
 //==============================================================================
 
 import type * as locApi from '#root/libopencor/locUIJsonApi'
+import type { BondgraphVariable } from '#root/plugins/bondgraph'
+import type { ParameterValues, VariableMapping } from './cellml'
 import type { Styling } from './styling'
 
 //==============================================================================
@@ -32,12 +34,26 @@ import type { Styling } from './styling'
 
 export const EDITOR_EVENTS_KEY: vue.InjectionKey<EventTarget> = Symbol('celldl-editor-events')
 
+// The Variables panel lists the diagram's variables and asks the host to rename them
+// and to set their values
+
+export interface VariableNames {
+    variables: () => BondgraphVariable[]
+    mapping: () => VariableMapping
+    rename: (variable: string, name: string) => void
+    values: () => ParameterValues
+    setValue: (variable: string, value: number|undefined) => void
+}
+
+export const VARIABLE_NAMES_KEY: vue.InjectionKey<VariableNames> = Symbol('celldl-variable-names')
+
 //==============================================================================
 
 export enum PANEL_ID {
     METADATA_PANEL = 'metadata-property-panel',
     PROPERTIES_PANEL = 'properties-property-panel',
-    STYLE_PANEL = 'style-property-panel'
+    STYLE_PANEL = 'style-property-panel',
+    VARIABLES_PANEL = 'variables-panel'
 }
 
 //==============================================================================

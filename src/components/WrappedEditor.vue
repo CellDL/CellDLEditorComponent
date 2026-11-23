@@ -38,7 +38,8 @@ import { CellDLDiagram } from '#editor/diagram'
 import { CellDLEditor } from '#editor/editor'
 import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS } from '#editor/editor'
 
-import { EDITOR_EVENTS_KEY, type EditorToolButton, PANEL_ID } from '#root/utils/editor-types'
+import type { ParameterValues, VariableMapping } from '#root/utils/cellml'
+import { EDITOR_EVENTS_KEY, type EditorToolButton, PANEL_ID, VARIABLE_NAMES_KEY } from '#root/utils/editor-types'
 
 import { ComponentLibraryPlugin } from '#root/plugins'
 
@@ -55,6 +56,7 @@ import type { PopoverEventData, ViewState } from '#root/utils/editor-types'
 
 import PropertiesPanel from './panels/PropertiesPanel.vue'
 import StylingPanel from './panels/StylingPanel.vue'
+import VariablesPanel from './panels/VariablesPanel.vue'
 
 import EditorToolbar from './toolbar/EditorToolbar.vue'
 import EditorContextMenu from './widgets/EditorContextMenu.vue'
@@ -113,7 +115,9 @@ export type CellDLEditorCommand = EditorEditCommand
 
 export interface CellDLEditorProps {
     editorCommand?: CellDLEditorCommand
+    parameterValues?: ParameterValues
     theme?: Theme
+    variableMapping?: VariableMapping
 }
 export type EditorData = {
     data: string
@@ -184,6 +188,8 @@ const emit = defineEmits<{
     'editor-data': [data: EditorData],
     'editor-ready': [],
     'file-edited': [],
+    'parameter-values': [values: ParameterValues],
+    'variable-mapping': [mapping: VariableMapping],
     'editor-state': [state: {
         error: string
     }]
@@ -254,7 +260,7 @@ const toolButtons = vue.ref<EditorToolButton[]>([
 let buttonGroupId = 1
 
 // Add bond graph tool buttons
-const bgPlugin = componentLibraryPlugin.getPlugin(BG_PLUGIN_ID)
+const bgPlugin = componentLibraryPlugin.getPlugin(BG_PLUGIN_ID) as BondgraphPlugin|undefined
 if (bgPlugin) {
     for (const buttonGroup of bgPlugin.toolButtons()) {
         toolButtons.value.push({ toolId: `separator-${buttonGroupId}`, prompt: '', separator: true })
@@ -293,8 +299,40 @@ const panelButtons = vue.ref<EditorToolButton[]>([
         prompt: 'Style',
         icon: 'lucide-Paintbrush',
         panel: vue.markRaw(StylingPanel)
+    },
+    {
+        toolId: PANEL_ID.VARIABLES_PANEL,
+        prompt: 'Variables',
+        icon: 'lucide-Tags',
+        panel: vue.markRaw(VariablesPanel)
     }
 ])
+
+// Our host owns the names and values of variables in generated CellML
+
+vue.provide(VARIABLE_NAMES_KEY, {
+    variables: () => bgPlugin?.bondgraphVariables() ?? [],
+    mapping: () => props.variableMapping ?? {},
+    rename: (variable: string, name: string) => {
+        const mapping = { ...props.variableMapping }
+        if (name === '' || name === variable) {
+            delete mapping[variable]
+        } else {
+            mapping[variable] = { ...mapping[variable], name }
+        }
+        emit('variable-mapping', mapping)
+    },
+    values: () => props.parameterValues ?? {},
+    setValue: (variable: string, value: number|undefined) => {
+        const values = { ...props.parameterValues }
+        if (value === undefined) {
+            delete values[variable]
+        } else {
+            values[variable] = { ...values[variable], value }
+        }
+        emit('parameter-values', values)
+    }
+})
 
 //==============================================================================
 

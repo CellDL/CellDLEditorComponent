@@ -47,7 +47,15 @@ export type {
     Theme
 } from '#root/components/WrappedEditor.vue'
 
+export type { BondgraphVariable } from '#root/plugins/bondgraph'
 export { bgRdfStatements } from '#root/plugins/bondgraph/bgrdf'
+
+export {
+    applyCellMLParameterValues,
+    type ParameterValues,
+    renameCellMLVariables,
+    type VariableMapping
+} from '#root/utils/cellml'
 
 export { editorInitialised } from '#root/utils'
 
