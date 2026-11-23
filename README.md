@@ -11,7 +11,8 @@ The component comes with the following props:
 **TODO**
 export interface CellDLEditorProps {
     editorCommand?: CellDLEditorCommand,
-    theme?: Theme
+    theme?: Theme,
+    variableMapping?: VariableMapping
 }
 
 
@@ -24,8 +25,13 @@ and emits the following actions:
 
 const emit = defineEmits<{
     'editor-data': [data: EditorData],
-    'error': [msg: string]
+    'error': [msg: string],
+    'variable-mapping': [mapping: VariableMapping]
 }>()
+
+A host owns the names of variables in CellML generated from a diagram. `variableMapping` maps a variable's
+generated name to the name it should have; the editor's Variables panel emits `variable-mapping` with a new
+mapping when a name is edited. Apply the mapping to generated CellML with `renameCellMLVariables(cellml, mapping)`.
 
 
 - **index.html:**
