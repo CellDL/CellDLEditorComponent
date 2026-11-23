@@ -46,6 +46,7 @@ import type { ComponentLibraryPlugin } from '#root/plugins'
 
 //==============================================================================
 
+import { EDITOR_COMMAND, keycodeToCommandMap, keyName } from './commands'
 import { DEFAULT_VIEW_STATE } from './defaults'
 import type { EditorFrame } from './editorframe'
 import { EDITOR_GRID_CLASS } from './editguides'
@@ -693,6 +694,15 @@ export class CellDLEditor {
         this.#showStatus(null)
     }
 
+    #groupSelectedObjects() {
+/* WIP
+        if (this.#boxMaker) {
+            this.#boxMaker.groupComponents()
+            this.#closeBoxMaker()
+        }
+*/
+    }
+
     setPropertiesPanelObject(celldlObject: CellDLObject|undefined) {
         for (const panel of this.#panels.values()) {
             panel.setObjectProperties(celldlObject)
@@ -1192,6 +1202,30 @@ export class CellDLEditor {
         this.events.dispatchEvent(new CustomEvent('file-edited'))
     }
 
+    #processEditorCommand(command: EDITOR_COMMAND) {
+        if        (command === EDITOR_COMMAND.COPY) {
+//          this.#copySelectedObjectsToClipboard()          // WIP
+        } else if (command === EDITOR_COMMAND.CUT) {
+//          this.#cutSelectedObjectsToClipboard()           // WIP
+        } else if (command === EDITOR_COMMAND.DELETE) {
+            this.#deleteSelectedObjects()
+        } else if (command === EDITOR_COMMAND.DUPLICATE) {
+//          this.#duplicateSelectedObjects()                // WIP
+        } else if (command === EDITOR_COMMAND.INSPECT) {
+//          this.#showSelectedObjectInfo()                  // WIP
+        } else if (command === EDITOR_COMMAND.GROUP) {
+            this.#groupSelectedObjects()
+        } else if (command === EDITOR_COMMAND.PASTE) {
+//          this.#pasteSelectedObjectsFromClipboard()       // WIP
+        } else if (command === EDITOR_COMMAND.REDO) {
+            this.#undoRedo?.redo(this.#celldlDiagram!)
+        } else if (command === EDITOR_COMMAND.UNDO) {
+            this.#undoRedo?.undo(this.#celldlDiagram!)
+        } else if (command === EDITOR_COMMAND.UNGROUP) {
+//          this.#ungroupSelectedObject()                   // WIP
+        }
+    }
+
     #keyDownEvent(event: KeyboardEvent) {
         // Keys typed into a field (e.g. in a panel) are for that field, not the diagram
         if (fromEditableElement(event)) {
@@ -1199,24 +1233,18 @@ export class CellDLEditor {
         }
         if (event.key === 'Escape' && this.#pathDrag.cancel()) {
             return
-        } else if (this.#editorMode === EDITOR_MODE.PathDrawing
-         && (event.key === 'Escape' || event.key === 'Backspace')) {
-            if (this.#pathMaker) {
+        } else if (this.#pathMaker) {
+            if (event.key === 'Escape' || event.key === 'Backspace' || event.key === 'Delete') {
                 // Remove any partial path
                 this.#pathMaker.close()
                 this.#pathMaker = null
             }
-        } else if (event.key === 'Backspace') {
+        } else {
             // Prevent any default browser action (e.g. navigating back)
             event.preventDefault()
-            this.#deleteSelectedObjects()
-        } else if (this.#editorMode === EDITOR_MODE.Selecting
-            && (isMacOs() && event.metaKey
-            || !isMacOs() && event.ctrlKey)) {
-            if (event.key === 'z' && !event.shiftKey) {
-                this.#undoRedo!.undo(this.#celldlDiagram!)
-            } else if (event.key === 'Z' || event.key === 'z' && event.shiftKey) {
-                this.#undoRedo!.redo(this.#celldlDiagram!)
+            const command = keycodeToCommandMap.get(keyName(event))
+            if (command) {
+                this.#processEditorCommand(command)
             }
         }
     }
