@@ -36,6 +36,7 @@ import * as $rdf from '@celldl/rdf'
 
 //==============================================================================
 
+import { latexAsSvgString } from '#root/mathjax'
 import { arrowMarkerDefinition } from '#root/utils/styling'
 import type {
     IUiJsonDiscreteInput,
@@ -92,6 +93,8 @@ import type {
     BGElementStyle
 } from './utils'
 import { DomainGraph } from './domainGraph'
+import { type MathNode, mathmlLatex, sumText, whereText } from './lawtext'
+import { ELEMENT_CLASSES, type NamingElement, variableNames } from './names'
 
 //==============================================================================
 
@@ -532,6 +535,158 @@ export class BondgraphPlugin implements PluginInterface {
             domain = this.#domainGraph.getDomain(celldlObject.uri.value)
         }
         return domain ? $rdf.getFragment(domain) : ''
+    }
+
+    //==========================================================================
+
+    #subclassesOf(base: string): Set<string> {
+        const rows = this.#rdfStore.query(`${SPARQL_PREFIXES}
+            SELECT DISTINCT ?type WHERE { ?type rdfs:subClassOf* <${base}> }`)
+        return new Set([base, ...rows.map((r: Map<string, $rdf.Term>) => r.get('type')!.value)])
+    }
+
+    #namingElements(store: MetadataStore): NamingElement[] {
+        const prefix = `${this.#currentDocumentUri}#`
+        const classes = ELEMENT_CLASSES.map(uri => ({ uri, types: this.#subclassesOf(uri) }))
+        const elements = new Map<string, NamingElement>()
+        for (const r of store.query(`${SPARQL_PREFIXES}
+            SELECT ?node ?type ?symbol ?species ?location WHERE {
+                ?node a ?type .
+                OPTIONAL { ?node bgf:hasSymbol ?symbol }
+                OPTIONAL { ?node bgf:hasSpecies ?species }
+                OPTIONAL { ?node bgf:hasLocation ?location }
+            }`) as Map<string, $rdf.Term>[]) {
+            const node = r.get('node')!.value
+            const template = this.#elementTemplates.get(r.get('type')!.value)
+            if (!node.startsWith(prefix) || !template || elements.has(node)) continue
+            const elementClass = classes.find(c => c.types.has(template.type))?.uri
+            const domain = this.#physicalDomains.get(template.domain)
+            const flow = domain?.flow.name ?? 'v', potential = domain?.potential.name ?? 'u'
+            const ports = elementClass === BGF.uri('Reaction').value ? [flow, `${potential}_f`, `${potential}_r`]
+                        : [flow, potential]
+            // a store's quantity takes the element's own name (a source's potential doesn't)
+            const value = template.value?.name
+            const intrinsic = value !== undefined && value === (domain?.quantity.name ?? 'q') ? value : undefined
+            const variables = [...ports, ...template.parameters.keys(), ...template.variables.keys()]
+                              .filter(v => v !== intrinsic)
+            if (intrinsic) variables.push(intrinsic)
+            elements.set(node, {
+                id: node, identifier: node.slice(prefix.length), elementClass, domain: template.domain,
+                label: r.get('symbol')?.value, species: r.get('species')?.value, location: r.get('location')?.value,
+                variables: [...new Set(variables)], intrinsic
+            })
+        }
+        return [...elements.values()]
+    }
+
+    #lawCache = new Map<string, { label: string, svg: string }|null>()
+
+    // A template's constitutive relation (its own or the nearest superclass's) typeset as SVG, and its label
+    #law(templateType: string): { label: string, svg: string }|null {
+        if (this.#lawCache.has(templateType)) return this.#lawCache.get(templateType)!
+        let found: { label: string, svg: string }|null = null
+        const queue = [templateType], seen = new Set<string>()
+        let label = ''
+        while (queue.length && !found) {
+            const type = queue.shift()!
+            if (seen.has(type)) continue
+            seen.add(type)
+            for (const r of this.#rdfStore.query(`${SPARQL_PREFIXES}
+                SELECT ?relation ?label WHERE {
+                    OPTIONAL { <${type}> bgf:constitutiveRelation ?relation }
+                    OPTIONAL { <${type}> rdfs:label ?label }
+                }`) as Map<string, $rdf.Term>[]) {
+                if (!label && r.get('label')) label = r.get('label')!.value
+                const relation = r.get('relation')?.value
+                if (relation && !found) {
+                    const math = new DOMParser().parseFromString(relation.trim(), 'text/xml').documentElement
+                    const latex = mathmlLatex(math as unknown as MathNode)
+                    found = { label, svg: latex ? latexAsSvgString(latex, true) : '' }
+                }
+            }
+            for (const r of this.#rdfStore.query(`${SPARQL_PREFIXES}
+                SELECT ?super WHERE { <${type}> rdfs:subClassOf ?super }`) as Map<string, $rdf.Term>[]) {
+                queue.push(r.get('super')!.value)
+            }
+        }
+        if (found && !found.label) found.label = label
+        this.#lawCache.set(templateType, found)
+        return found
+    }
+
+    /**
+     * An element's constitutive law, with the CellML name of each of its variables.
+     */
+    hoverHtml(celldlObject: CellDLObject): string {
+        if (celldlObject.isConnection) return ''
+        const templateType = (<PluginData>celldlObject.pluginData(this.id)).elementTemplate?.type
+        const law = templateType ? this.#law(templateType) : null
+        if (!law) return ''
+        const store = celldlObject.rdfStore
+        const id = celldlObject.uri.value
+        const elements = this.#namingElements(store)
+        const element = elements.find(e => e.id === id)
+        if (!element) return ''
+        const names = variableNames(elements)
+        const byId = new Map(elements.map(e => [e.id, e]))
+        const prefix = `${this.#currentDocumentUri}#`
+        const bonds = (store.query(`${SPARQL_PREFIXES}
+            SELECT ?bond ?source ?target ?count WHERE {
+                ?bond bgf:hasSource ?source ; bgf:hasTarget ?target .
+                OPTIONAL { ?bond bgf:bondCount ?count }
+            }`) as Map<string, $rdf.Term>[])
+            .filter(r => r.get('bond')!.value.startsWith(prefix))
+            .map(r => ({
+                source: r.get('source')!.value,
+                target: r.get('target')!.value,
+                count: r.get('count') ? Number(r.get('count')!.value) : 1
+            }))
+        const transforms = this.#subclassesOf(this.#transformNodeType)
+        const ratios = new Map<string, number>()
+        for (const r of store.query(`${SPARQL_PREFIXES}
+            SELECT ?node ?type ?value WHERE { ?node a ?type ; bgf:hasValue ?value }`) as Map<string, $rdf.Term>[]) {
+            if (transforms.has(r.get('type')!.value)) ratios.set(r.get('node')!.value, parseFloat(r.get('value')!.value))
+        }
+        const portName = (node: string, port: 'flow'|'potential') => {
+            const e = byId.get(node)
+            const domain = e?.domain ? this.#physicalDomains.get(e.domain) : undefined
+            const symbol = port === 'flow' ? (domain?.flow.name ?? 'v') : (domain?.potential.name ?? 'u')
+            return names.get(`${node}|${symbol}`) ?? symbol
+        }
+        const domain = element.domain ? this.#physicalDomains.get(element.domain) : undefined
+        const u = domain?.potential.name ?? 'u', v = domain?.flow.name ?? 'v'
+        const connected = new Map<string, string>()
+        if (element.elementClass === BGF.uri('Reaction').value) {
+            const side = (into: boolean) => sumText(bonds.flatMap(b => {
+                const other = into ? (b.target === id ? b.source : undefined) : (b.source === id ? b.target : undefined)
+                if (other === undefined) return []
+                const ratio = ratios.get(other)
+                if (ratio !== undefined) {      // a transformer between this step and a capacitor
+                    const capacitor = into ? bonds.find(c => c.target === other)?.source : bonds.find(c => c.source === other)?.target
+                    return capacitor ? [{ sign: 1, count: into ? ratio : 1 / ratio, name: portName(capacitor, 'potential') }] : []
+                }
+                return [{ sign: 1, count: b.count, name: portName(other, 'potential') }]
+            }))
+            connected.set(`${u}_f`, side(true))
+            connected.set(`${u}_r`, side(false))
+        } else if (element.elementClass === BGF.uri('QuantityStore').value) {
+            connected.set(v, sumText(bonds.flatMap(b => b.target === id ? [{ sign: 1, count: b.count, name: portName(b.source, 'flow') }]
+                                                      : b.source === id ? [{ sign: -1, count: b.count, name: portName(b.target, 'flow') }]
+                                                      : [])))
+        } else if (element.elementClass === BGF.uri('Resistance').value) {
+            connected.set(u, sumText(bonds.flatMap(b => b.target === id ? [{ sign: 1, count: 1, name: portName(b.source, 'potential') }]
+                                                      : b.source === id ? [{ sign: -1, count: 1, name: portName(b.target, 'potential') }]
+                                                      : [])))
+        }
+        const lines = whereText(element.variables.map(symbol => ({
+            symbol, name: names.get(`${id}|${symbol}`) ?? symbol, is: connected.get(symbol)
+        })))
+        const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        return '<div class="bg-law">'
+            + (law.label ? `<div class="bg-law-label">${escapeHtml(law.label)}</div>` : '')
+            + (law.svg ? `<div class="bg-law-math">${law.svg}</div>` : '')
+            + `<div class="bg-law-where">${lines.map(escapeHtml).join('<br>')}</div>`
+            + '</div>'
     }
 
     //==========================================================================

@@ -107,6 +107,13 @@ export interface PluginInterface {
     getPluginData: (celldlObject: CellDLObject) => object
 
     /**
+     * Get HTML to show while the pointer is over a CellDL object.
+     *
+     * @param celldlObject A CellDL object.
+     */
+    hoverHtml?: (celldlObject: CellDLObject) => string
+
+    /**
      * Get plugin specific text about the status of a CellDL object.
      *
      * @param celldlObject A CellDL object.
@@ -321,6 +328,11 @@ export class ComponentLibraryPlugin {
             pluginDataMap.set(plugin.id, plugin.getPluginData(celldlObject))
         }
         return pluginDataMap
+    }
+
+    hoverHtml(celldlObject: CellDLObject): string {
+        return [...this.#registeredPlugins.values().map(plugin => plugin.hoverHtml?.(celldlObject) ?? '')]
+                .filter(t => t !== '').join('')
     }
 
     statusText(celldlObject: CellDLObject): string {
