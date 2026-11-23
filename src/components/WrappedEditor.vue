@@ -2,6 +2,7 @@
     .celldl-editor.flex.flex-col
         main.editor-pane.relative.flex.flex-col.grow
             EditorToolbar.editor-bar-h(
+                v-if="!readOnly"
                 :leftButtons="toolButtons"
                 :rightButtons="panelButtons"
                 @button-event="buttonEvent"
@@ -113,6 +114,7 @@ export type CellDLEditorCommand = EditorEditCommand
 
 export interface CellDLEditorProps {
     editorCommand?: CellDLEditorCommand
+    readOnly?: boolean
     theme?: Theme
 }
 export type EditorData = {
@@ -309,6 +311,15 @@ function resetToolBars() {
     // FUTURE: reset to default panel tool
 }
 
+vue.watch(
+    () => props.readOnly,
+    (readOnly) => {
+        resetToolBars()
+        celldlEditor.readOnly = !!readOnly
+    },
+    { immediate: true }
+)
+
 //==============================================================================
 
 async function buttonEvent(toolId: PANEL_ID, active: boolean) {
@@ -456,11 +467,13 @@ vue.onUnmounted(() => {
 .svg-container {
     margin:  0;
     border: 2px solid var(--editor-border-color);
-    border-top-width: 0;
     flex: 1;
     min-height: 0;
     overflow: hidden;
     position: relative;     /* The diagram's (absolutely positioned) host fills us */
+}
+.editor-bar-h + .svg-container {
+    border-top-width: 0;
 }
 .hidden {
     display: none;
