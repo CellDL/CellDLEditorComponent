@@ -27,7 +27,6 @@ import type {
 import type { DiagramContext } from '#editor/diagram/context'
 import { Bounds } from '#editor/geometry'
 import { ControlPoint } from '#editor/geometry/controls'
-import { CONTEXT_MENU } from '#root/components/contextmenu/types'
 import { Point } from '#root/utils/points'
 import { MEMBRANE_GAP } from '#root/utils/styling'
 import { svgRect } from '#root/utils/svgUtils'
@@ -160,7 +159,6 @@ export class BoxMaker {
     }
 
     close(clearSelected: boolean=true) {
-        this.#updateContextMenu(false)
         if (this.#selectionRect) {
             if (clearSelected) {
                 this.#unsetSelectedObjects()
@@ -209,11 +207,6 @@ export class BoxMaker {
         for (const object of this.#selectedObjects.values()) {
             this.#editor.selectObject(object, false)
         }
-    }
-
-    #updateContextMenu(enabled: boolean) {
-        this.#editor.enableContextMenuItem(CONTEXT_MENU.DELETE, enabled)
-        this.#editor.enableContextMenuItem(CONTEXT_MENU.GROUP_OBJECTS, enabled)
     }
 
     updateSelectedObjects() {

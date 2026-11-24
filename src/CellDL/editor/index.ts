@@ -36,7 +36,6 @@ import { SelectionSet } from '#editor/diagram/selectionset'
 import type { MoveUndoState, UndoRedo } from '#editor/diagram/undoredo'
 import { round } from '#editor/utils'
 
-import { CONTEXT_MENU } from '#root/components/contextmenu/types'
 import { isMacOs } from '#root/utils/common'
 import { PANEL_ID, type EditorStatus } from '#root/utils/editor-types'
 import { type Point, type PointLike, PointMath } from '#root/utils/points'
@@ -371,18 +370,9 @@ export class CellDLEditor {
                 }
             }))
         }, { signal })
-        this.events.addEventListener('context-menu-click', (event: Event) => {
-            const targetId = (<CustomEvent>event).detail.id
-            if (targetId === CONTEXT_MENU.DELETE) {
-                this.#deleteSelectedObjects()
-            } else if (targetId === CONTEXT_MENU.INSPECT) {
-// WIP               this.#showSelectedObjectInfo()
-            } else if (targetId === CONTEXT_MENU.GROUP) {
-                if (this.#boxMaker) {
-                    this.#boxMaker.groupComponents()
-                    this.#closeBoxMaker()
-                }
-            }
+        this.events.addEventListener('context-menu-action', (event: Event) => {
+            const editorAction = (<CustomEvent>event).detail.action
+            this.#processEditorAction((<CustomEvent>event).detail.action)
         })
     }
 
