@@ -115,6 +115,7 @@ export type FileStatus = {
     haveData: boolean
     modified: boolean
 }
+
 //==============================================================================
 
 export type ViewState = {

@@ -63,7 +63,6 @@ import type { PopoverEventData, ViewState } from '#root/utils/editor-types'
 import EditorContextMenu from './contextmenu/EditorContextMenu.vue'
 import PropertiesPanel from './panels/PropertiesPanel.vue'
 import StylingPanel from './panels/StylingPanel.vue'
-
 import EditorToolbar from './toolbar/EditorToolbar.vue'
 
 //==============================================================================
@@ -185,7 +184,6 @@ const celldlEditor: CellDLEditor = new CellDLEditor(componentLibraryPlugin)
 
 // Our child components send their events to our editor
 vue.provide(EDITOR_EVENTS_KEY, celldlEditor.events)
-
 
 //==============================================================================
 

@@ -18,7 +18,9 @@ limitations under the License.
 
 ******************************************************************************/
 
-import CellDLEditor from '#root/components/EditorComponent'
+
+// biome-ignore assist/source/organizeImports: ignored...
+import  CellDLEditor from '#root/components/EditorComponent'
 
 //==============================================================================
 
