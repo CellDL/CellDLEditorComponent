@@ -1,46 +1,30 @@
-/******************************************************************************
-
-CellDL Editor
-
-Copyright (c) 2022 - 2025 David Brooks
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-******************************************************************************/
+//==============================================================================
+//==============================================================================
 
 import type { CellDLObject } from '#editor/celldlObjects'
-import { PathMaker, type PathNode } from '#editor/connections/pathmaker'
 import type { CellDLDiagram } from '#editor/diagram'
 import type { Bounds } from '#editor/geometry'
 import { isCtrlOrCmd } from '#root/utils/common'
 import type { PointLike } from '#root/utils/points'
 import { SVG_URI } from '#root/utils/svgUtils'
 
+import { PathMaker, type PathNode } from './pathmaker'
+
 //==============================================================================
 
-const BOND_HANDLE_CLASS = 'bond-handle'
-const BOND_TARGET_VALID_CLASS = 'bond-target-valid'
-const BOND_TARGET_DIMMED_CLASS = 'bond-target-dimmed'
+const BOND_HANDLE_CLASS = 'path-handle'
+const BOND_TARGET_VALID_CLASS = 'path-target-valid'
+const BOND_TARGET_DIMMED_CLASS = 'path-target-dimmed'
 
 const HANDLE_RADIUS = 5         // pixels
 const DRAG_START_DISTANCE = 4   // pixels
 
 //==============================================================================
 
-export interface BondDragHost {
+export interface PathDragHost {
     readonly celldlDiagram: CellDLDiagram | null
-    readonly canStartBond: boolean
-    readonly bondStyle: string | undefined
+    readonly canStartPath: boolean
+    readonly pathStyle: string | undefined
     objectAt(element: SVGGraphicsElement): CellDLObject | null
     hideTooltip(): void
     click(event: MouseEvent, object: CellDLObject): void
@@ -64,11 +48,11 @@ export function nearestBoundaryPoint(bounds: Bounds, point: PointLike): PointLik
 //==============================================================================
 
 /**
- * Draw a bond by dragging from a handle shown on a hovered element's boundary,
+ * Draw a path by dragging from a handle shown on a hovered element's boundary,
  * or from the element itself with Cmd (Ctrl) down.
  */
-export class BondDrag {
-    #host: BondDragHost
+export class PathDrag {
+    #host: PathDragHost
     #handle: SVGCircleElement | null = null
     #handleObject: CellDLObject | null = null
     #pending: { object: CellDLObject, clientX: number, clientY: number } | null = null
@@ -79,7 +63,7 @@ export class BondDrag {
     #validTargets: Map<string, PathNode> = new Map()
     #markedObjects: CellDLObject[] = []
 
-    constructor(host: BondDragHost) {
+    constructor(host: PathDragHost) {
         this.#host = host
     }
 
@@ -115,7 +99,7 @@ export class BondDrag {
             this.cancel()
             return true
         }
-        if (event.button !== 0 || !this.#host.canStartBond) {
+        if (event.button !== 0 || !this.#host.canStartPath) {
             this.#hideHandle()
             return false
         }
@@ -123,13 +107,13 @@ export class BondDrag {
         if (this.#isHandle(event.target)) {
             object = this.#handleObject
         } else if (isCtrlOrCmd(event) && !event.shiftKey) {
-            object = this.#bondable(this.#host.objectAt(event.target as SVGGraphicsElement))
+            object = this.#connectable(this.#host.objectAt(event.target as SVGGraphicsElement))
         }
         if (object === null) {
             this.#hideHandle()
             return false
         }
-        // Don't start the bond until the pointer moves
+        // Don't start the path until the pointer moves
         this.#pending = { object, clientX: event.clientX, clientY: event.clientY }
         return true
     }
@@ -155,7 +139,7 @@ export class BondDrag {
             this.#pathMaker.drawTo(diagram.domToSvgCoords(event))
             return true
         }
-        if (event.buttons === 0 && this.#host.canStartBond) {
+        if (event.buttons === 0 && this.#host.canStartPath) {
             this.#hover(event)
         } else {
             this.#hideHandle()
@@ -223,7 +207,7 @@ export class BondDrag {
         this.#handleObject = null
     }
 
-    #bondable(object: CellDLObject | null): CellDLObject | null {
+    #connectable(object: CellDLObject | null): CellDLObject | null {
         return (object?.isConnectable && !object.isConduit && !object.isConnection) ? object : null
     }
 
@@ -232,7 +216,7 @@ export class BondDrag {
     }
 
     #targetObject(event: PointerEvent): CellDLObject | null {
-        return this.#bondable(this.#host.objectAt(event.target as SVGGraphicsElement))
+        return this.#connectable(this.#host.objectAt(event.target as SVGGraphicsElement))
     }
 
     #start(object: CellDLObject): boolean {
@@ -246,10 +230,10 @@ export class BondDrag {
             return false
         }
         this.#startObject = object
-        this.#pathMaker = new PathMaker(diagram.context, startNode, this.#host.bondStyle)
+        this.#pathMaker = new PathMaker(diagram.context, startNode, this.#host.pathStyle)
         this.#validTargets.clear()
         for (const candidate of diagram.objects) {
-            if (candidate === object || !candidate.isComponent || this.#bondable(candidate) === null) {
+            if (candidate === object || !candidate.isComponent || this.#connectable(candidate) === null) {
                 continue
             }
             const node = this.#pathMaker.validPathNode(candidate, true)
