@@ -241,7 +241,7 @@ vue.onMounted(() => {
     // Customise our IDs.
 
     toastId.value = `editorToast${String(crtInstance?.uid)}`
-    mainMenuId.value = `opencorMainMenu${String(crtInstance?.uid)}`
+    mainMenuId.value = `celldlMainMenu${String(crtInstance?.uid)}`
 
     // Make ourselves the active instance.
 
