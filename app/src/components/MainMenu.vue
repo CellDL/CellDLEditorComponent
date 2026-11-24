@@ -31,7 +31,6 @@ import type { EditorStatus, ViewState } from '../../../src'
 
 const props = defineProps<{
     editorStatus: EditorStatus
-    fileModified: boolean  // to become part of editor state
     haveFile: boolean
     noPython?: boolean
     viewState: ViewState
@@ -180,7 +179,7 @@ const menuItems = [
                 command: () => {
                     emit('file-action', 'save')
                 },
-                disabled: () => !(props.haveFile && props.fileModified),
+                disabled: () => !(props.haveFile && props.editorStatus.diagramModified),
                 visible: fileOperationsAvailable
             },
             {
@@ -200,8 +199,8 @@ const menuItems = [
                 command: () => {
                     emit('export-action', 'cellml')
                 },
-                disabled: () => !(props.haveFile && !props.fileModified),
                 visible: () => fileOperationsAvailable && !props.noPython
+                disabled: () => !(props.haveFile && !props.editorStatus.diagramModified),
             }
         ]
     },
@@ -216,7 +215,7 @@ const menuItems = [
                 command: () => {
                     emit('edit-action', 'undo')
                 },
-                disabled: !props.editorState.fileModified
+                disabled: !props.editorStatus.diagramModified
             },
             {
                 label: 'Redo',
@@ -224,7 +223,7 @@ const menuItems = [
                 command: () => {
                     emit('edit-action', 'redo')
                 },
-                disabled: !props.editorState.redoContents
+                disabled: !props.editorStatus.canUndo
             },
             { separator: true },
             {
@@ -234,7 +233,7 @@ const menuItems = [
                 command: () => {
                     emit('edit-action', 'cut')
                 },
-                disabled: !props.editorState.itemSelected
+                disabled: !props.editorStatus.haveSelection
             },
             {
                 label: 'Copy',
@@ -243,7 +242,7 @@ const menuItems = [
                 command: () => {
                     emit('edit-action', 'copy')
                 },
-                disabled: !props.editorState.itemSelected
+                disabled: !props.editorStatus.haveSelection
             },
             {
                 label: 'Paste',
@@ -252,7 +251,7 @@ const menuItems = [
                 command: () => {
                     emit('edit-action', 'paste')
                 },
-                disabled: !props.editorState.pasteContents
+                disabled: !props.editorStatus.canPaste
             },
             {
                 label: 'Delete',
@@ -261,7 +260,7 @@ const menuItems = [
                 command: () => {
                     emit('edit-action', 'delete')
                 },
-                disabled: !props.editorState.itemSelected
+                disabled: !props.editorStatus.haveSelection
             }
         ]
     },

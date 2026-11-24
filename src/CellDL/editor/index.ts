@@ -38,7 +38,7 @@ import { round } from '#editor/utils'
 
 import { CONTEXT_MENU } from '#root/components/contextmenu/types'
 import { isMacOs } from '#root/utils/common'
-import { PANEL_ID } from '#root/utils/editor-types'
+import { PANEL_ID, type EditorStatus } from '#root/utils/editor-types'
 import { type Point, type PointLike, PointMath } from '#root/utils/points'
 import { loadImages } from '#root/utils/svgUtils'
 import type { StringProperties } from '#root/utils/types'
@@ -129,6 +129,16 @@ export function getElementId(element: SVGGraphicsElement): string {
 
 //==============================================================================
 
+class EditorStatusInstance implements EditorStatus {
+    canPaste: boolean = false
+    canUndo: boolean = false
+    diagramModified: boolean = false
+    haveGroupSelection: boolean = false
+    haveSelection: boolean = false
+}
+
+//==============================================================================
+
 export type PointerEventHandler = (eventType: string, svgElement: SVGGraphicsElement, svgCoords: PointLike) => boolean
 
 //==============================================================================
@@ -157,7 +167,9 @@ export class CellDLEditor {
     #moveSelection: boolean = false
 
     #editorMode: EDITOR_MODE = DEFAULT_EDITOR_MODE
+    #editorStatus: EditorStatus = new EditorStatusInstance()
     #dirty: boolean = false
+    #readOnly: boolean = false
 
     #dragging: boolean = false
     // Aborting this removes all the DOM event listeners added by `mount()`
@@ -343,6 +355,10 @@ export class CellDLEditor {
         }
         // Handle context menu events
         shadowRoot.addEventListener('contextmenu', (event) => {
+            if (this.#readOnly) {
+                event.preventDefault()
+                return
+            }
             const element = event.target as SVGGraphicsElement
             const clickedObject = this.#celldlDiagram!.objectById(getElementId(element))
             if (clickedObject && clickedObject === this.currentObject) {
@@ -387,6 +403,16 @@ export class CellDLEditor {
     }
     set status(text: string) {
         this.showMessage(text)
+    }
+
+    get readOnly(): boolean {
+        return this.#readOnly
+    }
+    set readOnly(readOnly: boolean) {
+        this.#readOnly = readOnly
+        if (readOnly) {
+            this.#changeMode(EDITOR_MODE.Selecting)
+        }
     }
 
     get undoRedo(): UndoRedo {
@@ -487,6 +513,45 @@ export class CellDLEditor {
         }
     }
 
+    /**
+     * Let the host know we can undo edit actions.
+     */
+    canUndo(canUndo: boolean) {
+        if (this.#editorStatus.canUndo !== canUndo) {
+            this.#editorStatus.canUndo = canUndo
+            this.#sendStatus()
+        }
+    }
+
+    /**
+     * Let the host know that the diagram has been modified.
+     */
+    diagramModified(modified: boolean) {
+        if (this.#editorStatus.diagramModified !== modified) {
+            this.#editorStatus.diagramModified = modified
+            this.#sendStatus()
+        }
+    }
+
+    /**
+     * Let the host know that there are selected objects.
+     */
+    haveSelection(selected: boolean) {
+        if (this.#editorStatus.haveSelection !== selected) {
+            this.#editorStatus.haveSelection = selected
+            this.#sendStatus()
+        }
+    }
+
+    #sendStatus() {
+        this.events.dispatchEvent(
+            new CustomEvent('editor-status', {
+                detail: {
+                    status: {...this.#editorStatus}
+                }
+            })
+        )
+    }
 
     #changeMode(editorMode: EDITOR_MODE) {
         this.#editorMode = editorMode
@@ -520,7 +585,8 @@ export class CellDLEditor {
                 const values = detail.value
                 if (values.oldValue !== values.newValue) {
                     await this.#openPanel.updateObjectProperties(this.selectionSet.objects[0]!, detail.itemId, detail.value)
-                    this.notifyChanges()
+                    this.#editorStatus.diagramModified = true
+                    this.#sendStatus()
                 }
             }
         }
@@ -531,7 +597,8 @@ export class CellDLEditor {
         if (detail.source === this.#openPanel?.panelId) {
             if (this.#openPanel && this.selectionSet.size === 1) {
                 await this.#openPanel.updateObjectStyling(this.selectionSet.objects[0]!, detail.styling)
-                this.notifyChanges()
+                this.#editorStatus.diagramModified = true
+                this.#sendStatus()
             }
         }
     }
@@ -665,16 +732,12 @@ export class CellDLEditor {
     }
 
     protected setSelectedObject(selectedObject: CellDLObject) {
-        if (this.selectionSet.select(selectedObject)) {
-            this.enableContextMenuItem(CONTEXT_MENU.DELETE, true)
-            this.enableContextMenuItem(CONTEXT_MENU.INFO, true)
-        }
+        this.selectionSet.select(selectedObject)
     }
 
     #unsetSelectedObject(selectedObject: CellDLObject|null) {
-        if (selectedObject && this.selectionSet.unselect(selectedObject)) {
-            this.enableContextMenuItem(CONTEXT_MENU.DELETE, false)
-            this.enableContextMenuItem(CONTEXT_MENU.INFO, false)
+        if (selectedObject) {
+            this.selectionSet.unselect(selectedObject)
         }
     }
 
@@ -849,8 +912,13 @@ export class CellDLEditor {
                     const svgPoint = this.#domToSvgCoords(event)
                     this.#pathMaker.addPoint(svgPoint, event.shiftKey)
                 }
+            } else if (clickedObject === null || clickedObject.isConnection) {
+                this.#selectionClickEvent(event, element, clickedObject)
             }
         } else if (this.#editorMode === EDITOR_MODE.Selecting) {
+            if (clickedObject) {
+                this.events.dispatchEvent(new CustomEvent('diagram-click', { detail: { id: clickedObject.id } }))
+            }
             this.#selectionClickEvent(event, element, clickedObject)
         }
     }
@@ -939,9 +1007,8 @@ export class CellDLEditor {
                     const nodeOrAlert = PathMaker.validStartObject(currentObject)
                     if (nodeOrAlert.alert) {
                         this.showTooltip(nodeOrAlert.alert, 'error')
-                    } else if (nodeOrAlert.node) {
-                        this.#nextPathNode = nodeOrAlert.node
                     }
+                    this.#nextPathNode = nodeOrAlert.node ?? null
                 } else {
                     this.#nextPathNode = this.#pathMaker.validPathNode(currentObject)
                 }
@@ -964,7 +1031,9 @@ export class CellDLEditor {
                 } else {
                     this.#setActiveObjects([currentObject])
                 }
-                currentObject.initialiseMove(element)  // will set moveable
+                if (!this.#readOnly) {
+                    currentObject.initialiseMove(element)  // will set moveable
+                }
                 this.currentObject = currentObject
             }
         }
@@ -1048,7 +1117,7 @@ export class CellDLEditor {
                 this.unsetSelectedObjects()
                 this.#boxMaker = new BoxMaker(this, svgPoint)
                 this.#boxMaking = true
-            } else if (this.currentObject?.isConnection) {
+            } else if (this.currentObject?.isConnection && !this.#readOnly) {
                 // Check if a linear path and if so, insert a control point and initialise moving it
                 this.#moveUndoState = this.#undoRedo!.setMoveUndoState(this.currentObject, svgPoint)
                 const controlElement = this.currentObject.addControlHandle(svgPoint)
@@ -1195,11 +1264,28 @@ export class CellDLEditor {
         this.#statusPos = null
     }
 
-    /**
-     * Let the editor's host know that the diagram has been changed.
-     */
-    notifyChanges() {
-        this.events.dispatchEvent(new CustomEvent('file-edited'))
+    #processEditorCommand(command: EDITOR_COMMAND) {
+        if        (command === EDITOR_COMMAND.COPY) {
+//          this.#copySelectedObjectsToClipboard()          // WIP
+        } else if (command === EDITOR_COMMAND.CUT) {
+//          this.#cutSelectedObjectsToClipboard()           // WIP
+        } else if (command === EDITOR_COMMAND.DELETE) {
+            this.#deleteSelectedObjects()
+        } else if (command === EDITOR_COMMAND.DUPLICATE) {
+//          this.#duplicateSelectedObjects()                // WIP
+        } else if (command === EDITOR_COMMAND.INSPECT) {
+//          this.#showSelectedObjectInfo()                  // WIP
+        } else if (command === EDITOR_COMMAND.GROUP) {
+            this.#groupSelectedObjects()
+        } else if (command === EDITOR_COMMAND.PASTE) {
+//          this.#pasteSelectedObjectsFromClipboard()       // WIP
+        } else if (command === EDITOR_COMMAND.REDO) {
+            this.#undoRedo?.redo(this.#celldlDiagram!)
+        } else if (command === EDITOR_COMMAND.UNDO) {
+            this.#undoRedo?.undo(this.#celldlDiagram!)
+        } else if (command === EDITOR_COMMAND.UNGROUP) {
+//          this.#ungroupSelectedObject()                   // WIP
+        }
     }
 
     #processEditorCommand(command: EDITOR_COMMAND) {
@@ -1228,7 +1314,7 @@ export class CellDLEditor {
 
     #keyDownEvent(event: KeyboardEvent) {
         // Keys typed into a field (e.g. in a panel) are for that field, not the diagram
-        if (fromEditableElement(event)) {
+        if (this.#readOnly || fromEditableElement(event)) {
             return
         }
         if (event.key === 'Escape' && this.#pathDrag.cancel()) {

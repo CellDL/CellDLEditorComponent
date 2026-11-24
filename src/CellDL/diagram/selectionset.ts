@@ -66,6 +66,7 @@ export class SelectionSet {
             this.#firstMoveableObject = null
         }
         this.#updatePanelObject()
+        this.#editor.haveSelection(false)
     }
 
     select(object: CellDLObject): boolean {
@@ -91,6 +92,7 @@ export class SelectionSet {
             this.#selectedObjects.set(object.id, object)
             this.#updatePanelObject()
             object.select(true)
+            this.#editor.haveSelection(true)
             return true
         }
         return false
@@ -121,6 +123,7 @@ export class SelectionSet {
             }
             this.#updatePanelObject()
             object.select(false)
+            this.#editor.haveSelection(this.#selectedObjects.size > 0)
             return true
         }
         return false
@@ -178,7 +181,7 @@ export class SelectionSet {
             connection.move(newPosn, { moveEntireConnection: true, noAlign: true } )
             connection.redraw()
         }
-        this.#editor.notifyChanges()
+        this.#editor.diagramModified()
     }
 
     endMove() {

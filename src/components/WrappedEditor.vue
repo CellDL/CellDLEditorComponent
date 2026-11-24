@@ -2,6 +2,7 @@
     .celldl-editor.flex.flex-col
         main.editor-pane.relative.flex.flex-col.grow
             EditorToolbar.editor-bar-h(
+                v-if="!readOnly"
                 :leftButtons="toolButtons"
                 :rightButtons="panelButtons"
                 @button-event="buttonEvent"
@@ -117,8 +118,13 @@ export type CellDLEditorCommand = EditorEditCommand
 
 //==============================================================================
 
+export type DiagramClickEvent = {
+    id: string
+}
+
 export interface CellDLEditorProps {
     editorCommand?: CellDLEditorCommand
+    readOnly?: boolean
     theme?: Theme
 }
 export type EditorData = {
@@ -192,6 +198,7 @@ const emit = defineEmits<{
     'editor-data': [data: EditorData],
     'editor-ready': [],
     'file-edited': [],
+    'diagram-click': [detail: DiagramClickEvent],
     'editor-state': [state: {
         error: string
     }]
@@ -200,6 +207,12 @@ const emit = defineEmits<{
 // Let our host know when the diagram has been changed
 
 celldlEditor.events.addEventListener('file-edited', () => emit('file-edited'))
+
+// and when one of its components or connections has been clicked
+
+celldlEditor.events.addEventListener('diagram-click', (event: Event) => {
+    emit('diagram-click', (<CustomEvent<DiagramClickEvent>>event).detail)
+})
 
 //==============================================================================
 
@@ -314,6 +327,15 @@ function resetToolBars() {
     // Hide any open panel
     // FUTURE: reset to default panel tool
 }
+
+vue.watch(
+    () => props.readOnly,
+    (readOnly) => {
+        resetToolBars()
+        celldlEditor.readOnly = !!readOnly
+    },
+    { immediate: true }
+)
 
 //==============================================================================
 
@@ -462,11 +484,13 @@ vue.onUnmounted(() => {
 .svg-container {
     margin:  0;
     border: 2px solid var(--editor-border-color);
-    border-top-width: 0;
     flex: 1;
     min-height: 0;
     overflow: hidden;
     position: relative;     /* The diagram's (absolutely positioned) host fills us */
+}
+.editor-bar-h + .svg-container {
+    border-top-width: 0;
 }
 .hidden {
     display: none;

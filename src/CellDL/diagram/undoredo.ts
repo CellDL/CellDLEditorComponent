@@ -28,6 +28,7 @@ import { Point, PointMath, type PointLike } from '#root/utils/points'
 
 import { SelectionSet } from './selectionset'
 import { StoredObject } from './storedobject'
+import type { CellDLEditor } from '#editor/editor'
 
 //==============================================================================
 
@@ -183,8 +184,13 @@ export class MoveUndoState extends UndoState {
 
 export class UndoRedo {
     #activeUndoState: UndoState|null = null
+    #editor: CellDLEditor
     #redoStack: UndoState[] = []
     #undoStack: UndoState[] = []
+
+    constructor(editor: CellDLEditor) {
+        this.#editor = editor
+    }
 
     get activeUndoState() {
         return this.#activeUndoState
@@ -193,7 +199,7 @@ export class UndoRedo {
     clean() {
         this.#redoStack = []
         this.#undoStack = []
-        // notify CLEAN
+        this.#editor.diagramModified(false)     // clean
     }
 
     resetActiveUndoState() {
@@ -220,7 +226,7 @@ export class UndoRedo {
     #clearRedoStack() {
         if (this.#redoStack.length) {
             this.#redoStack = []
-            // notify no REDO
+            this.#editor.canUndo(false)
         }
     }
 
@@ -228,7 +234,7 @@ export class UndoRedo {
         if (this.#redoStack.length) {
             const undoState = this.#redoStack.pop() || null
             if (this.#redoStack.length === 0) {
-            // notify no REDO
+                this.#editor.canUndo(false)
             }
             return undoState
         }
@@ -238,7 +244,7 @@ export class UndoRedo {
     #pushRedoStack(undoState: UndoState) {
         this.#redoStack.push(undoState)
         if (this.#redoStack.length === 1) {
-            // notify can REDO
+            this.#editor.canUndo(true)
         }
     }
 
@@ -246,7 +252,7 @@ export class UndoRedo {
         if (this.#undoStack.length) {
             const undoState = this.#undoStack.pop() as UndoState
             if (this.#undoStack.length === 0) {
-                // notify CLEAN
+                this.#editor.diagramModified(false)     // clean
             }
             return undoState
         }

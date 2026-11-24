@@ -28,16 +28,17 @@ import { logging } from '#root/utils/logging'
 
 export { DEFAULT_VIEW_STATE } from '#editor/editor/defaults'
 
-export {
-    type EditorState,
+export type {
+    EditorStateData,
     EditorStatus,
-    type FileStatus,
-    type ViewState
+    FileStatus,
+    ViewState
 } from '#root/utils/editor-types'
 
 export type {
     CellDLEditorCommand,
     CellDLEditorProps,
+    DiagramClickEvent,
     EditorData,
     EditorEditCommand,
     EditorExportCommand,
