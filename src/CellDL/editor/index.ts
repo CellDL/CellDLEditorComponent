@@ -83,16 +83,6 @@ const MAX_POINTER_CLICK_TIME = 200 // milliseconds
 
 //==============================================================================
 
-// Lookup tables for tracking tool bar state
-
-export enum EDITOR_TOOL_IDS {
-    SelectTool = 'editor-select-tool',
-    BondgraphTool = 'editor-bondgraph-tool',
-    DrawingTool = 'editor-drawing-tool'
-}
-
-export const DEFAULT_EDITOR_TOOL_ID = EDITOR_TOOL_IDS.SelectTool
-
 enum EDITOR_MODE {
     Selecting = 'SELECTING',
     PathDrawing = 'DRAW-PATH',

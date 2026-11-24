@@ -38,7 +38,6 @@ import * as vueCommon from '#root/utils/vueCommon'
 
 import { CellDLDiagram } from '#editor/diagram'
 import { CellDLEditor } from '#editor/editor'
-import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS } from '#editor/editor'
 
 import {
     EDITOR_EVENTS_KEY,
@@ -259,12 +258,14 @@ celldlEditor.events.addEventListener('open-context-menu', (event: Event) => {
 //==============================================================================
 //==============================================================================
 
-// Build the left toolbar buttons: SelectTool + BG component templates + BG stroke styles + Drawing tools
+// Build the left toolbar buttons: SelectTool + tools from plugins (bondgraph and drawing)
+
+const SELECT_TOOL_ID = 'editor-select-tool'
 
 const toolButtons = vue.ref<EditorToolButton[]>([
     {
-        toolId: EDITOR_TOOL_IDS.SelectTool,
-        active: (DEFAULT_EDITOR_TOOL_ID as EDITOR_TOOL_IDS) === EDITOR_TOOL_IDS.SelectTool,
+        toolId: SELECT_TOOL_ID,
+        active: true,
         prompt: 'Selection tool',
         icon: 'lucide-MousePointer'
     }
@@ -321,7 +322,7 @@ function resetToolBars() {
     // Set SelectTool as the only active tool button
 
     for (const toolButton of toolButtons.value) {
-        toolButton.active = toolButton.toolId === EDITOR_TOOL_IDS.SelectTool
+        toolButton.active = toolButton.toolId === SELECT_TOOL_ID
     }
 
     // Hide any open panel
