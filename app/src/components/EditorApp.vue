@@ -19,7 +19,6 @@
                     :id="mainMenuId"
                     :haveFile="haveFile"
                     :editorStatus="editorStatus"
-                    :noPython="noPython"
                     :viewState="viewState"
                     @about="onAboutMenu"
                     @edit-action="onEditAction"
@@ -138,7 +137,6 @@ import { DEFAULT_VIEW_STATE } from '../../../src'
 
 type IEditorAppProps = {
     theme?: Theme
-    noPython?: boolean
 }
 
 const props = defineProps<IEditorAppProps>()
