@@ -199,8 +199,8 @@ const menuItems = [
                 command: () => {
                     emit('export-action', 'cellml')
                 },
-                visible: () => fileOperationsAvailable && !props.noPython
-                disabled: () => !(props.haveFile && !props.editorStatus.diagramModified),
+                visible: () => fileOperationsAvailable && !props.noPython,
+                disabled: () => !(props.haveFile && !props.editorStatus.diagramModified)
             }
         ]
     },
