@@ -10,7 +10,7 @@ const isMacOs = common.isMacOs()
 
 //==============================================================================
 
-export enum EDITOR_COMMAND {
+export enum EDITOR_ACTION {
     COPY = 'copy',
     CUT = 'cut',
     DELETE = 'delete',
@@ -25,8 +25,8 @@ export enum EDITOR_COMMAND {
 
 //==============================================================================
 
-export type EditorCommandInfo = {
-    command: EDITOR_COMMAND
+export type EditorActionInfo = {
+    action: EDITOR_ACTION
     icon?: string
     keycode?: string
     label: string
@@ -35,80 +35,80 @@ export type EditorCommandInfo = {
 
 //==============================================================================
 
-const COMMAND_MODIFIER = isMacOs ? 'Meta' : 'Ctrl'
+const META_KEY_NAME = isMacOs ? 'Meta' : 'Ctrl'
 
-export const editorCommandMap: Map<EDITOR_COMMAND, EditorCommandInfo> = new Map([
+export const editorActionMap: Map<EDITOR_ACTION, EditorActionInfo> = new Map([
     [
-        EDITOR_COMMAND.COPY, {
-            command: EDITOR_COMMAND.COPY,
+        EDITOR_ACTION.COPY, {
+            action: EDITOR_ACTION.COPY,
             label: 'Copy',
             icon: 'pi pi-copy',
             shortcut: isWindowsOrLinux ? 'Ctrl+C' : isMacOs ? '⌘C' : undefined,
-            keycode: `${COMMAND_MODIFIER}+C`
+            keycode: `${META_KEY_NAME}+C`
     }], [
-        EDITOR_COMMAND.CUT, {
-            command: EDITOR_COMMAND.CUT,
+        EDITOR_ACTION.CUT, {
+            action: EDITOR_ACTION.CUT,
             label: 'Cut',
             icon: 'pi pi-file-export',
             shortcut: isWindowsOrLinux ? 'Ctrl+X' : isMacOs ? '⌘X' : undefined,
-            keycode: `${COMMAND_MODIFIER}+X`
+            keycode: `${META_KEY_NAME}+X`
     }], [
-        EDITOR_COMMAND.DELETE, {
-            command: EDITOR_COMMAND.DELETE,
+        EDITOR_ACTION.DELETE, {
+            action: EDITOR_ACTION.DELETE,
             label: 'Delete',
             icon: 'pi pi-trash',
             shortcut: isWindowsOrLinux ? undefined : isMacOs ? '⌫' : undefined,
             keycode: isMacOs ? 'BACKSPACE' : 'DELETE'
     }], [
-        EDITOR_COMMAND.DUPLICATE, {
-            command: EDITOR_COMMAND.DUPLICATE,
+        EDITOR_ACTION.DUPLICATE, {
+            action: EDITOR_ACTION.DUPLICATE,
             label: 'Duplicate',
             shortcut: isWindowsOrLinux ? 'Ctrl+D' : isMacOs ? '⌘D' : undefined,
-            keycode: `${COMMAND_MODIFIER}+D`
+            keycode: `${META_KEY_NAME}+D`
     }], [
-        EDITOR_COMMAND.GROUP, {
-            command: EDITOR_COMMAND.GROUP,
+        EDITOR_ACTION.GROUP, {
+            action: EDITOR_ACTION.GROUP,
             label: 'Group'
     }], [
-        EDITOR_COMMAND.INSPECT, {
-            command: EDITOR_COMMAND.INSPECT,
+        EDITOR_ACTION.INSPECT, {
+            action: EDITOR_ACTION.INSPECT,
             label: 'Inspect',
             shortcut: isWindowsOrLinux ? 'Ctrl+I' : isMacOs ? '⌘I' : undefined,
-            keycode: `${COMMAND_MODIFIER}+I`
+            keycode: `${META_KEY_NAME}+I`
     }], [
-        EDITOR_COMMAND.PASTE, {
-            command: EDITOR_COMMAND.PASTE,
+        EDITOR_ACTION.PASTE, {
+            action: EDITOR_ACTION.PASTE,
             label: 'Paste',
             icon: 'pi pi-clipboard',
             shortcut: isWindowsOrLinux ? 'Ctrl+V' : isMacOs ? '⌘V' : undefined,
-            keycode: `${COMMAND_MODIFIER}+V`
+            keycode: `${META_KEY_NAME}+V`
     }], [
-        EDITOR_COMMAND.REDO, {
-            command: EDITOR_COMMAND.REDO,
+        EDITOR_ACTION.REDO, {
+            action: EDITOR_ACTION.REDO,
             label: 'Redo',
             shortcut: isWindowsOrLinux ? 'Ctrl+Shift+Z' : isMacOs ? '⇧⌘Z' : undefined,
-            keycode: `${COMMAND_MODIFIER}+Shift+Z`
+            keycode: `${META_KEY_NAME}+Shift+Z`
     }], [
-        EDITOR_COMMAND.UNDO, {
-            command: EDITOR_COMMAND.UNDO,
+        EDITOR_ACTION.UNDO, {
+            action: EDITOR_ACTION.UNDO,
             label: 'Undo',
             icon: 'pi pi-undo',
             shortcut: isWindowsOrLinux ? 'Ctrl+Z' : isMacOs ? '⌘Z' : undefined,
-            keycode: `${COMMAND_MODIFIER}+Z`
+            keycode: `${META_KEY_NAME}+Z`
     }], [
-        EDITOR_COMMAND.UNGROUP, {
-            command: EDITOR_COMMAND.UNGROUP,
+        EDITOR_ACTION.UNGROUP, {
+            action: EDITOR_ACTION.UNGROUP,
             label: 'Ungroup'
     }]
 ])
 
 //==============================================================================
 
-export const keycodeToCommandMap: Map<string, EDITOR_COMMAND> = new Map()
+export const keycodeToEditorAction: Map<string, EDITOR_ACTION> = new Map()
 
-for (const commandInfo of editorCommandMap.values()) {
-    if (commandInfo.keycode) {
-        keycodeToCommandMap.set(commandInfo.keycode, commandInfo.command)
+for (const actionInfo of editorActionMap.values()) {
+    if (actionInfo.keycode) {
+        keycodeToEditorAction.set(actionInfo.keycode, actionInfo.action)
     }
 }
 

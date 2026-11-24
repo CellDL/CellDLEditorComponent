@@ -22,7 +22,7 @@ export function isDesktop(): boolean {
 
 // A method to determine whether the Ctrl or Cmd key is pressed, depending on the operating system.
 
-export function isCtrlOrCmd(event: KeyboardEvent): boolean {
+export function isCtrlOrCmd(event: KeyboardEvent|MouseEvent): boolean {
     return isMacOs() ? event.metaKey : event.ctrlKey
 }
 
