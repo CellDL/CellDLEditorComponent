@@ -320,9 +320,7 @@ async function onEditorState(state: EditorStateData) {
 
 async function onEditorData(data: EditorData) {
     if (data.kind === 'export') {
-        if (pythonOk) {
-            await saveCellML(data.data)
-        }
+// WIP        await saveCellML(data.data)
     } else if (data.kind === 'save-as' || !currentFileHandle) {
         await saveFile(data.data)
     } else if (currentFileHandle) {
