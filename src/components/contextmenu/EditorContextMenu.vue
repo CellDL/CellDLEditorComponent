@@ -1,7 +1,5 @@
 <template lang="pug">
-    ContextMenu(
-        ref="menu" :model="items"
-    )
+    ContextMenu(ref="menu" :model="items")
         template(#item="{ item, props, root }")
             a(v-bind="props.action")
                 .p-icon(:class="item.icon")
@@ -24,16 +22,9 @@ useThemeCssVariables('contextmenu')
 
 //==============================================================================
 
-import * as common from '#root/utils/common'
+import { EDITOR_ACTION, editorActionMap, keyName } from '#editor/editor/actions'
 
 import { EDITOR_EVENTS_KEY, type EditorStatus } from '#root/utils/editor-types'
-
-//==============================================================================
-
-import { CONTEXT_MENU } from './types'
-
-const isWindowsOrLinux = common.isWindows() || common.isLinux()
-const isMacOs = common.isMacOs()
 
 //==============================================================================
 
@@ -57,10 +48,10 @@ vue.watch(
     }
 )
 
-function contextMenuEvent(id: string) {
+function contextMenuEvent(action: string) {
     editorEvents.dispatchEvent(
-        new CustomEvent('context-menu-click', {
-            detail: { id }
+        new CustomEvent('context-menu-action', {
+            detail: { action }
         })
     )
     menu.value.hide()
@@ -68,78 +59,65 @@ function contextMenuEvent(id: string) {
 
 //==============================================================================
 
+const menuItem = (editorAction: EDITOR_ACTION, disabled: boolean) => {
+    const actionInfo = editorActionMap.get(editorAction)
+    if (actionInfo) {
+        return {
+            label: actionInfo.label,
+            icon: actionInfo.icon,
+            shortcut: actionInfo.shortcut,
+            keycode: actionInfo.keycode,
+            command: () => contextMenuEvent(actionInfo.action),
+            disabled: disabled
+        }
+    }
+    return {}
+}
+
 const items = vue.computed(() => {
     const editorStatus = vue.toRaw(props.editorStatus)
     return [
-        {
-            label: 'Undo',
-            icon: 'pi pi-undo',
-            shortcut: isWindowsOrLinux ? 'Ctrl+Z' : isMacOs ? '⌘Z' : undefined,
-            command: () => contextMenuEvent(CONTEXT_MENU.UNDO),
-            disabled: !props.editorStatus.diagramModified
-        },
-        {
-            label: 'Redo',
-            shortcut: isWindowsOrLinux ? 'Ctrl+Shift+O' : isMacOs ? '⇧⌘O' : undefined,
-            command: () => contextMenuEvent(CONTEXT_MENU.REDO),
-            disabled: !props.editorStatus.canUndo
-        },
-        { separator: true },
-        {
-            label: 'Cut',
-            icon: 'pi pi-file-export',
-            shortcut: isWindowsOrLinux ? 'Ctrl+X' : isMacOs ? '⌘X' : undefined,
-            command: () => contextMenuEvent(CONTEXT_MENU.CUT),
-            disabled: !editorStatus.haveSelection
-        },
-        {
-            label: 'Copy',
-            icon: 'pi pi-copy',
-            shortcut: isWindowsOrLinux ? 'Ctrl+C' : isMacOs ? '⌘C' : undefined,
-            command: () => contextMenuEvent(CONTEXT_MENU.COPY),
-            disabled: !editorStatus.haveSelection
-        },
-        {
-            label: 'Paste',
-            icon: 'pi pi-clipboard',
-            shortcut: isWindowsOrLinux ? 'Ctrl+V' : isMacOs ? '⌘V' : undefined,
-            command: () => contextMenuEvent(CONTEXT_MENU.PASTE),
-            disabled: !editorStatus.canPaste
-        },
-        {
-            label: 'Duplicate',
-            shortcut: isWindowsOrLinux ? 'Ctrl+D' : isMacOs ? '⌘D' : undefined,
-            command: () => contextMenuEvent(CONTEXT_MENU.DUPLICATE),
-            disabled: !editorStatus.haveSelection,
-        },
-        {
-            label: 'Delete',
-            icon: 'pi pi-trash',
-            shortcut: isWindowsOrLinux ? undefined : isMacOs ? '⌫' : undefined,
-            command: () => contextMenuEvent(CONTEXT_MENU.DELETE),
-            disabled: !editorStatus.haveSelection,
-        },
+        menuItem(EDITOR_ACTION.UNDO, !editorStatus.diagramModified),
+        menuItem(EDITOR_ACTION.REDO, !editorStatus.canUndo),
 /* WIP
         { separator: true },
-        {
-            label: 'Group',
-            command: () => contextMenuEvent(CONTEXT_MENU.GROUP),
-            disabled: !editorStatus.haveSelection
-        },
-        {
-            label: 'Ungroup',
-            command: () => contextMenuEvent(CONTEXT_MENU.UNGROUP),
-            disabled: !editorStatus.haveGroupSelection
-        },
+        menuItem(EDITOR_ACTION.CUT, !editorStatus.haveSelection),
+        menuItem(EDITOR_ACTION.COPY, !editorStatus.haveSelection),
+        menuItem(EDITOR_ACTION.PASTE, !editorStatus.canPaste),
+WIP */
         { separator: true },
-        {
-            command: () => contextMenuEvent(CONTEXT_MENU.INSPECT),
-            disabled: true,
-            label: 'Inspect'
-        }
+        menuItem(EDITOR_ACTION.DELETE, !editorStatus.haveSelection),
+/* WIP
+        { separator: true },
+        menuItem(EDITOR_ACTION.DUPLICATE, !editorStatus.haveSelection),
+WIP */
+/* WIP
+        { separator: true },
+        menuItem(EDITOR_ACTION.GROUP, !editorStatus.haveSelection),
+        menuItem(EDITOR_ACTION.UNGROUP, !editorStatus.haveGroupSelection),
+        { separator: true },
+        menuItem(EDITOR_ACTION.INSPECT, true0
 WIP */
     ]}
 )
+
+//==============================================================================
+
+const onKeyDown = (event: KeyboardEvent) => {
+    if (menu.value.visible) {
+        // Prevent any default browser action (e.g. navigating back)
+        event.preventDefault()
+        const key = keyName(event)
+        for (const item of items.value) {
+            if ('disabled' in item && !item.disabled && key === item.keycode) {
+                item.action()
+            }
+        }
+    }
+}
+
+vue.onMounted(() => window.addEventListener('keydown', onKeyDown));
+vue.onUnmounted(() => window.removeEventListener('keydown', onKeyDown));
 
 //==============================================================================
 </script>

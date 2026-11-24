@@ -32,7 +32,6 @@ import type { EditorStatus, ViewState } from '../../../src'
 const props = defineProps<{
     editorStatus: EditorStatus
     haveFile: boolean
-    noPython?: boolean
     viewState: ViewState
 }>()
 
@@ -192,15 +191,15 @@ const menuItems = [
             },
             {
                 separator: true,
-                visible: fileOperationsAvailable && !props.noPython
+                visible: fileOperationsAvailable
             },
             {
                 label: 'Generate CellML...',
                 command: () => {
                     emit('export-action', 'cellml')
                 },
-                visible: () => fileOperationsAvailable && !props.noPython,
-                disabled: () => !(props.haveFile && !props.editorStatus.diagramModified)
+                disabled: () => !(props.haveFile && !props.editorStatus.diagramModified),
+                visible: () => fileOperationsAvailable
             }
         ]
     },
