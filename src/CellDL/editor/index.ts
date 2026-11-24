@@ -27,6 +27,7 @@ import '#root/assets/svgContent.css'
 import svgContentCss from '#root/assets/svgContent.css?inline'
 
 import type { CellDLObject } from '#editor/celldlObjects'
+import { PathDrag } from '#editor/connections/pathdrag'
 import { PathMaker, type PathNode } from '#editor/connections/pathmaker'
 import type { TemplateEventDetails } from '#editor/components'
 import { objectMetadataTemplate, ObjectPropertiesPanel } from '#editor/components/properties'
@@ -176,6 +177,7 @@ export class CellDLEditor {
 
     #pathMaker: PathMaker | null = null
     #nextPathNode: PathNode | null = null
+    #pathDrag: PathDrag
 
     #currentTemplateDetails: TemplateEventDetails | null = null
     #drawConnectionSettings: StringProperties = {}
@@ -208,6 +210,19 @@ export class CellDLEditor {
     readonly events = new EventTarget()
 
     constructor(componentLibraryPlugin: ComponentLibraryPlugin) {
+        const editor = this
+        this.#pathDrag = new PathDrag({
+            get celldlDiagram() { return editor.#celldlDiagram },
+            get canStartPath() {
+                return editor.#editorMode === EDITOR_MODE.Selecting && editor.#celldlDiagram !== null
+                    && !editor.moving && !editor.#panning && editor.#boxMaker === null
+            },
+            get pathStyle() { return editor.#drawConnectionSettings.style },
+            objectAt: (element) => editor.#celldlDiagram?.objectById(getElementId(element)) ?? null,
+            hideTooltip: () => editor.#hideTooltip(),
+            click: (event, object) => editor.#selectionClickEvent(event, object.svgElement!, object)
+        })
+
         // Add a handler for events from toolbar buttons and popovers
         this.events.addEventListener('toolbar-event', this.#toolBarEvent.bind(this))
         this.events.addEventListener('component-selected', this.#componentTemplateSelectedEvent.bind(this))
@@ -286,9 +301,10 @@ export class CellDLEditor {
         shadowRoot.addEventListener('pointerdown', this.#pointerDownEvent.bind(this) as EventListener, { signal })
         shadowRoot.addEventListener('pointermove', this.#pointerMoveEvent.bind(this) as EventListener, { signal })
         shadowRoot.addEventListener('pointerup', this.#pointerUpEvent.bind(this) as EventListener, { signal })
-        // Clear the status bar when the pointer leaves the canvas
         this.#container.addEventListener('pointerleave', () => {
+            // Clear the status bar when the pointer leaves the canvas
             this.#clearStatus()
+            this.#pathDrag.pointerLeave()
         }, { signal })
 
         // Keyboard handlers. These are on the editor's own root element, so an editor only
@@ -458,6 +474,7 @@ export class CellDLEditor {
 
         // Set initial mode
         this.#editorMode = DEFAULT_EDITOR_MODE
+        this.#pathDrag.reset()
         this.currentObject = null
         this.pointerMoved = false
         this.#activeObjects.clear()
@@ -467,6 +484,7 @@ export class CellDLEditor {
     closeDiagram() {
         if (this.#celldlDiagram !== null) {
             this.#editorFrame!.clear()
+            this.#pathDrag.reset()
             //            this.#toolBar.enable(false)
             this.#panzoom!.disable()
             if (this.#shadowRoot) {
@@ -871,7 +889,7 @@ export class CellDLEditor {
     }
 
     #pointerClickEvent(event: MouseEvent) {
-        if (this.#handlePointerEvents(event)) {
+        if (this.#handlePointerEvents(event) || this.#pathDrag.click(event)) {
             return
         }
         const element = event.target as SVGGraphicsElement
@@ -955,7 +973,7 @@ export class CellDLEditor {
     }
 
     #pointerOverEvent(event: PointerEvent) {
-        if (this.#celldlDiagram === null || this.#handlePointerEvents(event)) {
+        if (this.#celldlDiagram === null || this.#handlePointerEvents(event) || this.#pathDrag.pointerOver(event)) {
             return
         }
         const element = event.target as SVGGraphicsElement
@@ -1045,6 +1063,9 @@ export class CellDLEditor {
     #pointerDownEvent(event: PointerEvent) {
         if (this.#handlePointerEvents(event)) {
             return
+        } else if (this.#pathDrag.pointerDown(event)) {
+            this.#hideTooltip()
+            return
         }
         this.pointerMoved = false
         this.#pointerDownTime = Date.now()
@@ -1121,7 +1142,7 @@ export class CellDLEditor {
     }
 
     #pointerMoveEvent(event: PointerEvent) {
-        if (this.#handlePointerEvents(event)) {
+        if (this.#handlePointerEvents(event) || this.#pathDrag.pointerMove(event)) {
             return
         }
         if (this.#panning) {
@@ -1157,7 +1178,7 @@ export class CellDLEditor {
     }
 
     #pointerUpEvent(event: PointerEvent) {
-        if (this.#celldlDiagram === null || this.#handlePointerEvents(event)) {
+        if (this.#celldlDiagram === null || this.#handlePointerEvents(event) || this.#pathDrag.pointerUp(event)) {
             return
         }
         const svgPoint = this.#domToSvgCoords(event)
@@ -1267,12 +1288,38 @@ export class CellDLEditor {
         }
     }
 
+    #processEditorCommand(command: EDITOR_COMMAND) {
+        if        (command === EDITOR_COMMAND.COPY) {
+//          this.#copySelectedObjectsToClipboard()          // WIP
+        } else if (command === EDITOR_COMMAND.CUT) {
+//          this.#cutSelectedObjectsToClipboard()           // WIP
+        } else if (command === EDITOR_COMMAND.DELETE) {
+            this.#deleteSelectedObjects()
+        } else if (command === EDITOR_COMMAND.DUPLICATE) {
+//          this.#duplicateSelectedObjects()                // WIP
+        } else if (command === EDITOR_COMMAND.INSPECT) {
+//          this.#showSelectedObjectInfo()                  // WIP
+        } else if (command === EDITOR_COMMAND.GROUP) {
+            this.#groupSelectedObjects()
+        } else if (command === EDITOR_COMMAND.PASTE) {
+//          this.#pasteSelectedObjectsFromClipboard()       // WIP
+        } else if (command === EDITOR_COMMAND.REDO) {
+            this.#undoRedo?.redo(this.#celldlDiagram!)
+        } else if (command === EDITOR_COMMAND.UNDO) {
+            this.#undoRedo?.undo(this.#celldlDiagram!)
+        } else if (command === EDITOR_COMMAND.UNGROUP) {
+//          this.#ungroupSelectedObject()                   // WIP
+        }
+    }
+
     #keyDownEvent(event: KeyboardEvent) {
         // Keys typed into a field (e.g. in a panel) are for that field, not the diagram
         if (this.#readOnly || fromEditableElement(event)) {
             return
         }
-        if (this.#pathMaker) {
+        if (event.key === 'Escape' && this.#pathDrag.cancel()) {
+            return
+        } else if (this.#pathMaker) {
             if (event.key === 'Escape' || event.key === 'Backspace' || event.key === 'Delete') {
                 // Remove any partial path
                 this.#pathMaker.close()
