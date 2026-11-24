@@ -46,7 +46,7 @@ import type { ComponentLibraryPlugin } from '#root/plugins'
 
 //==============================================================================
 
-import { EDITOR_COMMAND, keycodeToCommandMap, keyName } from './commands'
+import { EDITOR_ACTION, keycodeToEditorAction, keyName } from './actions'
 import { DEFAULT_VIEW_STATE } from './defaults'
 import type { EditorFrame } from './editorframe'
 import { EDITOR_GRID_CLASS } from './editguides'
@@ -1264,50 +1264,26 @@ export class CellDLEditor {
         this.#statusPos = null
     }
 
-    #processEditorCommand(command: EDITOR_COMMAND) {
-        if        (command === EDITOR_COMMAND.COPY) {
+    #processEditorAction(action: EDITOR_ACTION) {
+        if        (action === EDITOR_ACTION.COPY) {
 //          this.#copySelectedObjectsToClipboard()          // WIP
-        } else if (command === EDITOR_COMMAND.CUT) {
+        } else if (action === EDITOR_ACTION.CUT) {
 //          this.#cutSelectedObjectsToClipboard()           // WIP
-        } else if (command === EDITOR_COMMAND.DELETE) {
+        } else if (action === EDITOR_ACTION.DELETE) {
             this.#deleteSelectedObjects()
-        } else if (command === EDITOR_COMMAND.DUPLICATE) {
+        } else if (action === EDITOR_ACTION.DUPLICATE) {
 //          this.#duplicateSelectedObjects()                // WIP
-        } else if (command === EDITOR_COMMAND.INSPECT) {
+        } else if (action === EDITOR_ACTION.INSPECT) {
 //          this.#showSelectedObjectInfo()                  // WIP
-        } else if (command === EDITOR_COMMAND.GROUP) {
+        } else if (action === EDITOR_ACTION.GROUP) {
             this.#groupSelectedObjects()
-        } else if (command === EDITOR_COMMAND.PASTE) {
+        } else if (action === EDITOR_ACTION.PASTE) {
 //          this.#pasteSelectedObjectsFromClipboard()       // WIP
-        } else if (command === EDITOR_COMMAND.REDO) {
+        } else if (action === EDITOR_ACTION.REDO) {
             this.#undoRedo?.redo(this.#celldlDiagram!)
-        } else if (command === EDITOR_COMMAND.UNDO) {
+        } else if (action === EDITOR_ACTION.UNDO) {
             this.#undoRedo?.undo(this.#celldlDiagram!)
-        } else if (command === EDITOR_COMMAND.UNGROUP) {
-//          this.#ungroupSelectedObject()                   // WIP
-        }
-    }
-
-    #processEditorCommand(command: EDITOR_COMMAND) {
-        if        (command === EDITOR_COMMAND.COPY) {
-//          this.#copySelectedObjectsToClipboard()          // WIP
-        } else if (command === EDITOR_COMMAND.CUT) {
-//          this.#cutSelectedObjectsToClipboard()           // WIP
-        } else if (command === EDITOR_COMMAND.DELETE) {
-            this.#deleteSelectedObjects()
-        } else if (command === EDITOR_COMMAND.DUPLICATE) {
-//          this.#duplicateSelectedObjects()                // WIP
-        } else if (command === EDITOR_COMMAND.INSPECT) {
-//          this.#showSelectedObjectInfo()                  // WIP
-        } else if (command === EDITOR_COMMAND.GROUP) {
-            this.#groupSelectedObjects()
-        } else if (command === EDITOR_COMMAND.PASTE) {
-//          this.#pasteSelectedObjectsFromClipboard()       // WIP
-        } else if (command === EDITOR_COMMAND.REDO) {
-            this.#undoRedo?.redo(this.#celldlDiagram!)
-        } else if (command === EDITOR_COMMAND.UNDO) {
-            this.#undoRedo?.undo(this.#celldlDiagram!)
-        } else if (command === EDITOR_COMMAND.UNGROUP) {
+        } else if (action === EDITOR_ACTION.UNGROUP) {
 //          this.#ungroupSelectedObject()                   // WIP
         }
     }
@@ -1328,9 +1304,9 @@ export class CellDLEditor {
         } else {
             // Prevent any default browser action (e.g. navigating back)
             event.preventDefault()
-            const command = keycodeToCommandMap.get(keyName(event))
-            if (command) {
-                this.#processEditorCommand(command)
+            const action = keycodeToEditorAction.get(keyName(event))
+            if (action) {
+                this.#processEditorAction(action)
             }
         }
     }
