@@ -44,7 +44,7 @@
                     offIcon="pi pi-sun"
                     onIcon="pi pi-moon"
                     size="small"
-                    @change="onDarkMode"
+                    @change="setThemeMode"
                 )
             ConfirmDialog
                 template(#message="slotProps")
@@ -196,7 +196,7 @@ const editorTheme = vue.ref<Theme|undefined>(props.theme)
 
 const darkMode = vue.ref<boolean>(props.theme === 'dark')
 
-function onDarkMode() {
+function setThemeMode() {
     if (darkMode.value) {
         editorTheme.value = 'dark'
     } else {
@@ -204,6 +204,8 @@ function onDarkMode() {
     }
     vueCommon.useTheme().setTheme(editorTheme.value)
 }
+
+setThemeMode()
 
 //==============================================================================
 
@@ -261,7 +263,7 @@ vue.onMounted(() => {
 //==============================================================================
 //==============================================================================
 
-const editorCommand = vue.ref<CellDLEditorCommand>()
+const editorCommand = vue.ref<CellDLEditorCommand|undefined>(undefined)
 
 //==============================================================================
 
