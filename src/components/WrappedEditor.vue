@@ -196,17 +196,17 @@ const props = defineProps<CellDLEditorProps>()
 
 const emit = defineEmits<{
     'editor-data': [data: EditorData],
-    'editor-ready': [],
-    'file-edited': [],
     'diagram-click': [detail: DiagramClickEvent],
-    'editor-state': [state: {
-        error: string
-    }]
+    'editor-state': [state: EditorStateData]
 }>()
 
 // Let our host know when the diagram has been changed
 
-celldlEditor.events.addEventListener('file-edited', () => emit('file-edited'))
+celldlEditor.events.addEventListener('editor-status', (event: Event) => {
+    const status: EditorStatus = (<CustomEvent>event).detail.status
+    editorStatus.value = status
+    emit('editor-state', { status })
+})
 
 // and when one of its components or connections has been clicked
 
@@ -455,7 +455,9 @@ vue.onMounted(async () => {
             await celldlEditor.editDiagram(celldlDiagram)
 
 //            testEditor(celldlEditor)
-            emit('editor-ready')
+            emit('editor-state', {
+                ready: true
+            })
         })
     }
 })
