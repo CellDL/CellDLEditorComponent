@@ -1352,7 +1352,7 @@ export class CellDLEditor {
         const bounds = components.map(component => {
             const svgElement = component.celldlSvgElement!
             const { left, top, right, bottom } = svgElement.svgBounds()
-            return { left, top, right, bottom, centre: { x: svgElement.centroid.x, y: svgElement.centroid.y } }
+            return { left, top, right, bottom, centre: svgElement.centroid }
         })
         // Don't rearrange if components would stack on top of each other...
         // e.g. left then middle
@@ -1363,7 +1363,7 @@ export class CellDLEditor {
         components.forEach((component, index) => {
             const centroid = bounds[index]!.centre
             const target = arrangedCentres[index]!
-            if (Math.abs(target.x - centroid.x) > 1e-6 || Math.abs(target.y - centroid.y) > 1e-6) {
+            if (!centroid.equals(target)) {
                 component.reposition(centroid, target, { noAlign: true })
                 changed = true
             }
