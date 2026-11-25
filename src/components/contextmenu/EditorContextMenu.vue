@@ -68,7 +68,7 @@ function menuItem(editorAction: EDITOR_ACTION, disabled: boolean) {
                 icon: actionInfo.icon,
                 disabled: false, //disabled,
                 items: actionInfo.items.map(item => {
-                    return {
+                    return item[0] === '' ? { separator: true } : {
                         label: item[0],
                         command: () => contextMenuEvent(actionInfo.action, item[1]),
                     }
