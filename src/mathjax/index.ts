@@ -80,9 +80,9 @@ const html = mathjax.document('', {
 
 //==============================================================================
 
-export function latexAsSvgString(latex: string): string {
+export function latexAsSvgString(latex: string, display: boolean = false): string {
     const node = html.convert(latex, {
-        display: false, // process as inline math
+        display,
         em: EM_SIZE,
         ex: EX_SIZE
     })

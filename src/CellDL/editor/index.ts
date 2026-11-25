@@ -81,6 +81,7 @@ WIP ****/
 //==============================================================================
 
 const MAX_POINTER_CLICK_TIME = 200 // milliseconds
+const HOVER_TOOLTIP_DELAY = 600    // milliseconds
 
 //==============================================================================
 
@@ -196,6 +197,7 @@ export class CellDLEditor {
     #tooltip: vue.Ref|undefined
     #tooltipElement: HTMLElement|undefined
     #tooltipStyle: string = ''
+    #hoverTimer: ReturnType<typeof setTimeout>|undefined
 
     // Events between this editor and its UI (toolbars, panels, context menu) are sent
     // via this target rather than `document` as there may be several editors on a page
@@ -653,16 +655,23 @@ export class CellDLEditor {
         }
     }
 
+    #cancelHover() {
+        clearTimeout(this.#hoverTimer)
+        this.#hoverTimer = undefined
+    }
+
     #hideTooltip() {
+        this.#cancelHover()
         if (this.#tooltip) {
             this.#tooltip.value.hide()
         }
     }
 
-    showTooltip(msg: string, style: string = '') {
+    showTooltip(msg: string, style: string = '', html: boolean = false) {
         if (msg === '') {
             this.#hideTooltip()
         } else if (this.#tooltip) {
+            this.#tooltip.value.setProps({ allowHTML: html, maxWidth: html ? 640 : 350 })
             this.#tooltip.value.setContent(msg)
             this.#tooltip.value.show()
             if (this.#tooltipElement) {
@@ -1028,11 +1037,19 @@ export class CellDLEditor {
                     currentObject.initialiseMove(element)  // will set moveable
                 }
                 this.currentObject = currentObject
+                this.#hideTooltip()
+                this.#hoverTimer = setTimeout(() => {
+                    const hover = this.#componentLibraryPlugin.hoverHtml(currentObject)
+                    if (hover !== '') {
+                        this.showTooltip(hover, '', true)
+                    }
+                }, HOVER_TOOLTIP_DELAY)
             }
         }
     }
 
     #pointerOutEvent(event: PointerEvent) {
+        this.#cancelHover()
         if (this.#handlePointerEvents(event)) {
             return
         }
@@ -1054,6 +1071,7 @@ export class CellDLEditor {
     }
 
     #pointerDownEvent(event: PointerEvent) {
+        this.#hideTooltip()
         if (this.#handlePointerEvents(event)) {
             return
         } else if (this.#pathDrag.pointerDown(event)) {
@@ -1241,6 +1259,7 @@ export class CellDLEditor {
         this.#listeners = null
         this.#panzoom?.destroy()
         this.#panzoom = null
+        this.#cancelHover()
         this.#tooltip?.value?.destroy()
         this.#tooltip = undefined
         this.#tooltipElement = undefined

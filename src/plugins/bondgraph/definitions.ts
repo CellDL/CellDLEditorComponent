@@ -18,12 +18,14 @@ limitations under the License.
 
 ******************************************************************************/
 
-import { svgToDataUrl, LatexMathSvg } from '#root/utils/svgUtils'
+import { LatexMathSvg, svgToDataUrl } from '#root/utils/svgUtils'
+
+import { BGF_ONTOLOGY_NS } from './bgrdf'
 
 import type {
     BGComponentDefinition,
+    BGElementStyle,
     BGLibraryComponentTemplate,
-    BGElementStyle
 } from './utils'
 
 //==============================================================================
@@ -105,7 +107,7 @@ const ZERO_STORAGE_STYLE: BGElementStyle = {
 export const BONDGRAPH_COMPONENT_DEFINITIONS: BGComponentDefinition[] = [
     {
         id: 'QuantityStore',
-        type: 'https://bg-rdf.org/ontologies/bondgraph-framework#QuantityStore',
+        type: `${BGF_ONTOLOGY_NS}QuantityStore`,
         name: 'Static energy store',
         numPorts: 1,
         symbol: 'q',
@@ -113,7 +115,7 @@ export const BONDGRAPH_COMPONENT_DEFINITIONS: BGComponentDefinition[] = [
     },
     {
         id: 'ZeroNode',
-        type: 'https://bg-rdf.org/ontologies/bondgraph-framework#ZeroNode',
+        type: `${BGF_ONTOLOGY_NS}ZeroNode`,
         name: 'Zero node',
         numPorts: Infinity,
         symbol: 'u',
@@ -121,7 +123,7 @@ export const BONDGRAPH_COMPONENT_DEFINITIONS: BGComponentDefinition[] = [
     },
     {
         id: 'OneNode',
-        type: 'https://bg-rdf.org/ontologies/bondgraph-framework#OneNode',
+        type: `${BGF_ONTOLOGY_NS}OneNode`,
         name: 'One node',
         numPorts: Infinity,
         symbol: 'v',
@@ -129,7 +131,7 @@ export const BONDGRAPH_COMPONENT_DEFINITIONS: BGComponentDefinition[] = [
     },
     {
         id: 'ZeroStorageNode_q',
-        type: 'https://bg-rdf.org/ontologies/bondgraph-framework#ZeroStorageNode',
+        type: `${BGF_ONTOLOGY_NS}ZeroStorageNode`,
         name: 'Zero storage node',
         numPorts: Infinity,
         symbol: 'q',
@@ -137,7 +139,7 @@ export const BONDGRAPH_COMPONENT_DEFINITIONS: BGComponentDefinition[] = [
     },
     {
         id: 'ZeroStorageNode_u',
-        type: 'https://bg-rdf.org/ontologies/bondgraph-framework#ZeroStorageNode',
+        type: `${BGF_ONTOLOGY_NS}ZeroStorageNode`,
         name: 'Zero storage node',
         numPorts: Infinity,
         symbol: 'u',
@@ -145,7 +147,7 @@ export const BONDGRAPH_COMPONENT_DEFINITIONS: BGComponentDefinition[] = [
     },
     {
         id: 'OneResistanceNode',
-        type: 'https://bg-rdf.org/ontologies/bondgraph-framework#OneResistanceNode',
+        type: `${BGF_ONTOLOGY_NS}OneResistanceNode`,
         name: 'One resistance node',
         numPorts: Infinity,
         symbol: 'v',
@@ -153,7 +155,7 @@ export const BONDGRAPH_COMPONENT_DEFINITIONS: BGComponentDefinition[] = [
     },
     {
         id: 'Resistance',
-        type: 'https://bg-rdf.org/ontologies/bondgraph-framework#Resistance',
+        type: `${BGF_ONTOLOGY_NS}Resistance`,
         name: 'Resistance',
         numPorts: 1,
         symbol: 'R',
@@ -161,7 +163,7 @@ export const BONDGRAPH_COMPONENT_DEFINITIONS: BGComponentDefinition[] = [
     },
     {
         id: 'Reaction',
-        type: 'https://bg-rdf.org/ontologies/bondgraph-framework#Reaction',
+        type: `${BGF_ONTOLOGY_NS}Reaction`,
         name: 'Reaction',
         numPorts: 2,
         symbol: 'Rx',
@@ -169,7 +171,7 @@ export const BONDGRAPH_COMPONENT_DEFINITIONS: BGComponentDefinition[] = [
     },
     {
         id: 'TransformNode',
-        type: 'https://bg-rdf.org/ontologies/bondgraph-framework#TransformNode',
+        type: `${BGF_ONTOLOGY_NS}TransformNode`,
         name: 'Transform node',
         numPorts: 2,
         symbol: 'k',
@@ -178,7 +180,7 @@ export const BONDGRAPH_COMPONENT_DEFINITIONS: BGComponentDefinition[] = [
     },
     {
         id: 'FlowStore',
-        type: 'https://bg-rdf.org/ontologies/bondgraph-framework#FlowStore',
+        type: `${BGF_ONTOLOGY_NS}FlowStore`,
         name: 'Dynamic energy store',
         numPorts: 1,
         symbol: 'L',
@@ -186,7 +188,7 @@ export const BONDGRAPH_COMPONENT_DEFINITIONS: BGComponentDefinition[] = [
     },
     {
         id: 'PotentialSource',
-        type: 'https://bg-rdf.org/ontologies/bondgraph-framework#PotentialSource',
+        type: `${BGF_ONTOLOGY_NS}PotentialSource`,
         name: 'Potential source',
         numPorts: 1,
         symbol: 'S',
@@ -194,7 +196,7 @@ export const BONDGRAPH_COMPONENT_DEFINITIONS: BGComponentDefinition[] = [
     },
     {
         id: 'FlowSource',
-        type: 'https://bg-rdf.org/ontologies/bondgraph-framework#FlowSource',
+        type: `${BGF_ONTOLOGY_NS}FlowSource`,
         name: 'Flow source',
         numPorts: 1,
         symbol: 'S',

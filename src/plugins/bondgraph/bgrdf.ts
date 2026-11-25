@@ -25,6 +25,7 @@ import { initialised, RdfStore, type Statement } from '@celldl/rdf'
 // URIs for the BG-RDF framework
 
 export const BGF_ONTOLOGY_URI = 'https://bg-rdf.org/ontologies/bondgraph-framework'
+export const BGF_ONTOLOGY_NS = `${BGF_ONTOLOGY_URI}#`
 
 const BG_RDF_TEMPLATE_BASE_URI = 'https://bg-rdf.org/'
 
