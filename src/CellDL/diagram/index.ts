@@ -183,8 +183,7 @@ export class CellDLDiagram {
         this.#loadConnections()
         this.#loadAnnotations()
         if (this.#imported) {
-            // We want the file to be flagged as modified
-            this.#celldlEditor.notifyChanges()
+            this.#diagramModified()
         }
     }
 
@@ -208,7 +207,7 @@ export class CellDLDiagram {
                 // @ts-expect-error: `key` is a valid key for `data`
                 this.#diagramProperties[key] = data[key]
             })
-        this.#celldlEditor.notifyChanges()
+        this.#diagramModified()
     }
 
     get rdfStore() {
@@ -262,6 +261,10 @@ export class CellDLDiagram {
             }
             this.#kb.removeStatementsMatching(subject, predicate, null)
         }
+    }
+
+    #diagramModified() {
+        this.#celldlEditor.diagramModified(true)
     }
 
     #loadDiagramProperties() {
@@ -350,6 +353,10 @@ export class CellDLDiagram {
         if (defn) {
             this.#defsElement?.removeChild(defn)
         }
+    }
+
+    get objects(): CellDLObject[] {
+        return [...this.#objects.values()]
     }
 
     objectById(id: string): CellDLObject | null {
@@ -653,7 +660,7 @@ export class CellDLDiagram {
     addConnectedObject(svgElement: SVGGraphicsElement, template: ObjectTemplate): CellDLConnectedObject | null {
         const object = this.#addNewObject(svgElement, template)
         this.#addMoveableObject(object)
-        this.#celldlEditor.notifyChanges()
+        this.#diagramModified()
         return object as CellDLConnectedObject
     }
 
@@ -661,7 +668,7 @@ export class CellDLDiagram {
         const connection = this.#addNewObject(svgElement, template) as CellDLConnection
         // let the plugins know
         this.#context.componentLibraryPlugin.addConnection(connection)
-        this.#celldlEditor.notifyChanges()
+        this.#diagramModified()
         return connection
     }
 
@@ -683,7 +690,7 @@ export class CellDLDiagram {
         if (object) {
             this.#addMoveableObject(object)
         }
-        this.#celldlEditor.notifyChanges()
+        this.#diagramModified()
         return object
     }
 
@@ -730,7 +737,7 @@ export class CellDLDiagram {
         if (component) {
             this.#addMoveableObject(component)
         }
-        this.#celldlEditor.notifyChanges()
+        this.#diagramModified()
         return component
     }
 
@@ -1029,7 +1036,7 @@ export class CellDLDiagram {
 
     objectMoved(celldlObject: CellDLObject) {
         this.#spatialIndex.update(celldlObject)
-        this.#celldlEditor.notifyChanges()
+        this.#diagramModified()
     }
 
     undoDelete(undoState: UndoState) {
@@ -1074,7 +1081,7 @@ export class CellDLDiagram {
     removeObject(celldlObject: CellDLObject, undoState: UndoState|null=null) {
         if (this.#objects.has(celldlObject.id)) {
             this.#removeObject(celldlObject, undoState)
-            this.#celldlEditor.notifyChanges()
+            this.#diagramModified()
         }
     }
 

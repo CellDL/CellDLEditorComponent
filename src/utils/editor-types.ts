@@ -73,46 +73,21 @@ export type ComponentProperties = {
 
 //==============================================================================
 
-export type EditorState = {
-    msg?: string
-    state: string
+export type EditorStateData = {
+    error?: string
+    ready?: boolean
+    status?: EditorStatus
 }
 
-//==============================================================================
-
-export class EditorStatus {
-    #canPaste: boolean = false
-    #canRedo: boolean = false
-    #fileModified: boolean = false
-    #objectSelected: boolean = false
-
-    get canPaste(): boolean {
-        return this.#canPaste
-    }
-    set canPaste(value: boolean) {
-        this.#canPaste = value
-    }
-
-    get canRedo(): boolean {
-        return this.#canRedo
-    }
-    set canRedo(value: boolean) {
-        this.#canRedo = value
-    }
-
-    get fileModified(): boolean {
-        return this.#fileModified
-    }
-    set fileModified(value: boolean) {
-        this.#fileModified = value
-    }
-
-    get objectSelected(): boolean {
-        return this.#objectSelected
-    }
-    set objectSelected(value: boolean) {
-        this.#objectSelected = value
-    }
+export interface EditorStatus {
+    canPaste?: boolean
+    canUndo?: boolean
+    diagramModified?: boolean
+    haveBentConnections?: boolean
+    haveArrangeableComponents?: boolean
+    haveDistributableComponents?: boolean
+    haveGroupSelection?: boolean
+    haveSelection?: boolean
 }
 
 //==============================================================================
@@ -143,6 +118,7 @@ export type FileStatus = {
     haveData: boolean
     modified: boolean
 }
+
 //==============================================================================
 
 export type ViewState = {

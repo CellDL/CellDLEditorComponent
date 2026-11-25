@@ -1,34 +1,23 @@
-/******************************************************************************
-
-CellDL Editor
-
-Copyright (c) 2022 - 2025 David Brooks
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-******************************************************************************/
+//==============================================================================
+//==============================================================================
 
 /** biome-ignore-all lint/style/noNonNullAssertion: indices are of the bounds given */
 
-import type { CellDLConnection, CellDLObject } from '#editor/celldlObjects'
+import type { CellDLConnectedObject, CellDLConnection } from '#editor/celldlObjects'
 import type { PointLike } from '#root/utils/points'
 
 //==============================================================================
 
-export type ArrangeOp =
-    | 'left' | 'centre' | 'right'
-    | 'top' | 'middle' | 'bottom'
-    | 'distribute-h' | 'distribute-v'
+export enum COMPONENT_ARRANGEMENT {
+    LEFT = 'left',
+    CENTRE = 'centre',
+    RIGHT = 'right',
+    TOP = 'top',
+    MIDDLE = 'middle',
+    BOTTOM = 'bottom',
+    SPACE_HORIZONTALLY = 'distribute-h',
+    SPACE_VERTICALLY = 'distribute-v',
+}
 
 export type ArrangeBounds = {
     left: number
@@ -43,23 +32,23 @@ type ArrangeDelta = {
     dy: number
 }
 
-// Bonds between arranged components this near horizontal or vertical are squared up
+// Paths between arranged components this near to horizontal or vertical are squared up
 export const SQUARE_UP_TOLERANCE = 6
 
-export function minimumForArrange(op: ArrangeOp): number {
-    return op.startsWith('distribute') ? 3 : 2
+export function minimumComponentsForArranging(op: COMPONENT_ARRANGEMENT): number {
+    return [COMPONENT_ARRANGEMENT.SPACE_HORIZONTALLY, COMPONENT_ARRANGEMENT.SPACE_VERTICALLY].includes(op) ? 3 : 2
 }
 
 //==============================================================================
 
 /**
- * Where each object's centre goes. Aligning uses the edges of the objects' bounding
+ * Where each component's centre goes. Aligning uses the edges of the components' bounding
  * box, or puts their centres exactly on the line through its middle. Distributing
- * keeps the outermost objects in place and makes the gaps between objects equal.
+ * keeps the outermost components in place and makes the gaps between components equal.
  */
-export function arrangedCentres(bounds: ArrangeBounds[], op: ArrangeOp): PointLike[] {
+export function arrangedComponentCentres(bounds: ArrangeBounds[], op: COMPONENT_ARRANGEMENT): PointLike[] {
     const deltas: ArrangeDelta[] = bounds.map(() => ({ dx: 0, dy: 0 }))
-    if (bounds.length < minimumForArrange(op)) {
+    if (bounds.length < minimumComponentsForArranging(op)) {
         return bounds.map(b => b.centre)
     }
     const left = Math.min(...bounds.map(b => b.left))
@@ -68,30 +57,30 @@ export function arrangedCentres(bounds: ArrangeBounds[], op: ArrangeOp): PointLi
     const bottom = Math.max(...bounds.map(b => b.bottom))
     bounds.forEach((b, i) => {
         const delta = deltas[i]!
-        if (op === 'left') {
+        if (op === COMPONENT_ARRANGEMENT.LEFT) {
             delta.dx = left - b.left
-        } else if (op === 'right') {
+        } else if (op === COMPONENT_ARRANGEMENT.RIGHT) {
             delta.dx = right - b.right
-        } else if (op === 'top') {
+        } else if (op === COMPONENT_ARRANGEMENT.TOP) {
             delta.dy = top - b.top
-        } else if (op === 'bottom') {
+        } else if (op === COMPONENT_ARRANGEMENT.BOTTOM) {
             delta.dy = bottom - b.bottom
         }
     })
-    if (op === 'distribute-h') {
-        distribute(bounds, deltas, 'left', 'right', 'dx')
-    } else if (op === 'distribute-v') {
-        distribute(bounds, deltas, 'top', 'bottom', 'dy')
+    if (op === COMPONENT_ARRANGEMENT.SPACE_HORIZONTALLY) {
+        distributeComponents(bounds, deltas, 'left', 'right', 'dx')
+    } else if (op === COMPONENT_ARRANGEMENT.SPACE_VERTICALLY) {
+        distributeComponents(bounds, deltas, 'top', 'bottom', 'dy')
     }
     return bounds.map((b, i) => ({
-        x: (op === 'centre') ? (left + right) / 2 : b.centre.x + deltas[i]!.dx,
-        y: (op === 'middle') ? (top + bottom) / 2 : b.centre.y + deltas[i]!.dy
+        x: (op === COMPONENT_ARRANGEMENT.CENTRE) ? (left + right) / 2 : b.centre.x + deltas[i]!.dx,
+        y: (op === COMPONENT_ARRANGEMENT.MIDDLE) ? (top + bottom) / 2 : b.centre.y + deltas[i]!.dy
     }))
 }
 
-function distribute(bounds: ArrangeBounds[], deltas: ArrangeDelta[],
+function distributeComponents(bounds: ArrangeBounds[], deltas: ArrangeDelta[],
                     start: 'left'|'top', end: 'right'|'bottom', axis: 'dx'|'dy') {
-    // Order by centre, so the outermost objects are first and last
+    // Order by centre, so the outermost components are first and last
     const middle = (b: ArrangeBounds) => (b[start] + b[end]) / 2
     const order = bounds.map((_, i) => i).sort((a, b) => middle(bounds[a]!) - middle(bounds[b]!) || a - b)
     const sizes = order.map(i => bounds[i]![end] - bounds[i]![start])
@@ -110,22 +99,22 @@ function distribute(bounds: ArrangeBounds[], deltas: ArrangeDelta[],
 //==============================================================================
 
 /**
- * The bonds of the objects, split into those with both ends among the objects
+ * The connections between components, split into those with both ends among the components
  * and those with just one end among them.
  */
-export function arrangedBonds(objects: CellDLObject[]): { within: CellDLConnection[], leaving: CellDLConnection[] } {
-    const arranged: Set<unknown> = new Set(objects)
+export function arrangedPaths(components: CellDLConnectedObject[]): { within: CellDLConnection[], leaving: CellDLConnection[] } {
+    const arranged: Set<CellDLConnectedObject> = new Set(components)
     const within: Set<CellDLConnection> = new Set()
     const leaving: Set<CellDLConnection> = new Set()
-    for (const object of objects) {
-        for (const bond of object.connections) {
-            const ends = bond.connectedObjects
+    for (const component of components) {
+        for (const connection of component.connections) {
+            const ends = connection.connectedObjects
             if (ends.length >= 2) {
-                const count = Number(arranged.has(ends[0])) + Number(arranged.has(ends.at(-1)))
+                const count = Number(arranged.has(ends[0]!)) + Number(arranged.has(ends.at(-1)!))
                 if (count === 2) {
-                    within.add(bond)
+                    within.add(connection)
                 } else if (count === 1) {
-                    leaving.add(bond)
+                    leaving.add(connection)
                 }
             }
         }

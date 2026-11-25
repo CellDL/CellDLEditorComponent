@@ -31,7 +31,7 @@ import { Point } from '#root/utils/points'
 import { MEMBRANE_GAP } from '#root/utils/styling'
 import { svgRect } from '#root/utils/svgUtils'
 
-import { type CellDLEditor, CONTEXT_MENU } from '.'
+import type { CellDLEditor } from '.'
 
 //==============================================================================
 
@@ -159,7 +159,6 @@ export class BoxMaker {
     }
 
     close(clearSelected: boolean=true) {
-        this.#updateContextMenu(false)
         if (this.#selectionRect) {
             if (clearSelected) {
                 this.#unsetSelectedObjects()
@@ -208,11 +207,6 @@ export class BoxMaker {
         for (const object of this.#selectedObjects.values()) {
             this.#editor.selectObject(object, false)
         }
-    }
-
-    #updateContextMenu(enabled: boolean) {
-        this.#editor.enableContextMenuItem(CONTEXT_MENU.DELETE, enabled)
-        this.#editor.enableContextMenuItem(CONTEXT_MENU.GROUP_OBJECTS, enabled)
     }
 
     updateSelectedObjects() {

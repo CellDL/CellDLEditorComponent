@@ -2,13 +2,15 @@
     .celldl-editor.flex.flex-col
         main.editor-pane.relative.flex.flex-col.grow
             EditorToolbar.editor-bar-h(
+                v-if="!readOnly"
                 :leftButtons="toolButtons"
                 :rightButtons="panelButtons"
                 @button-event="buttonEvent"
             )
             div.svg-container(ref="svgContainer")
                 EditorContextMenu(
-                    :contextMenuProps="contextMenuProps"
+                    :editorStatus="editorStatus"
+                    :menuEvent="contextMenuEvent"
                 )
                 <!-- context-menu(id="context-menu")  -->
         footer.status-bar
@@ -36,9 +38,14 @@ import * as vueCommon from '#root/utils/vueCommon'
 
 import { CellDLDiagram } from '#editor/diagram'
 import { CellDLEditor } from '#editor/editor'
-import { DEFAULT_EDITOR_TOOL_ID, EDITOR_TOOL_IDS } from '#editor/editor'
 
-import { EDITOR_EVENTS_KEY, type EditorToolButton, PANEL_ID } from '#root/utils/editor-types'
+import {
+    EDITOR_EVENTS_KEY,
+    type EditorStateData,
+    type EditorStatus,
+    type EditorToolButton,
+    PANEL_ID
+} from '#root/utils/editor-types'
 
 import { ComponentLibraryPlugin } from '#root/plugins'
 
@@ -53,12 +60,10 @@ import type { PopoverEventData, ViewState } from '#root/utils/editor-types'
 
 //import { TestCellDLEditor, testEditor } from '../../tests/editor'
 
+import EditorContextMenu from './contextmenu/EditorContextMenu.vue'
 import PropertiesPanel from './panels/PropertiesPanel.vue'
 import StylingPanel from './panels/StylingPanel.vue'
-
 import EditorToolbar from './toolbar/EditorToolbar.vue'
-import EditorContextMenu from './widgets/EditorContextMenu.vue'
-import type { ContextMenuProps } from './widgets/EditorContextMenu.vue'
 
 //==============================================================================
 
@@ -111,8 +116,13 @@ export type CellDLEditorCommand = EditorEditCommand
 
 //==============================================================================
 
+export type DiagramClickEvent = {
+    id: string
+}
+
 export interface CellDLEditorProps {
     editorCommand?: CellDLEditorCommand
+    readOnly?: boolean
     theme?: Theme
 }
 export type EditorData = {
@@ -175,23 +185,31 @@ const celldlEditor: CellDLEditor = new CellDLEditor(componentLibraryPlugin)
 // Our child components send their events to our editor
 vue.provide(EDITOR_EVENTS_KEY, celldlEditor.events)
 
-
 //==============================================================================
+
+const editorStatus = vue.ref<EditorStatus>({})
 
 const props = defineProps<CellDLEditorProps>()
 
 const emit = defineEmits<{
     'editor-data': [data: EditorData],
-    'editor-ready': [],
-    'file-edited': [],
-    'editor-state': [state: {
-        error: string
-    }]
+    'diagram-click': [detail: DiagramClickEvent],
+    'editor-state': [state: EditorStateData]
 }>()
 
 // Let our host know when the diagram has been changed
 
-celldlEditor.events.addEventListener('file-edited', () => emit('file-edited'))
+celldlEditor.events.addEventListener('editor-status', (event: Event) => {
+    const status: EditorStatus = (<CustomEvent>event).detail.status
+    editorStatus.value = status
+    emit('editor-state', { status })
+})
+
+// and when one of its components or connections has been clicked
+
+celldlEditor.events.addEventListener('diagram-click', (event: Event) => {
+    emit('diagram-click', (<CustomEvent<DiagramClickEvent>>event).detail)
+})
 
 //==============================================================================
 
@@ -229,23 +247,23 @@ function despatchToolbarEvent(type: string, source: string, value: boolean|strin
 
 // Pass 'context-menu' events from the editor to the context menu's component
 
-const contextMenuProps = vue.ref<ContextMenuProps>({
-    state: new Set()
-})
+const contextMenuEvent = vue.ref<{event?: Event}>({})
 
 celldlEditor.events.addEventListener('open-context-menu', (event: Event) => {
-    contextMenuProps.value = (<CustomEvent>event).detail
+    contextMenuEvent.value = (<CustomEvent>event).detail
 })
 
 //==============================================================================
 //==============================================================================
 
-// Build the left toolbar buttons: SelectTool + BG component templates + BG stroke styles + Drawing tools
+// Build the left toolbar buttons: SelectTool + tools from plugins (bondgraph and drawing)
+
+const SELECT_TOOL_ID = 'editor-select-tool'
 
 const toolButtons = vue.ref<EditorToolButton[]>([
     {
-        toolId: EDITOR_TOOL_IDS.SelectTool,
-        active: (DEFAULT_EDITOR_TOOL_ID as EDITOR_TOOL_IDS) === EDITOR_TOOL_IDS.SelectTool,
+        toolId: SELECT_TOOL_ID,
+        active: true,
         prompt: 'Selection tool',
         icon: 'lucide-MousePointer'
     }
@@ -302,12 +320,21 @@ function resetToolBars() {
     // Set SelectTool as the only active tool button
 
     for (const toolButton of toolButtons.value) {
-        toolButton.active = toolButton.toolId === EDITOR_TOOL_IDS.SelectTool
+        toolButton.active = toolButton.toolId === SELECT_TOOL_ID
     }
 
     // Hide any open panel
     // FUTURE: reset to default panel tool
 }
+
+vue.watch(
+    () => props.readOnly,
+    (readOnly) => {
+        resetToolBars()
+        celldlEditor.readOnly = !!readOnly
+    },
+    { immediate: true }
+)
 
 //==============================================================================
 
@@ -427,7 +454,9 @@ vue.onMounted(async () => {
             await celldlEditor.editDiagram(celldlDiagram)
 
 //            testEditor(celldlEditor)
-            emit('editor-ready')
+            emit('editor-state', {
+                ready: true
+            })
         })
     }
 })
@@ -456,11 +485,13 @@ vue.onUnmounted(() => {
 .svg-container {
     margin:  0;
     border: 2px solid var(--editor-border-color);
-    border-top-width: 0;
     flex: 1;
     min-height: 0;
     overflow: hidden;
     position: relative;     /* The diagram's (absolutely positioned) host fills us */
+}
+.editor-bar-h + .svg-container {
+    border-top-width: 0;
 }
 .hidden {
     display: none;
