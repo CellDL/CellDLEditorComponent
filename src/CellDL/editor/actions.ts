@@ -10,15 +10,22 @@ const isMacOs = common.isMacOs()
 
 //==============================================================================
 
+import { COMPONENT_ARRANGEMENT } from './arrange'
+
+//==============================================================================
+
 export enum EDITOR_ACTION {
+    ALIGN_COMPONENTS = 'align-components',
     COPY = 'copy',
     CUT = 'cut',
     DELETE = 'delete',
+    DISTRIBUTE_COMPONENTS = 'distribute-components',
     DUPLICATE = 'duplicate',
     GROUP = 'group',
     INSPECT = 'inspect',
     PASTE = 'paste',
     REDO = 'redo',
+    STRAIGHTEN_PATH = 'straighten-path',
     UNDO = 'undo',
     UNGROUP = 'ungroup'
 }
@@ -28,6 +35,7 @@ export enum EDITOR_ACTION {
 export type EditorActionInfo = {
     action: EDITOR_ACTION
     icon?: string
+    items?: [string, string][],
     keycode?: string
     label: string
     shortcut?: string
@@ -82,6 +90,26 @@ export const editorActionMap: Map<EDITOR_ACTION, EditorActionInfo> = new Map([
             icon: 'pi pi-clipboard',
             shortcut: isWindowsOrLinux ? 'Ctrl+V' : isMacOs ? '⌘V' : undefined,
             keycode: `${META_KEY_NAME}+V`
+    }], [
+        EDITOR_ACTION.ALIGN_COMPONENTS, {
+            action: EDITOR_ACTION.ALIGN_COMPONENTS,
+            label: 'Align components',
+            items: [
+                ['Left', COMPONENT_ARRANGEMENT.LEFT], ['Centre', COMPONENT_ARRANGEMENT.CENTRE], ['Right', COMPONENT_ARRANGEMENT.RIGHT],
+                ['Top', COMPONENT_ARRANGEMENT.TOP], ['Middle', COMPONENT_ARRANGEMENT.MIDDLE], ['Bottom', COMPONENT_ARRANGEMENT.BOTTOM],
+
+            ]
+    }], [
+        EDITOR_ACTION.DISTRIBUTE_COMPONENTS, {
+            action: EDITOR_ACTION.DISTRIBUTE_COMPONENTS,
+            label: 'Distribute components',
+            items: [
+                ['Horizontally', COMPONENT_ARRANGEMENT.SPACE_HORIZONTALLY], ['Vertically', COMPONENT_ARRANGEMENT.SPACE_VERTICALLY],
+            ]
+    }], [
+        EDITOR_ACTION.STRAIGHTEN_PATH, {
+            action: EDITOR_ACTION.STRAIGHTEN_PATH,
+            label: 'Straighten paths'
     }], [
         EDITOR_ACTION.REDO, {
             action: EDITOR_ACTION.REDO,

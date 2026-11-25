@@ -26,17 +26,16 @@ import '#root/assets/svgContent.css'
 // Also needed inside each editor's shadow root, where diagram content is styled via `:host` rules
 import svgContentCss from '#root/assets/svgContent.css?inline'
 
-import type { CellDLObject } from '#editor/celldlObjects'
+import type { CellDLConnectedObject, CellDLObject } from '#editor/celldlObjects'
 import { PathDrag } from '#editor/connections/pathdrag'
 import { PathMaker, type PathNode } from '#editor/connections/pathmaker'
 import type { TemplateEventDetails } from '#editor/components'
 import { objectMetadataTemplate, ObjectPropertiesPanel } from '#editor/components/properties'
 import type { CellDLDiagram } from '#editor/diagram'
 import { SelectionSet } from '#editor/diagram/selectionset'
-import type { MoveUndoState, UndoRedo } from '#editor/diagram/undoredo'
+import type { ArrangeUndoState, MoveUndoState, UndoRedo } from '#editor/diagram/undoredo'
 import { round } from '#editor/utils'
 
-import { isMacOs } from '#root/utils/common'
 import { PANEL_ID, type EditorStatus } from '#root/utils/editor-types'
 import { type Point, type PointLike, PointMath } from '#root/utils/points'
 import { loadImages } from '#root/utils/svgUtils'
@@ -46,6 +45,8 @@ import type { ComponentLibraryPlugin } from '#root/plugins'
 //==============================================================================
 
 import { EDITOR_ACTION, keycodeToEditorAction, keyName } from './actions'
+import { arrangedPaths, arrangedComponentCentres, minimumComponentsForArranging,
+         COMPONENT_ARRANGEMENT, SQUARE_UP_TOLERANCE } from './arrange'
 import { DEFAULT_VIEW_STATE } from './defaults'
 import type { EditorFrame } from './editorframe'
 import { EDITOR_GRID_CLASS } from './editguides'
@@ -122,6 +123,9 @@ class EditorStatusInstance implements EditorStatus {
     canPaste: boolean = false
     canUndo: boolean = false
     diagramModified: boolean = false
+    haveBentConnections: boolean = false
+    haveArrangeableComponents: boolean = false
+    haveDistributableComponents: boolean = false
     haveGroupSelection: boolean = false
     haveSelection: boolean = false
 }
@@ -157,7 +161,6 @@ export class CellDLEditor {
 
     #editorMode: EDITOR_MODE = DEFAULT_EDITOR_MODE
     #editorStatus: EditorStatus = new EditorStatusInstance()
-    #dirty: boolean = false
     #readOnly: boolean = false
 
     #dragging: boolean = false
@@ -361,8 +364,7 @@ export class CellDLEditor {
             }))
         }, { signal })
         this.events.addEventListener('context-menu-action', (event: Event) => {
-            const editorAction = (<CustomEvent>event).detail.action
-            this.#processEditorAction((<CustomEvent>event).detail.action)
+            this.#processEditorAction((<CustomEvent>event).detail.action, (<CustomEvent>event).detail.operation)
         })
     }
 
@@ -372,10 +374,6 @@ export class CellDLEditor {
 
     get celldlDiagram() {
         return this.#celldlDiagram
-    }
-
-    get dirty() {
-        return this.#dirty
     }
 
     get status(): string {
@@ -406,18 +404,6 @@ export class CellDLEditor {
         return [0, 0]
     }
 
-    setDirty() {
-        if (!this.#dirty) {
-            this.#dirty = true
-        }
-    }
-
-    markClean() {
-        if (this.#dirty) {
-            this.#dirty = false
-        }
-    }
-
     async editDiagram(celldlDiagram: CellDLDiagram) {
         if (this.#celldlDiagram !== null) {
             this.closeDiagram()
@@ -443,7 +429,6 @@ export class CellDLEditor {
         await vue.nextTick()
 
         // Rewriting metadata during diagram finishSetup might dirty
-        this.markClean()
         this.#undoRedo.clean()
 
         // Finish setting up the diagram as we now have SVG elements
@@ -514,6 +499,36 @@ export class CellDLEditor {
     }
 
     /**
+     * Let the host know that there are selected connections with bends.
+     */
+    haveBentConnections(bentConnections: boolean) {
+        if (this.#editorStatus.haveBentConnections !== bentConnections) {
+            this.#editorStatus.haveBentConnections = bentConnections
+            this.#sendStatus()
+        }
+    }
+
+    /**
+     * Let the host know that there are selected components that can be aligned.
+     */
+    haveArrangeableComponents(arrangeable: boolean) {
+        if (this.#editorStatus.haveArrangeableComponents !== arrangeable) {
+            this.#editorStatus.haveArrangeableComponents = arrangeable
+            this.#sendStatus()
+        }
+    }
+
+    /**
+     * Let the host know that there are selected components that can be distributed.
+     */
+    haveDistributableComponents(arrangeable: boolean) {
+        if (this.#editorStatus.haveDistributableComponents !== arrangeable) {
+            this.#editorStatus.haveDistributableComponents = arrangeable
+            this.#sendStatus()
+        }
+    }
+
+    /**
      * Let the host know that there are selected objects.
      */
     haveSelection(selected: boolean) {
@@ -565,8 +580,7 @@ export class CellDLEditor {
                 const values = detail.value
                 if (values.oldValue !== values.newValue) {
                     await this.#openPanel.updateObjectProperties(this.selectionSet.objects[0]!, detail.itemId, detail.value)
-                    this.#editorStatus.diagramModified = true
-                    this.#sendStatus()
+                    this.diagramModified(true)
                 }
             }
         }
@@ -577,8 +591,7 @@ export class CellDLEditor {
         if (detail.source === this.#openPanel?.panelId) {
             if (this.#openPanel && this.selectionSet.size === 1) {
                 await this.#openPanel.updateObjectStyling(this.selectionSet.objects[0]!, detail.styling)
-                this.#editorStatus.diagramModified = true
-                this.#sendStatus()
+                this.diagramModified(true)
             }
         }
     }
@@ -1244,7 +1257,7 @@ export class CellDLEditor {
         this.#statusPos = null
     }
 
-    #processEditorAction(action: EDITOR_ACTION) {
+    #processEditorAction(action: EDITOR_ACTION, operation?: string) {
         if        (action === EDITOR_ACTION.COPY) {
 //          this.#copySelectedObjectsToClipboard()          // WIP
         } else if (action === EDITOR_ACTION.CUT) {
@@ -1265,6 +1278,11 @@ export class CellDLEditor {
             this.#undoRedo?.undo(this.#celldlDiagram!)
         } else if (action === EDITOR_ACTION.UNGROUP) {
 //          this.#ungroupSelectedObject()                   // WIP
+        } else if (action === EDITOR_ACTION.ALIGN_COMPONENTS
+                || action === EDITOR_ACTION.DISTRIBUTE_COMPONENTS) {
+            this.#arrangeComponents(operation as COMPONENT_ARRANGEMENT)
+        } else if (action === EDITOR_ACTION.STRAIGHTEN_PATH) {
+            this.#straightenPaths()
         }
     }
 
@@ -1296,6 +1314,88 @@ export class CellDLEditor {
             this.#setDefaultCursor()
         }
     }
+
+    //==========================================================================
+
+    /**
+     * Align or distribute the selected components, as one undoable step. Paths
+     * between them are straightened, and squared up when nearly horizontal or
+     * vertical; straight paths with one end among them are redrawn between centres.
+     */
+    #arrangeComponents(op: COMPONENT_ARRANGEMENT): boolean {
+        if (this.#celldlDiagram === null || this.moving || this.#pathMaker !== null) {
+            return false
+        }
+        const components = this.selectionSet.arrangeableComponents
+        if (components.length < minimumComponentsForArranging(op)) {
+            return false
+        }
+        const bounds = components.map(component => {
+            const svgElement = component.celldlSvgElement!
+            const { left, top, right, bottom } = svgElement.svgBounds()
+            return { left, top, right, bottom, centre: { x: svgElement.centroid.x, y: svgElement.centroid.y } }
+        })
+        // Don't rearrange if components would stack on top of each other...
+        // e.g. left then middle
+        const arrangedCentres = arrangedComponentCentres(bounds, op)
+        const { within, leaving } = arrangedPaths(components)
+        const undoState = this.#undoRedo!.setArrangeUndoState(components)
+        let changed = false
+        components.forEach((component, index) => {
+            const centroid = bounds[index]!.centre
+            const target = arrangedCentres[index]!
+            if (Math.abs(target.x - centroid.x) > 1e-6 || Math.abs(target.y - centroid.y) > 1e-6) {
+                component.reposition(centroid, target, { noAlign: true })
+                changed = true
+            }
+        })
+        // Once every end is where it goes
+        for (const connection of within) {
+            changed = connection.svgConnection.straighten(SQUARE_UP_TOLERANCE) || changed
+        }
+        for (const connection of leaving) {
+            if (!connection.svgConnection.hasControlPoints) {
+                changed = connection.svgConnection.straighten() || changed
+            }
+        }
+        return this.#endArranging(undoState, changed)
+    }
+
+    /**
+     * Remove the bends of the selected paths and of the paths between selected
+     * components, as one undoable step.
+     */
+    #straightenPaths(): boolean {
+        if (this.#celldlDiagram === null || this.moving || this.#pathMaker !== null) {
+            return false
+        }
+        const connections = this.selectionSet.bentConnections
+        if (connections.length === 0) {
+            return false
+        }
+        const ends = [...new Set(connections.flatMap(connection => connection.connectedObjects))]
+        const undoState = this.#undoRedo!.setArrangeUndoState(ends)
+        let changed = false
+        for (const connection of connections) {
+            changed = connection.svgConnection.straighten() || changed
+        }
+        if (changed) {
+            this.haveBentConnections(false)
+        }
+        return this.#endArranging(undoState, changed)
+    }
+
+    #endArranging(undoState: ArrangeUndoState, changed: boolean): boolean {
+        if (changed) {
+            undoState.endArrange()
+            this.diagramModified(true)
+        } else {
+            this.#undoRedo!.resetActiveUndoState()
+        }
+        return changed
+    }
+
+//==============================================================================
 
     /* WIP
     #showSelectedObjectInfo() {

@@ -18,8 +18,9 @@ limitations under the License.
 
 ******************************************************************************/
 
-import type { CellDLConnection, CellDLObject } from "#editor/celldlObjects"
+import type { CellDLConnectedObject, CellDLConnection, CellDLObject } from "#editor/celldlObjects"
 import type { CellDLEditor } from "#editor/editor"
+import { COMPONENT_ARRANGEMENT, minimumComponentsForArranging } from '#editor/editor/arrange'
 import { Point, type PointLike } from "#root/utils/points"
 
 //==============================================================================
@@ -28,13 +29,24 @@ export class SelectionSet {
     #editor: CellDLEditor
     #movedObject: CellDLObject|null = null
     #movedObjectOffset: Point = new Point()
-    #selectedConnections: CellDLConnection[] = []
     #selectedObjects: Map<string, CellDLObject> = new Map()
+
+    #arrangeableComponents: CellDLConnectedObject[] = []
+    #bentConnections: CellDLConnection[] = []
+    #selectedConnections: CellDLConnection[] = []
 
     #firstMoveableObject: CellDLObject | null = null
 
     constructor(editor: CellDLEditor) {
         this.#editor = editor
+    }
+
+    get arrangeableComponents() {
+        return this.#arrangeableComponents
+    }
+
+    get bentConnections() {
+        return this.#bentConnections
     }
 
     get firstMoveableObject() {
@@ -57,16 +69,31 @@ export class SelectionSet {
         for (const connection of this.#selectedConnections) {
             connection.select(false)
         }
+        this.#bentConnections = []
         this.#selectedConnections = []
         for (const object of this.#selectedObjects.values()) {
             object.select(false)
         }
         this.#selectedObjects.clear()
+        this.#arrangeableComponents = []
         if (resetFirst) {
             this.#firstMoveableObject = null
         }
         this.#updatePanelObject()
+        this.#editor.haveBentConnections(false)
+        this.#editor.haveArrangeableComponents(false)
+        this.#editor.haveDistributableComponents(false)
         this.#editor.haveSelection(false)
+    }
+
+    #setArrangeableComponents() {
+        // Connections and compartments aren't aligned; moving a compartment moves its contents
+        this.#arrangeableComponents = [...this.#selectedObjects.values()]
+                                        .filter(object => object.isMoveable &&  object.celldlSvgElement
+                                            && !object.isConnection && !object.isCompartment) as CellDLConnectedObject[]
+        const arrangeable = this.#arrangeableComponents.length
+        this.#editor.haveArrangeableComponents(arrangeable >= minimumComponentsForArranging(COMPONENT_ARRANGEMENT.LEFT))
+        this.#editor.haveDistributableComponents(arrangeable >= minimumComponentsForArranging(COMPONENT_ARRANGEMENT.SPACE_HORIZONTALLY))
     }
 
     select(object: CellDLObject): boolean {
@@ -77,6 +104,9 @@ export class SelectionSet {
                         for (const connection of component.connections) {
                             if (connection.source?.id === object.id || connection.target?.id === object.id) {
                                 this.#selectedConnections.push(connection)
+                                if (connection.svgConnection.hasControlPoints) {
+                                    this.#bentConnections.push(connection)
+                                }
                                 connection.select(true)
                             }
                         }
@@ -90,9 +120,16 @@ export class SelectionSet {
                 this.#firstMoveableObject = object
             }
             this.#selectedObjects.set(object.id, object)
+            if (object.isConnection) {
+                if ((object as CellDLConnection).svgConnection.hasControlPoints) {
+                    this.#bentConnections.push(object as CellDLConnection)
+                }
+            }
+            this.#setArrangeableComponents()
             this.#updatePanelObject()
             object.select(true)
             this.#editor.haveSelection(true)
+            this.#editor.haveBentConnections(this.#bentConnections.length > 0)
             return true
         }
         return false
@@ -111,9 +148,13 @@ export class SelectionSet {
                 }
                 if (deletedIndices.length) {
                     this.#selectedConnections = this.#selectedConnections.filter((_, i) => !deletedIndices.includes(i))
+                    this.#bentConnections = this.#selectedConnections.filter(connection => connection.svgConnection.hasControlPoints)
                 }
             }
             this.#selectedObjects.delete(object.id)
+            if (object.isConnection) {
+                this.#selectedConnections = this.#selectedConnections.filter(connection => connection.id !== object.id)
+            }
             if (this.#selectedObjects.size === 0) {
                 this.#firstMoveableObject = null
             } else if (this.#firstMoveableObject?.id === object.id) {
@@ -121,9 +162,11 @@ export class SelectionSet {
                 // This assumes all selected objects are moveable...
                 this.#firstMoveableObject = [...this.#selectedObjects.values()][0] as CellDLObject
             }
+            this.#setArrangeableComponents()
             this.#updatePanelObject()
             object.select(false)
             this.#editor.haveSelection(this.#selectedObjects.size > 0)
+            this.#editor.haveBentConnections(this.#bentConnections.length > 0)
             return true
         }
         return false
@@ -181,7 +224,7 @@ export class SelectionSet {
             connection.move(newPosn, { moveEntireConnection: true, noAlign: true } )
             connection.redraw()
         }
-        this.#editor.diagramModified()
+        this.#editor.diagramModified(true)
     }
 
     endMove() {

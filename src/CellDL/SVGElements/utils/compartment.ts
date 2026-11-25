@@ -1,9 +1,10 @@
 //==============================================================================
+//==============================================================================
 
 import type { CellDLObject } from '#editor/celldlObjects'
 import type { CellDLDiagram } from '#editor/diagram'
 
-import { Point, type PointLike } from '#root/utils/points'
+import type { PointLike } from '#root/utils/points'
 import {
     COMPARTMENT_BACKGROUND,
     MEMBRANE_COLOUR,

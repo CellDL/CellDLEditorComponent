@@ -83,6 +83,9 @@ export interface EditorStatus {
     canPaste?: boolean
     canUndo?: boolean
     diagramModified?: boolean
+    haveBentConnections?: boolean
+    haveArrangeableComponents?: boolean
+    haveDistributableComponents?: boolean
     haveGroupSelection?: boolean
     haveSelection?: boolean
 }

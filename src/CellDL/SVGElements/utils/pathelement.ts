@@ -143,6 +143,10 @@ export class PathElement {
         return this.#lastElement
     }
 
+    get hasControlPoints(): boolean {
+        return this.#pathPoints.length > 2
+    }
+
     get moveIndex() {
         return this.#moveIndex
     }
@@ -362,6 +366,14 @@ export class PathElement {
     protected resizedElementBoundingBox(_index: number, _element: BoundedElement, _cornerDeltas: [Point, Point]) {}
 
     setPathPoints(_pathArray: NormalArray) {}
+
+    /**
+     * Run the path straight between its ends, squared up when within `square`
+     * pixels of horizontal or vertical. Returns whether the path changed.
+     */
+    straighten(_square: number=0): boolean {
+        return false
+    }
 
     protected simplifyPathPoints(): PathPoint[] | null {
         return null

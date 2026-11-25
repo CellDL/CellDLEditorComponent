@@ -48,10 +48,10 @@ vue.watch(
     }
 )
 
-function contextMenuEvent(action: string) {
+function contextMenuEvent(action: string, operation: string='') {
     editorEvents.dispatchEvent(
         new CustomEvent('context-menu-action', {
-            detail: { action }
+            detail: { action, operation }
         })
     )
     menu.value.hide()
@@ -59,16 +59,30 @@ function contextMenuEvent(action: string) {
 
 //==============================================================================
 
-const menuItem = (editorAction: EDITOR_ACTION, disabled: boolean) => {
+function menuItem(editorAction: EDITOR_ACTION, disabled: boolean) {
     const actionInfo = editorActionMap.get(editorAction)
     if (actionInfo) {
-        return {
-            label: actionInfo.label,
-            icon: actionInfo.icon,
-            shortcut: actionInfo.shortcut,
-            keycode: actionInfo.keycode,
-            command: () => contextMenuEvent(actionInfo.action),
-            disabled: disabled
+        if (actionInfo.items) {
+            return {
+                label: actionInfo.label,
+                icon: actionInfo.icon,
+                disabled: false, //disabled,
+                items: actionInfo.items.map(item => {
+                    return {
+                        label: item[0],
+                        command: () => contextMenuEvent(actionInfo.action, item[1]),
+                    }
+                })
+            }
+        } else {
+            return {
+                label: actionInfo.label,
+                icon: actionInfo.icon,
+                shortcut: actionInfo.shortcut,
+                keycode: actionInfo.keycode,
+                command: () => contextMenuEvent(actionInfo.action),
+                disabled: disabled
+            }
         }
     }
     return {}
@@ -91,6 +105,10 @@ WIP */
         { separator: true },
         menuItem(EDITOR_ACTION.DUPLICATE, !editorStatus.haveSelection),
 WIP */
+        { separator: true },
+        menuItem(EDITOR_ACTION.ALIGN_COMPONENTS, !editorStatus.haveArrangeableComponents),
+        menuItem(EDITOR_ACTION.DISTRIBUTE_COMPONENTS, !editorStatus.haveDistributableComponents),
+        menuItem(EDITOR_ACTION.STRAIGHTEN_PATH, !editorStatus.haveBentConnections),
 /* WIP
         { separator: true },
         menuItem(EDITOR_ACTION.GROUP, !editorStatus.haveSelection),
@@ -110,7 +128,7 @@ const onKeyDown = (event: KeyboardEvent) => {
         const key = keyName(event)
         for (const item of items.value) {
             if ('disabled' in item && !item.disabled && key === item.keycode) {
-                item.action()
+                item.command()
             }
         }
     }

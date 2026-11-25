@@ -668,6 +668,10 @@ export class CellDLConnection extends CellDLObject {
         return this.#connectedObjects[0]
     }
 
+    get svgConnection(): SvgConnection {
+        return this.celldlSvgElement as unknown as SvgConnection
+    }
+
     get target(): CellDLConnectedObject | undefined {
         return this.#connectedObjects.length > 1 ? this.#connectedObjects.at(-1) : undefined
     }
