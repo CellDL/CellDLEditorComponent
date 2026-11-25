@@ -55,9 +55,6 @@ import type { ConnectionStatus, PluginInterface } from '#root/plugins'
 import type {
     Styling
 } from '#root/utils/styling'
-import {
-    getFillString
-} from '#root/utils/svgUtils'
 
 import {
     CellDLComponent,
