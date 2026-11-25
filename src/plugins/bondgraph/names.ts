@@ -1,35 +1,16 @@
-/******************************************************************************
-
-CellDL Editor
-
-Copyright (c) 2022 - 2025 David Brooks
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-******************************************************************************/
-
+//==============================================================================
 //==============================================================================
 
-const BGF = 'https://bg-rdf.org/ontologies/bondgraph-framework#'
+import { BGF_ONTOLOGY_NS } from './bgrdf'
 
 // the classes of element whose variables are named
 export const ELEMENT_CLASSES: string[] = [
-    `${BGF}QuantityStore`,
-    `${BGF}Reaction`,
-    `${BGF}PotentialSource`,
-    `${BGF}FlowSource`,
-    `${BGF}Resistance`,
-    `${BGF}FlowStore`
+    `${BGF_ONTOLOGY_NS}QuantityStore`,
+    `${BGF_ONTOLOGY_NS}Reaction`,
+    `${BGF_ONTOLOGY_NS}PotentialSource`,
+    `${BGF_ONTOLOGY_NS}FlowSource`,
+    `${BGF_ONTOLOGY_NS}Resistance`,
+    `${BGF_ONTOLOGY_NS}FlowStore`
 ]
 
 export interface NamingElement {
