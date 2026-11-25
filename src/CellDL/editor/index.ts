@@ -26,7 +26,7 @@ import '#root/assets/svgContent.css'
 // Also needed inside each editor's shadow root, where diagram content is styled via `:host` rules
 import svgContentCss from '#root/assets/svgContent.css?inline'
 
-import type { CellDLConnectedObject, CellDLObject } from '#editor/celldlObjects'
+import type { CellDLObject } from '#editor/celldlObjects'
 import { PathDrag } from '#editor/connections/pathdrag'
 import { PathMaker, type PathNode } from '#editor/connections/pathmaker'
 import type { TemplateEventDetails } from '#editor/components'
@@ -45,8 +45,8 @@ import type { ComponentLibraryPlugin } from '#root/plugins'
 //==============================================================================
 
 import { EDITOR_ACTION, keycodeToEditorAction, keyName } from './actions'
-import { arrangedPaths, arrangedComponentCentres, minimumComponentsForArranging,
-         COMPONENT_ARRANGEMENT, SQUARE_UP_TOLERANCE } from './arrange'
+import { arrangedComponentCentres, arrangedPaths, type COMPONENT_ARRANGEMENT,
+         minimumComponentsForArranging, SQUARE_UP_TOLERANCE } from './arrange'
 import { DEFAULT_VIEW_STATE } from './defaults'
 import type { EditorFrame } from './editorframe'
 import { EDITOR_GRID_CLASS } from './editguides'
