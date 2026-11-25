@@ -205,7 +205,16 @@ export class PathMaker {
         this.#removeSvgPath()
     }
 
-    validPathNode(celldlObject: CellDLObject): PathNode | null {
+    /**
+     * @param quiet Don't alert, and don't require a drawn path (e.g. when finding a bond's valid targets)
+     */
+    validPathNode(celldlObject: CellDLObject, quiet: boolean = false): PathNode | null {
+        const refuse = (msg: string) => {
+            if (!quiet) {
+                this.#context.alert.tooltip(msg)
+            }
+            return null
+        }
         if (celldlObject.isUnconnectedPort) {
             const connection = celldlObject.connections[0]
             // An UnconnectedPort is only valid if it is the source of a connection
@@ -217,32 +226,26 @@ export class PathMaker {
         }
         if (!celldlObject.isConnectable) {
             if (!celldlObject.isConnection) {
-                this.#context.alert.tooltip('Component does not allow connections')
+                return refuse('Component does not allow connections')
             }
             return null
-        } else if (this.#currentSvgPath === null) {
+        } else if (this.#currentSvgPath === null && !quiet) {
             return null
         } else if (celldlObject.id === this.#startObject.id) {
             if (this.#nodes.length < 2) {
-                this.#context.alert.tooltip('Path cannot directly loop to start component')
-                return null
+                return refuse('Path cannot directly loop to start component')
             }
         } else if (this.#objectIds.includes(celldlObject.id)) {
-            this.#context.alert.tooltip('Component is already on the path')
-            return null
+            return refuse('Component is already on the path')
         }
         // Check with plugins that (source --> object) would be valid.
         const connectionStatus = this.#context.componentLibraryPlugin.checkConnectionValid(this.#startObject, celldlObject)
         if (connectionStatus?.alert) {
-            this.#context.alert.tooltip(connectionStatus.alert)
-            return null
+            return refuse(connectionStatus.alert)
         }
         const connectionOkOrAlert = PathMaker.#checkMaxConnections(<CellDLConnectedObject>celldlObject)
         if (connectionOkOrAlert !== true) {
-            if (connectionOkOrAlert !== false) {
-                this.#context.alert.tooltip(connectionOkOrAlert)
-            }
-            return null
+            return connectionOkOrAlert !== false ? refuse(connectionOkOrAlert) : null
         }
         const pathNode = new PathNode(<CellDLConnectedObject>celldlObject)
         if (pathNode.canConnect(this.#lastNode)) {

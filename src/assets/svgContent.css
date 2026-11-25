@@ -188,6 +188,23 @@
     opacity: 0.4;
 }
 
+:host .path-handle {
+    cursor: crosshair;
+    fill: #fff;
+    stroke: var(--active);
+    stroke-width: 1.5px;
+    vector-effect: non-scaling-stroke;
+}
+:host .path-handle:hover {
+    fill: var(--active);
+}
+:host .path-target-valid {
+    filter: drop-shadow(0 0 3px var(--active));
+}
+:host .path-target-dimmed {
+    opacity: 0.35;
+}
+
 .error {
     color: yellow;
     opacity: 1;

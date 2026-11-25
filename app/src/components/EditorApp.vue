@@ -18,9 +18,7 @@
                 MainMenu(
                     :id="mainMenuId"
                     :haveFile="haveFile"
-                    :fileModified="fileModified"
                     :editorStatus="editorStatus"
-                    :noPython="noPython"
                     :viewState="viewState"
                     @about="onAboutMenu"
                     @edit-action="onEditAction"
@@ -45,7 +43,7 @@
                     offIcon="pi pi-sun"
                     onIcon="pi pi-moon"
                     size="small"
-                    @change="onDarkMode"
+                    @change="setThemeMode"
                 )
             ConfirmDialog
                 template(#message="slotProps")
@@ -55,8 +53,7 @@
                 :editorCommand="editorCommand"
                 :theme="editorTheme"
                 @editorData="onEditorData"
-                @editorReady="onEditorReady"
-                @error="onError"
+                @editorState="onEditorState"
             )
             AboutDialog(
                 v-model:visible="aboutVisible"
@@ -109,7 +106,6 @@
 
 <script setup lang="ts">
 import * as vue from 'vue'
-import * as vueusecore from '@vueuse/core'
 
 import 'primeicons/primeicons.css'
 
@@ -134,32 +130,22 @@ import * as vueCommon from '../utils/vueCommon'
 import CellDLEditor from '../../../src'
 
 import type { CellDLEditorCommand, EditorData, FileStatus, Theme, ViewState } from '../../../src'
-import { editorInitialised, EditorStatus } from '../../../src'
+import type { EditorStateData, EditorStatus } from '../../../src'
 import { DEFAULT_VIEW_STATE } from '../../../src'
 
 //==============================================================================
 
 type IEditorAppProps = {
     theme?: Theme
-    noPython?: boolean
 }
 
 const props = defineProps<IEditorAppProps>()
 
 //==============================================================================
 
-// Wait for the editor component to become ready
+// Cleared when editor component comes ready
 
 const loadingMessage = vue.ref<string>('Loading CellDL editor')
-
-async function onEditorReady() {
-    loadingMessage.value = ''
-
-    console.log('Editor ready...')
-
-    // Now start checking for a newer version of the editor
-    version.startCheck()
-}
 
 //==============================================================================
 //==============================================================================
@@ -208,7 +194,7 @@ const editorTheme = vue.ref<Theme|undefined>(props.theme)
 
 const darkMode = vue.ref<boolean>(props.theme === 'dark')
 
-function onDarkMode() {
+function setThemeMode() {
     if (darkMode.value) {
         editorTheme.value = 'dark'
     } else {
@@ -216,6 +202,8 @@ function onDarkMode() {
     }
     vueCommon.useTheme().setTheme(editorTheme.value)
 }
+
+setThemeMode()
 
 //==============================================================================
 
@@ -251,7 +239,7 @@ vue.onMounted(() => {
     // Customise our IDs.
 
     toastId.value = `editorToast${String(crtInstance?.uid)}`
-    mainMenuId.value = `opencorMainMenu${String(crtInstance?.uid)}`
+    mainMenuId.value = `celldlMainMenu${String(crtInstance?.uid)}`
 
     // Make ourselves the active instance.
 
@@ -273,7 +261,7 @@ vue.onMounted(() => {
 //==============================================================================
 //==============================================================================
 
-const editorCommand = vue.ref<CellDLEditorCommand>()
+const editorCommand = vue.ref<CellDLEditorCommand|undefined>(undefined)
 
 //==============================================================================
 
@@ -301,41 +289,43 @@ const haveFile = vue.computed(() => {
     return fileStatus.value.haveData
 })
 
-const fileModified = vue.computed(() => {
-    return fileStatus.value.modified
-})
-
 let currentFileHandle: FileSystemFileHandle|undefined
 
 //==============================================================================
 //==============================================================================
 
-vueusecore.useEventListener(document, 'file-edited', (_: Event) => {
-    fileStatus.value.haveData = true
-    diagramModified(true)
-    if (!windowTitle.value.endsWith(' *')) {
-        windowTitle.value += ' *'
-    }
-})
+const editorStatus = vue.ref<EditorStatus>({})
 
-//==============================================================================
-
-async function onEditorData(data: EditorData) {
-    if (data.kind === 'export') {
-        if (pythonOk) {
-            await saveCellML(data.data)
+async function onEditorState(state: EditorStateData) {
+    if (state.ready) {
+        loadingMessage.value = ''
+        console.log('Editor ready...')
+        // Now start checking for a newer version of the editor
+        version.startCheck()
+    } else if (state.error) {
+        window.alert(state.error)
+    } else if (state.status) {
+        editorStatus.value = state.status
+        if (state.status.diagramModified) {
+            fileStatus.value.haveData = true
+            diagramModified(true)
+            if (!windowTitle.value.endsWith(' *')) {
+                windowTitle.value += ' *'
+            }
         }
-    } else if (data.kind === 'save-as' || !currentFileHandle) {
-        await saveFile(data.data)
-    } else if (currentFileHandle) {
-        await writeFileData(currentFileHandle, data.data)
     }
 }
 
 //==============================================================================
 
-function onError(msg: string) {
-    window.alert(msg)
+async function onEditorData(data: EditorData) {
+    if (data.kind === 'export') {
+// WIP        await saveCellML(data.data)
+    } else if (data.kind === 'save-as' || !currentFileHandle) {
+        await saveFile(data.data)
+    } else if (currentFileHandle) {
+        await writeFileData(currentFileHandle, data.data)
+    }
 }
 
 //==============================================================================
@@ -579,10 +569,6 @@ function onMenuActive() {
 }
 
 //==============================================================================
-
-const editorStatus = vue.computed<EditorStatus>(() => {
-    return new EditorStatus()
-})
 
 function onEditAction(action: string) {
     editorCommand.value = {

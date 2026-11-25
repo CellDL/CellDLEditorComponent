@@ -29,7 +29,7 @@ import { lengthToPixels } from '#editor/geometry/units'
 import { type Point, type PointLike, PointMath } from '#root/utils/points'
 import { CONNECTION_WIDTH } from '#root/utils/styling'
 
-import type { BoundedElement } from './boundedelement'
+import type { BoundedElement } from '../boundedelement'
 import { FixedPathPoint, PathElement, PathPoint } from './pathelement'
 
 //==============================================================================
@@ -98,6 +98,56 @@ export class LinearPath extends PathElement {
             }
         }
         this.setDirty()
+    }
+
+    straighten(square: number=0): boolean {
+        if (!this.validPath || this.pathPoints.length < 2) {
+            return false
+        }
+        const [start, end] = this.#straightEnds(square)
+        const same = (a: PointLike, b: PointLike) => Math.abs(a.x - b.x) < 1e-6 && Math.abs(a.y - b.y) < 1e-6
+        if (this.pathPoints.length === 2 && same(this.pathPoints[0]!, start) && same(this.pathPoints[1]!, end)) {
+            return false
+        }
+        this.clearControlHandles()
+        this.setPathPoints([['M', start.x, start.y], ['L', end.x, end.y]] as NormalArray)
+        this.redraw(true)
+        return true
+    }
+
+    #straightEnds(square: number): [PointLike, PointLike] {
+        const firstCentroid = this.firstElement.centroid
+        const lastCentroid = this.lastElement.centroid
+        const ends: [PointLike, PointLike] = [
+            this.firstElement.boundaryIntersections(lastCentroid)[0] ?? firstCentroid,
+            this.lastElement.boundaryIntersections(firstCentroid)[0] ?? lastCentroid
+        ]
+        const dx = lastCentroid.x - firstCentroid.x
+        const dy = lastCentroid.y - firstCentroid.y
+        const horizontal = Math.abs(dy) <= square && Math.abs(dx) > Math.abs(dy)
+        const vertical = Math.abs(dx) <= square && Math.abs(dy) > Math.abs(dx)
+        if (!horizontal && !vertical) {
+            return ends
+        }
+        // Square up midway between the centroids, if both elements reach that far
+        const across: 'x'|'y' = horizontal ? 'y' : 'x'
+        const line = (firstCentroid[across] + lastCentroid[across]) / 2
+        for (const element of [this.firstElement, this.lastElement]) {
+            const offsets = element.corners.map(corner => corner[across])
+            if (line < element.centroid[across] + Math.min(...offsets)
+             || line > element.centroid[across] + Math.max(...offsets)) {
+                return ends
+            }
+        }
+        const towards = (from: PointLike, to: PointLike): PointLike => horizontal ? { x: to.x, y: from.y }
+                                                                                    : { x: from.x, y: to.y }
+        const start = this.firstElement.boundaryIntersections(towards(firstCentroid, lastCentroid))[0]
+        const end = this.lastElement.boundaryIntersections(towards(lastCentroid, firstCentroid))[0]
+        if (!start || !end) {
+            return ends
+        }
+        return horizontal ? [{ x: start.x, y: line }, { x: end.x, y: line }]
+                          : [{ x: line, y: start.y }, { x: line, y: end.y }]
     }
 
     protected movePathPoint(position: PointLike) {

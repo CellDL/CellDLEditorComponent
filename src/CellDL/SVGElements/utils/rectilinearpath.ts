@@ -312,8 +312,6 @@ const otherFace = element.boundaryFace(closePoint)
         splayPoint.adjustValue(delta)
         const boundaryIntersection = element.boundaryIntersections(splayPoint)
 
-
-console.log(nPoints, index, face, otherFace, boundaryIntersection)
         if (boundaryIntersection[0]) {
             boundaryPoint.reassignPosition(boundaryIntersection[0])
         }

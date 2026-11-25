@@ -396,7 +396,7 @@ export abstract class CellDLSVGElement {
                                      this.#startResizeDims, topLeftDelta, bottomRightDelta)
             }
             this.#updateBounds()
-            this.celldlObject.context.editor.notifyChanges()
+            this.celldlObject.context.editor.diagramModified(true)
         }
     }
 
