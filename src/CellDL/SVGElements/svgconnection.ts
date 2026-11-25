@@ -232,7 +232,10 @@ export class SvgConnection extends CellDLSVGElement {
             strokeStyle: getStrokeString(this.svgElement, {
                 colour: CONNECTION_COLOUR,
                 width: CONNECTION_WIDTH,
-                dashScale: 0   // CONNECTION_DASH   (WIP: signals will be dashed)
+                // this needs to come via BG plugin?
+                // bonds are **never** dashed
+                // signals are **always** dashed
+                dashScale: 0   // CONNECTION_DASH
             })
         }
     }
