@@ -32,8 +32,12 @@ type ArrangeDelta = {
     dy: number
 }
 
+//==============================================================================
+
 // Paths between arranged components this near to horizontal or vertical are squared up
-export const SQUARE_UP_TOLERANCE = 6
+export const SQUARE_UP_TOLERANCE = 6            // pixels
+
+//==============================================================================
 
 export function minimumComponentsForArranging(op: COMPONENT_ARRANGEMENT): number {
     return [COMPONENT_ARRANGEMENT.SPACE_HORIZONTALLY, COMPONENT_ARRANGEMENT.SPACE_VERTICALLY].includes(op) ? 3 : 2

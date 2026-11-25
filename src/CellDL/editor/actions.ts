@@ -96,6 +96,7 @@ export const editorActionMap: Map<EDITOR_ACTION, EditorActionInfo> = new Map([
             label: 'Align components',
             items: [
                 ['Left', COMPONENT_ARRANGEMENT.LEFT], ['Centre', COMPONENT_ARRANGEMENT.CENTRE], ['Right', COMPONENT_ARRANGEMENT.RIGHT],
+                ['', ''],
                 ['Top', COMPONENT_ARRANGEMENT.TOP], ['Middle', COMPONENT_ARRANGEMENT.MIDDLE], ['Bottom', COMPONENT_ARRANGEMENT.BOTTOM],
 
             ]

@@ -26,7 +26,7 @@ import '#root/assets/svgContent.css'
 // Also needed inside each editor's shadow root, where diagram content is styled via `:host` rules
 import svgContentCss from '#root/assets/svgContent.css?inline'
 
-import type { CellDLConnectedObject, CellDLObject } from '#editor/celldlObjects'
+import type { CellDLObject } from '#editor/celldlObjects'
 import { PathDrag } from '#editor/connections/pathdrag'
 import { PathMaker, type PathNode } from '#editor/connections/pathmaker'
 import type { TemplateEventDetails } from '#editor/components'
@@ -45,8 +45,8 @@ import type { ComponentLibraryPlugin } from '#root/plugins'
 //==============================================================================
 
 import { EDITOR_ACTION, keycodeToEditorAction, keyName } from './actions'
-import { arrangedPaths, arrangedComponentCentres, minimumComponentsForArranging,
-         COMPONENT_ARRANGEMENT, SQUARE_UP_TOLERANCE } from './arrange'
+import { arrangedComponentCentres, arrangedPaths, type COMPONENT_ARRANGEMENT,
+         minimumComponentsForArranging, SQUARE_UP_TOLERANCE } from './arrange'
 import { DEFAULT_VIEW_STATE } from './defaults'
 import type { EditorFrame } from './editorframe'
 import { EDITOR_GRID_CLASS } from './editguides'
@@ -1352,7 +1352,7 @@ export class CellDLEditor {
         const bounds = components.map(component => {
             const svgElement = component.celldlSvgElement!
             const { left, top, right, bottom } = svgElement.svgBounds()
-            return { left, top, right, bottom, centre: { x: svgElement.centroid.x, y: svgElement.centroid.y } }
+            return { left, top, right, bottom, centre: svgElement.centroid }
         })
         // Don't rearrange if components would stack on top of each other...
         // e.g. left then middle
@@ -1363,7 +1363,7 @@ export class CellDLEditor {
         components.forEach((component, index) => {
             const centroid = bounds[index]!.centre
             const target = arrangedCentres[index]!
-            if (Math.abs(target.x - centroid.x) > 1e-6 || Math.abs(target.y - centroid.y) > 1e-6) {
+            if (!centroid.equals(target)) {
                 component.reposition(centroid, target, { noAlign: true })
                 changed = true
             }

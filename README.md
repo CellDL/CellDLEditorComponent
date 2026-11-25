@@ -2,33 +2,105 @@
 
 This package is a [Vue 3](https://vuejs.org/) component for the CellDL Editor, built with the [Composition API](https://vuejs.org/guide/extras/composition-api-faq).
 
-
-
-## Usage
+## Props
 
 The component comes with the following props:
 
-**TODO**
+```typescript
 export interface CellDLEditorProps {
-    editorCommand?: CellDLEditorCommand,
+    editorCommand?: CellDLEditorCommand
+    readOnly?: boolean
     theme?: Theme
 }
+```
 
+```typescript
+export type CellDLEditorCommand = EditorEditCommand
+                                | EditorExportCommand
+                                | EditorFileCommand
+                                | EditorSetStateCommand
+                                | EditorViewCommand
+
+export type EditorEditCommand = {
+    command: 'edit'
+    options: {
+        action: string
+    }
+}
+
+export type EditorExportCommand = {
+    command: 'export'
+    options: {
+        action: string
+    }
+}
+
+export type EditorFileAction = 'close' | 'data' | 'open'
+
+export type EditorFileCommand = {
+    command: 'file'
+    options: {
+        action: EditorFileAction
+        data?: string
+        kind?: string     // Returned with `EditorData`
+        name?: string
+    }
+}
+
+export type EditorSetStateCommand = {
+    command: 'set-state'
+    options: {
+        action: string
+    }
+}
 
 export type EditorViewCommand = {
     command: 'view'
     options: ViewState
 }
+```
 
-and emits the following actions:
+## Emits
 
+It emits the following actions:
+
+```typescript
 const emit = defineEmits<{
     'editor-data': [data: EditorData],
-    'error': [msg: string]
+    'diagram-click': [detail: DiagramClickEvent],
+    'editor-state': [state: EditorStateData]
 }>()
+```
 
+```typescript
+export type EditorData = {
+    data: string
+    kind?: string     // As passed in EditorFileCommand
+}
 
-- **index.html:**
+export type DiagramClickEvent = {
+    id: string
+}
+
+export type EditorStateData = {
+    error?: string
+    ready?: boolean
+    status?: EditorStatus
+}
+
+export interface EditorStatus {
+    canPaste?: boolean
+    canUndo?: boolean
+    diagramModified?: boolean
+    haveBentConnections?: boolean
+    haveArrangeableComponents?: boolean
+    haveDistributableComponents?: boolean
+    haveGroupSelection?: boolean
+    haveSelection?: boolean
+}
+```
+
+## index.html
 
 The `Content-Security-Policy` **must** allow `data:` connections and Wasm to be evaluated, for instance:
 
@@ -38,7 +110,7 @@ The `Content-Security-Policy` **must** allow `data:` connections and Wasm to be 
       content="connect-src * data:; script-src 'self' 'wasm-unsafe-eval'" />
 ```
 
-- **main.ts:**
+## main.ts
 
 ```typescript
 import { createApp } from 'vue';
@@ -48,60 +120,56 @@ import App from './App.vue';
 createApp(App).mount('#app');
 ```
 
-The Vue component gives access to all of the CellDL Editor's features
+## App.vue
 
-- **App.vue:**
+The Vue component provoides access to all of the Editor's features:
 
-```vue
+```html
 <template>
   <CellDLEditor
     :editorCommand="editorCommand"
     :theme="editorTheme"
     @editorData="onEditorData"
-    @error="onError" />
+    @editorState="onEditorState"
+  />
 </template>
 
 <script setup lang="ts">
-import type { CellDLEditorCommand, EditorData } from '@celldl/editor';
-import '@celldl/editor/style.css';
-import * as vueusecore from '@vueuse/core';
-
+```
+```typescript
 import * as vue from 'vue';
 
+import '@celldl/editor/style.css';
+
 import CellDLEditor from '@celldl/editor'
+import type { CellDLEditorCommand, EditorData, EditorStateData} from '@celldl/editor';
 
 const editorCommand = vue.ref<CellDLEditorCommand>();
 const theme = vue.ref<Theme>('light');
 
-vueusecore.useEventListener(document, 'file-edited', (_: Event) => {
-  // The current diagram has has been modified, so update any local state (e.g., add a modified indicator to the
-  // diagram's title).
-});
-
-async function onEditorData(data: EditorData) {
-  if (data.kind === 'export') {
-    // const uri = 'https://example.org/some_uri_to_identify_the_celldl_source_';
-    // const cellmlObject = celldl2cellml(uri, data.data);
-    // if (cellmlObject.cellml) {
-    //   // Save `cellmlObject.cellml`.
-    // } else if (cellmlObject.issues) {
-    //   window.alert(cellmlObject.issues.join('\n'));
-    // }
+async function onEditorState(state: EditorStateData) {
+  if (state.ready) {
+    console.log('Editor ready...')
+  } else if (status.diagramModified) {
+    // The current diagram has has been modified, so update any local state,
+    // for instance adding a modified indicator to the diagram's title.
   } else {
-    // Process `data.data`.
+    // Use status to enable/disable menu items etc.
   }
 }
 
-function onError(msg: string) {
-  window.alert(msg);
+async function onEditorData(data: EditorData) {
+  // Use `data.kind`, as passed in `EditorFileCommand` to determine what to
+  // do with `data.data`.
 }
+```
 
-/*
 The editor is initialised with a blank window.
 
 1. To load a CellDL diagram set:
 
-  celldlEditorCommand.value = {
+```typescript
+  editorCommand.value = {
     command: 'file',
     options: {
       action: 'open',
@@ -109,27 +177,33 @@ The editor is initialised with a blank window.
       name: filename
     }
   }
+```
 
-2. To get serialised CellDL from the editing window set:
+2. To get serialised CellDL from the editor's window set:
 
-  celldlEditorCommand.value = {
+```typescript
+  editorCommand.value = {
     command: 'file',
     options: {
       action: 'data',
-      kind: 'export'
+      kind: '...'
     }
   }
+```
 
 with `kind` set as appropriate. This will result in an `editorData` event, to be handled as above.
 
 3. To clear the editing window set:
 
-  celldlEditorCommand.value = {
+```typescript
+  editorCommand.value = {
     command: 'file',
     options: {
       action: 'close'
     }
   }
-*/
+```
+
+```html
 </script>
 ```
