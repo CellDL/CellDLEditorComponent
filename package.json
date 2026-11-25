@@ -5,6 +5,21 @@
         "name": "David Brooks",
         "email": "d.brooks@auckland.ac.nz"
     },
+    "contributors": [
+        {
+            "name": "Finbar Argus",
+            "email": "finbar.argus@auckland.ac.nz"
+        },
+        {
+            "name": "Jarrah Dowrick",
+            "email": "j.dowrick@auckland.ac.nz"
+        },
+        {
+            "name": "Claude (Anthropic)",
+            "url": "https://claude.ai",
+            "role": "AI Assistant"
+        }
+    ],
     "bugs": {
         "url": "https://github.com/CellDL/CellDLEditorComponent/issues"
     },
