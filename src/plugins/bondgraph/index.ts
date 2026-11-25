@@ -77,6 +77,8 @@ import {
 
 //==============================================================================
 
+import './style.css'
+
 import './bgrdf'    // Run set up code
 import { BGF_ONTOLOGY_URI, bgRdfStatements } from './bgrdf'
 import { type BondEnd, type BondEndKind, type BondPorts, bondRule } from './bondrules'
