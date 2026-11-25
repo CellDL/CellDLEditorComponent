@@ -85,14 +85,15 @@ export type EditorExportCommand = {
     }
 }
 
+export type EditorFileAction = 'close' | 'data' | 'open'
+
 export type EditorFileCommand = {
     command: 'file'
     options: {
-        action: string
+        action: EditorFileAction
         data?: string
-        kind?: string   // export,
+        kind?: string   // Returned with `EditorData`
         name?: string
-        type?: string   // For export: `cellml`, `omex`
     }
 }
 
