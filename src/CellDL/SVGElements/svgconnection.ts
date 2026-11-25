@@ -29,7 +29,7 @@ import { ID_PART_SEPARATOR } from '#editor/diagram'
 import type { PointLike } from '#root/utils/points'
 import {
     CONNECTION_COLOUR,
-    CONNECTION_DASH,
+//    CONNECTION_DASH,      (WIP: signals will be dashed)
     CONNECTION_WIDTH,
     type Styling
 } from '#root/utils/styling'
@@ -194,6 +194,7 @@ export class SvgConnection extends CellDLSVGElement {
                 this.#moveableElement.redraw()
             }
         }
+        return true
     }
 
     redraw() {
@@ -231,7 +232,7 @@ export class SvgConnection extends CellDLSVGElement {
             strokeStyle: getStrokeString(this.svgElement, {
                 colour: CONNECTION_COLOUR,
                 width: CONNECTION_WIDTH,
-                dashScale: 0   // CONNECTION_DASH
+                dashScale: 0   // CONNECTION_DASH   (WIP: signals will be dashed)
             })
         }
     }

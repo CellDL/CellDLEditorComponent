@@ -29,7 +29,7 @@ import { lengthToPixels } from '#editor/geometry/units'
 import { type Point, type PointLike, PointMath } from '#root/utils/points'
 import { CONNECTION_WIDTH } from '#root/utils/styling'
 
-import type { BoundedElement } from './boundedelement'
+import type { BoundedElement } from '../boundedelement'
 import { FixedPathPoint, PathElement, PathPoint } from './pathelement'
 
 //==============================================================================
